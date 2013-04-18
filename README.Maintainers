@@ -1,0 +1,15 @@
+
+
+			 Notes for mantainers
+			 ====================
+
+
+If you download from the git tree, you will need GNU Autotools installed.
+
+After the first time you check out the tree you need to run
+
+    libtoolize
+    aclocal
+    automake --add-missing
+    autoreconf
+
