@@ -1,0 +1,353 @@
+% -*- mode: Noweb; noweb-code-mode: c-mode -*-
+%
+% This file is part of glsim, a numerical simulation class library and
+% helper programs.
+%
+% glsim is copyright (C) 2009, 2010, 2011, 2013, 2013 by Tomas
+% S. Grigera.
+% 
+% glsim is free software; you can redistribute it and/or modify it under
+% the terms of the GNU General Public License (GPL) as published by the
+% Free Software Foundation, with the additional requirements of
+% attribution and nonmisrepresentation. You can use either version 3, or
+% (at your option) any later version.
+% 
+% Additional terms under GNU GPL version 3 section 7:
+% 
+% When you redistribute this software, you are required to preserve its
+% author attributions. If you distribute verbatim copies, you must not
+% alter the AUTHORS file or attributions inserted in the source files,
+% and you must not change the software's name. If you distribute a
+% modified copy, then you must give clear notice that your work is
+% different from but based on glsim. You must distribute it under a
+% different name, but include a prominent notice specifying that "(your
+% package) is based on glsim version x.x", and provide a pointer to the
+% glsim distribution.
+%
+% glsim is distributed in the hope that it will be useful, but WITHOUT
+% ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+% or FITNESS FOR A PARTICULAR PURPOSE.
+% 
+% For details see the file LICENSE in the home directory. If the file is
+% missing, contact the maintainers.
+
+\documentclass{book}
+
+\usepackage[round]{natbib}
+
+\usepackage{noweb}
+\noweboptions{externalindex}
+\noweboptions{longchunks}
+\noweboptions{longxref}
+\noweboptions{smallcode}
+
+\def\e{\mathbf{e}}
+\def\x{\mathbf{x}}
+\def\cp{\mathbf{\gamma}}
+\def\X{\mathbf{X}}
+\def\E{\mathbf{E}}
+\def\O{\mathbf{O}}
+
+\def\glsim{\texttt{glsim}}
+
+\input version.tex
+
+\title{GLSIM version \glsimversion}
+
+\author{Tom\'as S.\ Grigera}
+
+\date{\today}
+
+\begin{document}
+
+@
+\maketitle
+
+\tableofcontents
+
+\chapter{Introduction}
+
+\label{ch:introduction}
+
+Very often scientific research work involves numerical computation or
+numerical processing of data, be it statistical analysis of
+experimental data, numerical solution of systems nonlinear integral or
+differential equations, or large scale simulations of many-particle
+systems (from electron gases to galaxies to social systems
+\citep{philo:hartmann96}). Although many packages and libraries
+(commercial and open-source) exist that can perform a wide range of
+more or less specialized tasks, the practising scientist often finds
+him or herself writing computer code: new problems are studied which
+require variations or combinations of known techniques, or new
+techniques or solutions are developed for old problems.
+
+One of the problems the scientist/programmer faces is that to build a
+useful working program, one needs much more code than the lines
+required to express the main algorithm: user interaction, data
+input/output, preprocessing or format conversions make up for a large
+percentage of source code lines of the final program. We call this
+additional code ``clerical'', because it expresses relatively simple
+tasks and straightforward algorithms, and generally takes a small
+fraction of execution time. But writing, debugging and maintaining it
+take a fair amount of time. Ideally, the scientist needing to program
+some new algorithm should be able concentrate in the code for the main
+algorithm (on which he/she is an expert), while resorting to some sort
+of library for the rest of the clerical tasks which are not part of
+the main algorithm, and likely not within the scientist's main
+expertise.
+
+\glsim\ is a class library that attempts to fulfil precisely that
+role, easing the development of a simulation program by providing
+simple ways to incorporate configuration file parsing, binary i/o from
+self-describing files and processing of Unix signals to handle early
+interruption, among other features.
+
+\glsim\ was born from the author's frustation when realizing how many
+times essentialy identical algorithms were being coded. It is the
+fourth attempt (though the first designed as a class library) at
+designing a modular numerical simulation program.
+
+\glsim\ is the result of the experience gained over many years writing
+numerical simulation software in one-man or two-men teams, and of the
+efforts to organize the code in such a way that it would be useful
+beyond the immediate situation for which it was written. Of the many
+thousands of lines of simulation code the author has written, \glsim\
+incorporates the part that is expected to be of more general
+usefulness to colleagues writing simulation software, and has achieved
+a reasonable level of maturity regarding interface and code
+organization, debugging and documentation to warrant a public
+release. It is however far from complete, and development is
+continuing. But it is expected that it can be useful at the present
+stage of its evolution, and that its development will benefit from
+feedback and contributions from users.
+
+\section{What \glsim\ is and is not}
+
+\glsim\ is not a simulation package. Building \glsim\ does not produce
+an executable. It does not even include code for an actual simulation
+algorithm, say Monte Carlo or Molecular Dynamics. It is intended for
+developers, not end users (though these developers are typically
+scientists not specifically trained in computer science).
+
+\glsim\ is a class library providing (many of) the clerical code a
+complete simulation program needs (see
+chapter~\ref{ch:simulation}). As long as your problem conforms to the
+(very general) definition of simulation we give in
+chapter~\ref{ch:simulation}, you can benefit from \glsim by ``filling
+in the blanks'' of the basic simulation algorithm, easily obtaining,
+for example, parsing of a \texttt{.ini}-like file for reading the
+simulation parameters you define.
+
+\glsim\ should be especially useful to small (perhaps one-man) teams,
+writing software to implement simulations in some way non-standard and
+thus unable to use complete packages for specific techniques, by
+allowing them to incorporate to their programs features only
+expected in relatively large and mature packages.
+
+Before deciding whether \glsim\ is useful to your project, read
+chapter~\ref{ch:simulation}. The word simulation might sound rather
+specific, but our rather abstract definition makes it a very general
+concept. Basically any iterative numerical task that consists of
+repeated relatively fast steps is a simulation, and can potentially
+benefit from the library.
+
+\section{Organization of this book}
+
+\glsim\ is written under the literate programming
+paradigm~\citep{book:knuth92}, where code and code documentation are
+presented simultaneously, striving to communicate to other human
+beigns what the author is telling the computer to do. Some automated
+tool is used to extract the code from the mix and send it to the
+compiler. This book is thus to be regarded as the \glsim\ ``product'':
+it contains the full explained source code. The version quoted (at
+this time \glsimversion) thus applies to the book as well as to the
+library.
+
+Chapter~\ref{ch:simulation} defines what we understand by simulation,
+and explains what \glsim\ strives to
+achieve. Chapter~\ref{ch:software-overview} gives an overview of the
+software and explains the design of the library. After that the
+(commented) source code for the library and utilities is presented (at
+present only the base library is distributed).
+
+\section{Authors}
+
+If you wish to contact \glsim's author you can do so at
+\smallskip
+\begin{obeylines}
+Tom\'as S.\ Grigera
+INIFTA --- Universidad Nacional de La Plata
+Diagonal 113 esq.\ 64, c.c.\ 16, suc.\ 4
+1900 La Plata
+Argentina
+\texttt{tgrigera@inifta.unlp.edu.ar}
+\end{obeylines}
+
+\section{Copyright and licensing}
+
+\glsim\ is Copyright (C) 2009, 2010 by Tom\'as S. Grigera
+
+\glsim\ is free software; it is distributed under the GNU General
+Public License version 3. You can redistribute \glsim\ and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 3, or (at your option) any
+later version. Note that \glsim\ refers to this book as well as the
+software it documents. In fact, book and software have been written
+simultaneously under the literate programming paradigm, so actually
+they are one and the same.
+
+Additional terms under GNU GPL version 3 section 7:
+
+When you redistribute this software, you are required to preserve its
+author attributions. If you distribute verbatim copies, you must not
+alter the AUTHORS file or attributions inserted in the source files,
+and you must not change the software's name. If you distribute a
+modified copy, then you must give clear notice that your work is
+different from but based on glsim. You must distribute it under a
+different name, but include a prominent notice specifying that "(your
+package) is based on glsim version x.x", and provide a pointer to the
+glsim distribution.
+
+If you use \glsim\ to produced published work, please acknowledge it in
+your publication.
+
+\medskip
+
+\begin{quote}
+\glsim\ is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE.
+
+You can find the full text of the license in appendix~\ref{ap:license}.
+\end{quote}
+
+\chapter{Simulation}
+
+\label{ch:simulation}
+
+[[FIXME: this needs rewriting]]
+
+A \emph{simulation,} from a general point of view, is the repeated
+application of a transformation to set of numbers. Let's define two
+spaces $\cal{X}$ and $\cal{E}$, which we can assume to be subsets of
+$\Re^n$ (though $n$ needn't be the same for both). $\cal{X}$ is the
+\emph{configuration space}, and a vector $\x \in {\cal X}$ is a
+\emph{configuration}. ${\cal E}$ is the \emph{environment space} and
+$\e \in {\cal E}$ is an \emph{environment.}
+
+To perform a \emph{simulation step} means to apply the transformations
+\begin{eqnarray}
+  \e_{n+1} &=& \E(\e_n),\\
+  \x_{n+1} &=& \X(\x_n,\e_{n+1}).
+\end{eqnarray}
+
+The configurations and environments thus form an ordered sequence. One
+can define a \emph{simulation time} $t(n)$ through any monotonically
+increasing function of the number of steps $n$. The separation into
+configuration and environment is somewhat arbitrary, but note that
+while $\x_{n+1}$ can depend on $\e_{n+1}$, $\e_{n+1}$ is always obtained
+independently of $\x_n$.
+
+The ordered pair $(\x_n,\e_n)$ is the \emph{state} of the simulation
+at step $n$ (or time $t(n)$). To start the simulation, we must specify
+the initial state $(\x_0,\e_0)$. This state can be constructed from
+another real vector $\cp$ through
+\begin{eqnarray}
+  \e_0&=&\E_0(\cp),\\
+  \x_0&=&\X_0(\cp).
+\end{eqnarray}
+The components of $\cp$ are called \emph{control parameters.}
+
+Also, it may be useful or convenient to compute subsidiary quantities,
+called \emph{observables,} along the simulation. These quantities
+depend only on the configuration, and their value is not used at all
+in computing the successive environment or configuration, so that
+their computation can be omitted without changing the final state. We
+note them $\O_i(\x_n)$. To define the observable, a number of
+parameters will in general be needed, and these could in principle
+also evolve, so there will be an environment associated with each
+observable. In practice it is often convenient to merge these
+environments with the main simulation environment, and we do so below,
+the important point is that the environment parameters associated with
+the observables do not interact with the rest of the environment.
+
+DEFINE LOG.
+
+The basic simulation algorithm is then
+\begin{enumerate}
+
+\item Read $\cp$.
+
+\item Create $\x_0$ and $\e_0$ (possibly using a previously saved
+  state).
+
+\item For $n=1,\ldots,N_\mathrm{tot}(\cp)$, repeat the following:
+  \begin{enumerate}
+  \item Compute $\e_n=E(\e_{n-1})$.
+  \item Compute $\x_n=D(\x_{n-1},\e_n)$.
+  \item Compute $\O_i(\x_n,\e_n)$.
+  \item Write log and $\O_i$.
+  \end{enumerate}
+
+\item Write state.
+
+\item End.
+
+\end{enumerate}
+
+\chapter{Software overview}
+
+Explain design. Explain also:
+
+\begin{itemize}
+\item Graceful termination (SIGTERM)
+\item Checkpointing
+\end{itemize}
+
+\label{ch:software-overview}
+
+\section{Third-party libraries used}
+
+\begin{enumerate}
+\item NetCDF from xx
+\item Boost::program\_options
+\item GSL
+\end{enumerate}
+
+\part{GLSIM base library}
+\input blib.tex
+% \part{Lattice simulations}
+% \input lattice.tex
+% \part{Off-lattice simulations}
+% \input offlattice.tex
+% \part{Analysis}
+% \input analysis.tex
+% \part{Util}
+% \input util.tex
+
+@
+
+\appendix
+
+\renewcommand{\bibsection}{\chapter{Bibliography}}
+\bibliographystyle{plainnat}
+\bibliography{glsim}
+
+\chapter{TODO list}
+
+\begin{itemize}
+\item Chapter~\ref{ch:simulation}.
+\item Chapter~\ref{ch:software-overview}.
+\end{itemize}
+
+\chapter{GNU GENERAL PUBLIC LICENSE}
+\label{ap:license}
+\input gpl.tex
+
+\chapter{Index}
+
+\nowebindex
+
+\nowebchunks
+
+\end{document}
