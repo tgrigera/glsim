@@ -36,7 +36,7 @@
 
 @ \section{Errors, exceptions and debugging}
 
-\subsection{Context and backtrace}
+\subsection{Backtrace, source context, and exceptions}
 
 Here is an example showing how to print a backtrace and source context
 information.  To see source lines and function names for the
@@ -100,4 +100,14 @@ int main(int argc, char *argv[])
 }
 
 
+@ \subsection{C language errors}
 
+<<cerrors-test.c>>=
+#include "glsim/cerrors.h"
+
+int main(int argc, char *argv[])
+{
+  errno=19;  // Let's report a fake error
+  SYSERROR_EXIT("Faking error:",2);
+  return 0;
+}

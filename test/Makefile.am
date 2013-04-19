@@ -10,7 +10,7 @@
 
 EXTRA_DIST = errors.nw
 errors_hdr = 
-errors_src = context.cc
+errors_src = context.cc cerrors-test.c
 BUILT_SOURCES = $(errors_hdr) $(errors_src)
 $(errors_src) : errors.nw
 	@TANGLE@ -L -R$@ $? | @CPIF@ $@
@@ -20,7 +20,7 @@ $(errors_hdr) : errors.nw
 
 AM_CPPFLAGS = -I$(top_builddir)/include
 
-check_PROGRAMS = context
+check_PROGRAMS = context cerrors-test
 
 context_SOURCES = context.cc ../blib/scontext.cc
-
+cerrors_test_SOURCES = cerrors-test.c ../blib/cerrors.c

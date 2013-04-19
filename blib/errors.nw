@@ -135,7 +135,7 @@ rm -rf ${base}
 
 
 
-@ \subsection{Source context}
+@ \subsubsection{Source context}
 %$
 
 The [[Source_context]] class holds source filename, line and function
@@ -244,7 +244,7 @@ public:
     {}
 } ;
 
-@ \paragraph{Exceptions deriving from [[Runtime_error]].}
+@ \subsubsection{Exceptions deriving from [[Runtime_error]].}
 
 <<exception hierarchy>>=
 class Invalid_operation : public Runtime_error {
@@ -263,4 +263,84 @@ public:
     {}
 } ;
 
+
+@ \subsection{Error reporting in C}
+
+For the occasional C program we provide a simple way to abort the
+program with a backtrace through the [[ERROR_EXIT]] and
+[[SYSERROR_EXIT]] macros.  Also, the [[I_AM_HERE]] macro is provided
+as an easy way to report source position (to stderr), useful when debugging.
+
+<<cerrors.h>>=
+#ifndef _CERRORS_H
+#define _CERRORS_H
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <unistd.h>
+
+#define ERROR_EXIT(s,ecode) \
+        exit_on_error(__FILE__,__LINE__,__func__,s,ecode)
+
+#define SYSERROR_EXIT(s,ecode) \
+        exit_on_system_error(__FILE__,__LINE__,__func__,s,ecode)
+
+#define I_AM_HERE \
+  {fprintf(stderr,"(DD) Reached %s:%d (in function %s)\n",__FILE__,__LINE__, \
+	  __func__); fflush(stderr); }
+
+#ifdef _ERRORS_C
+#define EXTERN
+#else
+#define EXTERN extern
+#endif
+
+#ifdef __cplusplus
+#include <cstdio>
+extern "C" {
+#endif
+EXTERN void exit_on_system_error(const char *file,int line,const char *func,
+				 const char *s,int ecode);
+EXTERN void exit_on_error(const char *file,int line,const char *func,
+			  const char *s,int ecode);
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
+#endif /* _CERRORS_H */
+
+<<cerrors.c>>=
+#include <execinfo.h>
+#define _ERRORS_C
+#include "cerrors.h"
+
+static char errbuf[2000];
+
+static void print_backtrace_and_exit(int ecode)
+{
+  void   *ar[50];
+  size_t n;
+
+  n=backtrace(ar,50);
+  fprintf(stderr,"===== BACKTRACE START ==========\n");
+  backtrace_symbols_fd(ar,n,STDERR_FILENO);
+  fprintf(stderr,"===== BACKTRACE END ==========\n");
+  exit(ecode);
+}
+
+void exit_on_system_error(const char *file,int line,const char *func,
+			  const char *s,int ecode)
+{
+  sprintf(errbuf,"%s:%d (%s): %s",file,line,func,s);
+  perror(errbuf);
+  print_backtrace_and_exit(ecode);
+}
+
+void exit_on_error(const char *file,int line,const char *func,
+		   const char *s,int ecode)
+{
+  fprintf(stderr,"%s:%d (%s): %s\n",file,line,func,s);
+  print_backtrace_and_exit(ecode);
+}
 
