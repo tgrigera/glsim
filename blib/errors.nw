@@ -198,6 +198,9 @@ that gives access to the [[Backtrace]] object stored in
 #include <sstream>
 #include <stdexcept>
 
+#include <errno.h>
+#include <string.h>
+
 namespace glsim {
 
   class Logic_error : public std::logic_error {
@@ -252,3 +255,12 @@ public:
 		  c)
   {}
 } ;
+
+class Clib_error : public Runtime_error {
+public:
+  explicit Clib_error(const Source_context &c=Source_context()) :
+    Runtime_error(std::string("C library error: ") + strerror(errno), c)
+    {}
+} ;
+
+

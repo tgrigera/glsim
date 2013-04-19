@@ -61,7 +61,9 @@ glsim::Backtrace f1(int a)
 void throws_exceptions()
 {
   // throw glsim::Unimplemented("ugly feature",HERE);
-  throw glsim::Invalid_operation("reading",HERE);
+  // throw glsim::Invalid_operation("reading",HERE);
+  errno = 25;
+  throw glsim::Clib_error(HERE);
 }
 
 int main(int argc, char *argv[])
