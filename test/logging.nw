@@ -1,6 +1,6 @@
-% -*- mode: Noweb; noweb-code-mode: c-mode -*-
+% -*- mode: Noweb; noweb-code-mode: c++-mode -*-
 %
-% test.nw
+% logging.nw - a simple log stream
 %
 % This file is part of glsim, a numerical simulation class library and
 % helper programs.
@@ -31,12 +31,51 @@
 % 
 % For details see the file LICENSE in the home directory. If the file is
 % missing, contact the maintainers.
+%
+%'
 
-@ \chapter{Test suite}
+@ \section{Logging}
 
-The program in this chapter are intended as tests for the integrity of
-the library as well as examples of use.
+<<logtest.cc>>=
+#include "glsim/log.hh"
 
-\input{errors}
-\input{logging}
+glsim::logger glsim::logs;
 
+void flog()
+{
+  using glsim::logs;
+  using glsim::debug;
+  using glsim::info;
+  using glsim::warn;
+  using glsim::error;
+
+  logs(debug) << "A debugging message\n";
+  logs(info) << "An information message\n";
+  logs(warn) << "A WARING!\n";
+  logs(error) << "This is really an ERROR\n";
+}
+
+int main(int argc, char *argv[])
+{
+  std::cout << "Now we will be calling the same function several times,\n"
+	    << "wiht different log levels.\n\n";
+
+
+  std::cout << "\n*** Loglevel debug\n\n";
+  glsim::logs.set_stream(std::cout,glsim::debug);
+  flog();
+
+  std::cout << "\n*** Loglevel info\n\n";
+  glsim::logs.set_stream(std::cout,glsim::info);
+  flog();
+
+  std::cout << "\n*** Loglevel warn\n\n";
+  glsim::logs.set_stream(std::cout,glsim::warn);
+  flog();
+
+  std::cout << "\n*** Loglevel error\n\n";
+  glsim::logs.set_stream(std::cout,glsim::error);
+  flog();
+
+  return 0;
+}
