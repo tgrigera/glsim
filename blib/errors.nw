@@ -201,6 +201,8 @@ that gives access to the [[Backtrace]] object stored in
 #include <errno.h>
 #include <string.h>
 
+#include "glsim/scontext.hh"
+
 namespace glsim {
 
   class Logic_error : public std::logic_error {
