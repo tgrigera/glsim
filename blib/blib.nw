@@ -5,7 +5,7 @@
 % This file is part of glsim, a numerical simulation class library and
 % helper programs.
 %
-% glsim is copyright (C) 2009, 2010, 2011, 2012 by Tomas S. Grigera.
+% glsim is copyright (C) 2009, 2010, 2011, 2012, 2013 by Tomas S. Grigera.
 % 
 % glsim is free software; you can redistribute it and/or modify it under
 % the terms of the GNU General Public License (GPL) as published by the
@@ -38,3 +38,4 @@ This chapter describes some classes that implement basic functionality
 and help.
 
 \include{errors}
+\include{logging}
