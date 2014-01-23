@@ -4,7 +4,8 @@
 ## This file is part of glsim, a numerical simulation class library and
 ## helper programs.
 ##
-## glsim is copyright (C) 2009, 2010, 2011, 2012, 2013 by Tomas S. Grigera.
+## glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014
+## by Tomas S. Grigera.
 
 ##idir = $(top_builddir)/offlattice/offlattice
 
@@ -30,12 +31,24 @@ $(logging_hdr) : logging.nw
 	@TANGLE@ -L -R$@ $? | @CPIF@ $@
 	ln -s -f $(PWD)/$@ $(top_builddir)/include/glsim
 
+EXTRA_DIST += parameters.nw
+parameters_hdr = 
+parameters_src = partest.cc partest.ini
+BUILT_SOURCES += $(parameters_hdr) $(parameters_src)
+$(parameters_src) : parameters.nw
+	@TANGLE@ -L -R$@ $? | @CPIF@ $@
+$(parameters_hdr) : parameters.nw
+	@TANGLE@ -L -R$@ $? | @CPIF@ $@
+	ln -s -f $(PWD)/$@ $(top_builddir)/include/glsim
+
 EXTRA_DIST += $(BUILT_SOURCES)
 
 AM_CPPFLAGS = -I$(top_builddir)/include
 
-check_PROGRAMS = context cerrors-test logtest
+check_PROGRAMS = context cerrors-test logtest partest
 
 context_SOURCES = context.cc ../blib/scontext.cc
 cerrors_test_SOURCES = cerrors-test.c ../blib/cerrors.c
 logtest_SOURCES = logtest.cc ../blib/log.cc
+partest_SOURCES = partest.cc ../blib/parameters.cc ../blib/log.cc ../blib/scontext.cc
+

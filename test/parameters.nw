@@ -1,0 +1,182 @@
+% -*- mode: Noweb; noweb-code-mode: c++-mode -*-
+%
+% test/parameters.nw -- Test of Parameters class
+%
+% This file is part of glsim, a numerical simulation class library and
+% helper programs.
+%
+% glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014
+% by Tomas S. Grigera.
+% 
+% glsim is free software; you can redistribute it and/or modify it under
+% the terms of the GNU General Public License (GPL) as published by the
+% Free Software Foundation, with the additional requirements of
+% attribution and nonmisrepresentation. You can use either version 3, or
+% (at your option) any later version.
+% 
+% Additional terms under GNU GPL version 3 section 7:
+% 
+% When you redistribute this software, you are required to preserve its
+% author attributions. If you distribute verbatim copies, you must not
+% alter the AUTHORS file or attributions inserted in the source files,
+% and you must not change the software's name. If you distribute a
+% modified copy, then you must give clear notice that your work is
+% different from but based on glsim. You must distribute it under a
+% different name, but include a prominent notice specifying that "(your
+% package) is based on glsim version x.x", and provide a pointer to the
+% glsim distribution.
+%
+% glsim is distributed in the hope that it will be useful, but WITHOUT
+% ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+% or FITNESS FOR A PARTICULAR PURPOSE.
+% 
+% For details see the file LICENSE in the home directory. If the file is
+% missing, contact the maintainers.
+%
+%'
+
+@ \section{Parameters}
+
+This short program tests and demonstrates how to define new parameters
+to be read from a parameter file or from the command-line.
+
+<<partest.cc>>=
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <iostream>
+
+#include "glsim/log.hh"
+#include "glsim/parameters.hh"
+
+using namespace glsim;
+
+logger glsim::logs;
+
+@ We now declare parameters intended to be read from a [[.ini]] file.
+As shown, many independent [[Parameters]] objects can be declared, and
+all parameters will be consolidated and read from the same file.
+
+<<partest.cc>>=
+class filepars : public Parameters {
+public:
+  filepars();
+} ;
+
+filepars::filepars() : 
+  Parameters()
+{
+  parm_file_options.add_options()
+    ("steps",po::value<int>(),"Number of steps")
+    ("alpha",po::value<double>()->default_value(1.2),"Weird tuning parameter")
+    ;
+}
+
+@ This is the second class, it also demonstrate the use of sections.
+
+<<partest.cc>>=
+class morepars : public Parameters {
+public:
+  morepars();
+} ;
+
+morepars::morepars() : Parameters()
+{
+  parm_file_options.add_options()
+    ("title",po::value<std::string>()->default_value("[no title]"),"Simulation title")
+    ("special.steps",po::value<int>(),"Number of special steps")
+    ("special.T",po::value<double>()->required(),"Special temperature")
+    ;
+}
+
+@ Now for the command line.  We define a few more parameters, specify the
+position some of those will occupy in the command line, and write a
+usage message.
+
+<<partest.cc>>=
+class CLIpar : public ParametersCL {
+public:
+  CLIpar();
+  void show_usage(const char* prog);
+} ;
+
+CLIpar::CLIpar() :
+  ParametersCL()
+{
+  command_line_options.add_options()
+    ("output_file,o",po::value<std::string>(),"Output file")
+    ("data_description_file",po::value<std::string>()->required(),"Some data we need")
+    ("input_file",po::value<std::vector<std::string> >()->required(),"Input files")
+    ;
+  pos.add("parameter_file",1).add("data_description_file",1)
+    .add("input_file",-1);
+}
+
+void CLIpar::show_usage(const char* prog)
+{
+  std::cerr << "\nusage: " << prog << " [options] parameter_file data_desc_file ifile [ifile ...]\n\n"
+    << "Options:\n"
+    << "  -o  file      Output file\n"
+    << "\n\n"
+    ;
+}
+
+@ Now the [[main]].  We declare one instance of the above classes, and
+parse all options through [[CLIpar.parse_command_line]].
+
+<<partest.cc>>=
+int main(int argc, char *argv[])
+{
+  try {
+
+  filepars fpar;
+  morepars mpar;
+  CLIpar   cl;
+
+  cl.parse_command_line(argc,argv);
+
+
+  std::cout << "Parameters read:\n"
+	    << "parameter_file = "
+	    << ( (cl.count("parameter_file"))>0 ? cl.value("parameter_file").as<std::string>() : "N/A" ) << '\n'
+	    << "output_file = " << cl.value("output_file").as<std::string>() << '\n'
+   	    << "steps = " << fpar.value("steps").as<int>() << '\n'
+   	    << "alpha = " << fpar.value("alpha").as<double>() << '\n'
+    	    << "title = " << mpar.value("title").as<std::string>() << '\n'
+	    << "special.steps = " << mpar.value("special.steps").as<int>() << '\n'
+	    << "special.T = " << mpar.value("special.T").as<double>() << '\n'
+    ;
+
+
+  std::vector<std::string> input_files(cl.value("input_file").as<std::vector<std::string> >());
+  std::cout << "\nInput files :";
+  std::copy(input_files.begin(),input_files.end(),
+	    std::ostream_iterator<std::string>(std::cout," "));
+  std::cout << "\n\n";
+
+
+  } catch (glsim::Early_stop &e) {
+  } catch (glsim::Runtime_error& e) {
+    std::cerr << e.what() << '\n';
+    std::cerr << e.backtrace();
+  } catch (glsim::Logic_error& e) {
+    std::cerr << e.what() << '\n';
+    std::cerr << e.backtrace();
+  } catch (std::exception &e) {
+    std::cerr << "Exception: " << e.what() << '\n';
+  }
+}
+
+@ And this is a suitable parameter file.  Note however that you can
+specify any of the parameters below on the command line, as a long
+option, overriding the value in the file.
+
+<<partest.ini>>=
+title="Test title"
+steps=1000  # Steps is a mandatory parameter
+# alpha and title can be omitted since they have assigned defaults
+
+[special]
+steps = 22  # Different from the above
+T = 1
+
