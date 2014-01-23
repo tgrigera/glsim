@@ -32,9 +32,18 @@ $(logging_hdr) : logging.nw
 	@TANGLE@ -L -R$@ $? | @CPIF@ $@
 	ln -s -f $(PWD)/$@ $(top_builddir)/include/glsim
 
+EXTRA_DIST += parameters.nw
+parameters_hdr = parameters.hh
+parameters_src = parameters.cc
+BUILT_SOURCES += $(parameters_hdr) $(parameters_src)
+$(parameters_src) : parameters.nw
+	@TANGLE@ -L -R$@ $? | @CPIF@ $@
+$(parameters_hdr) : parameters.nw
+	@TANGLE@ -L -R$@ $? | @CPIF@ $@
+	ln -s -f $(PWD)/$@ $(top_builddir)/include/glsim
+
 EXTRA_DIST += $(BUILT_SOURCES)
 
-
-pkginclude_HEADERS = $(errors_hdr)
+pkginclude_HEADERS = $(errors_hdr) $(logging_hdr) $(parameters_hdr)
 
 bin_SCRIPTS = readbt.sh

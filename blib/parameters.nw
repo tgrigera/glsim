@@ -1,0 +1,296 @@
+% -*- mode: Noweb; noweb-code-mode: c-mode -*-
+%
+% parameters.nw -- base class for Parameters hierarchy
+%
+% This file is part of glsim, a numerical simulation class library and
+% helper programs.
+%
+% glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014
+% by Tomas S. Grigera.
+% 
+% glsim is free software; you can redistribute it and/or modify it under
+% the terms of the GNU General Public License (GPL) as published by the
+% Free Software Foundation, with the additional requirements of
+% attribution and nonmisrepresentation. You can use either version 3, or
+% (at your option) any later version.
+% 
+% Additional terms under GNU GPL version 3 section 7:
+% 
+% When you redistribute this software, you are required to preserve its
+% author attributions. If you distribute verbatim copies, you must not
+% alter the AUTHORS file or attributions inserted in the source files,
+% and you must not change the software's name. If you distribute a
+% modified copy, then you must give clear notice that your work is
+% different from but based on glsim. You must distribute it under a
+% different name, but include a prominent notice specifying that "(your
+% package) is based on glsim version x.x", and provide a pointer to the
+% glsim distribution.
+%
+% glsim is distributed in the hope that it will be useful, but WITHOUT
+% ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+% or FITNESS FOR A PARTICULAR PURPOSE.
+% 
+% For details see the file LICENSE in the home directory. If the file is
+% missing, contact the maintainers.
+
+@ \chapter{Parameters}
+
+We provide here two classes, which correspond to our parameters
+abstraction.  The library user will derive from here to define
+parameters as needed as shown below.  The actual parsing is done
+through Boost::program\_options.  One or more [[Parameters]]
+descendants will be used to define the parameters to be read from a
+parameter ([[.ini]]) file.  Typically, parameters will be defined at
+several places, but parsing needs to be done only once (a Boost
+requirement), thus all [[Parameters]] objects will consolidate the
+parameters information in one [[boost::program_options]] object, and
+the parsing function will read all of them from a single file.
+
+To parse the command line, one can create an object derived from
+[[ParametersCL]].  Only one such object should exist.  In this case
+two parser functions must be called, one for the command line and one
+for the file.  But note that [[ParametersCL]] descends from
+[[Parameters]], thus it too consolidates all parameter definitions. As
+result, if a [[ParametersCL]] object exists, the parameters defined in
+other [[Parameters]] objects can also be specified as long options in
+the command line.
+
+%'
+
+<<parameters.hh>>=
+#ifndef PARAMETERS_HH
+#define PARAMETERS_HH
+
+#include <string>
+#include <iostream>
+#include <boost/program_options.hpp>
+
+#include <glsim/exception.hh>
+
+namespace glsim {
+
+<<Parameters declaration>>
+<<ParametersCL declaration>>
+<<inline methods>>
+<<Exceptions>>
+
+}
+
+#endif /* PARAMETERS_HH */
+
+<<parameters.cc>>=
+#include <fstream>
+
+#include "log.hh"
+#include "parameters.hh"
+
+namespace glsim {
+<<static data>>
+<<Parameters methods>>
+<<ParametersCL methods>>
+}
+
+@ \section{Parameters}
+
+To read parameters, the user declares a class inherited from
+[[Parameters]].  The constructor of the derived class must declare
+the parameters to be read by calling [[parm_file_options]], which is
+an object of type [[options_description]] from
+[[boost::program_options]].  See the example in [[test]] and the Boost
+documentation for the declaration syntax.
+
+To actually read the parameters from the file, one must call
+[[Parameters::parse(char*)]] passing it a file name.  The parsing
+should be done only once (in the simulation, from an [[Environent]]
+object, which see).  After that, [[Parameters::count]] and
+[[Parameters::value]] may be called to load parameters as desired.
+
+The backend for parameter reading is Boost::program_options.  Though
+we allow that the parameter definition be scattered all over, the
+definitios are actually collected in a single static object.  All the
+parameters must be defined by the time the parser is called.  As a
+result, the library user \emph{must not declary any global
+  [[Parameter]] object,} or the static member objects may fail to be
+properly initialized.
+
+<<Parameters declaration>>=
+namespace po=boost::program_options;
+ 
+class Parameters {
+public:
+  Parameters() {}
+  void parse(const char *parfile);
+  int  count(const std::string& s) const;
+  const po::variable_value& value(const std::string& s) const;
+  virtual void show_parameters(std::ostream&) const;
+  
+protected:
+  static po::options_description parm_file_options;
+
+private:
+  static po::variables_map parameters_map;
+
+  friend class ParametersCL;
+} ;
+
+<<static data>>=
+po::options_description Parameters::parm_file_options;
+po::variables_map       Parameters::parameters_map;
+
+@ The parse function just properly calls the Boost component.
+
+<<Parameters methods>>=
+void Parameters::parse(const char *parfile)
+{
+  glsim::logs(glsim::info) << "Reading parameters from " << parfile << "\n";
+  std::ifstream icf(parfile);
+  po::store(po::parse_config_file(icf,parm_file_options),parameters_map);
+  po::notify(parameters_map);
+}
+
+@ With the next two methods one can retrieve the values of the
+options. See the Boost documentation for usage of the
+[[po::variable_value]] object.
+
+<<Parameters methods>>=
+const po::variable_value& Parameters::value(const std::string& s) const 
+{
+  if (parameters_map.count(s)>0)
+    return parameters_map[s];
+  else
+    throw Undefined_parameter(s);
+}
+
+<<inline methods>>=
+inline int Parameters::count(const std::string& s) const
+{
+  return parameters_map.count(s);
+}
+
+@ A help screen can be printed easily thanks to
+[[boost::program_options]]' facilities.  Override if you prefer a
+custom message. %'
+
+<<Parameters methods>>=
+void Parameters::show_parameters(std::ostream& o) const
+{
+  o << parm_file_options;
+}
+
+@ \paragraph{Exception.}  [[Parameters::value()]] will throw an
+exception when an undefined parameter is requested.
+
+<<Exceptions>>=
+class Undefined_parameter : public glsim::Runtime_error {
+public:
+  explicit Undefined_parameter(const std::string& param,
+			       const Source_context &c=Source_context()) :
+  Runtime_error("ERROR: undefined parameter "+param,c) {}
+  ~Undefined_parameter() throw() {}
+} ;
+
+
+@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+\section{ParametersCL}
+
+[[ParametersCL]] inherits from [[Parameters]], adding functionality to
+parse a command line, always relying on [[boost::program_options]]'
+facilities.  Only one [[ParametersCL]] object should be declared, and
+it must \emph{not} be global. %'
+
+This class is abstract because [[show_usage]] is a pure virtual.
+Decent command-line parsing requires definition of ``positional
+parameters'' (in Boost::program_options jargon), and a good usage
+message to match.  See the test section for an example.
+
+<<ParametersCL declaration>>=
+class ParametersCL : public Parameters {
+public:
+  ParametersCL();
+  virtual void parse_command_line(int argc,char *argv[],bool require_parameter_file=true,
+				  bool use_parameter_file=true);
+  virtual void show_usage(const char* progname)=0;
+
+protected:
+  static po::options_description            command_line_options;
+  static po::positional_options_description pos;
+} ;			      
+
+<<static data>>=
+po::options_description            ParametersCL::command_line_options;
+po::positional_options_description ParametersCL::pos;
+
+@ The constructor declares three command-line options ([[--help]] or
+[[-h]] to request usage help, [[--parameter-help]] to show all the
+accepted parameters, and the optional [[parameter_file]] to name the
+[[.ini]] file to be used).  The rest must be added by the user through
+the [[comand_line_options]] object.  Positional options can be
+declared through the [[pos]] protected object, as documented in the
+Boost library (see also the examples in the test section).
+
+<<ParametersCL methods>>=
+ParametersCL::ParametersCL()
+{
+  command_line_options.add_options()
+    ("help,h",po::bool_switch(),"help with usage")
+    ("parameter-help",po::bool_switch(),"show accepted parameters")
+    ("parameter_file",po::value<std::string>()->required(),"specifiy parameter (.ini) file")
+    ;
+}
+
+@ This method parses the command line and acts upon the help options,
+displaying the requested help and throwing an exception.  Also, if
+[[use_parameter_file]] is true and the [[control_file]] option is
+given, the named file is parsed.  With [[require_parameter_file]], an
+exception will be thrown if the parameter file is not given.  If this
+behavior is not wanted, the method can be overriden.  To check for the
+legality of the command line, in simple cases it will suffice to mark
+some parameters as [[required()]].  In more complex cases
+[[parse_command_line]] can be written that calls this one to parse the
+command line and then checks that all required command-line parameters
+have been read and are consistent.
+
+<<ParametersCL methods>>=
+void ParametersCL::parse_command_line(int argc,char *argv[],bool require_parameter_file,
+				      bool use_parameter_file)
+{
+  try {
+
+    command_line_options.add(parm_file_options);
+
+    po::store(po::command_line_parser(argc,argv).options(command_line_options).
+              positional(pos).run(),parameters_map);
+  
+    if (parameters_map["help"].as<bool>()) {
+      show_usage(basename(argv[0]));
+      throw Early_stop();
+    }
+    if (parameters_map["parameter-help"].as<bool>()) {
+      show_parameters(std::cerr);
+      throw Early_stop();
+    }
+    if (require_parameter_file || use_parameter_file && count("parameter_file")>0) {
+      parse(value("parameter_file").as<std::string>().c_str());
+    } else po::notify(parameters_map);
+
+  } catch (po::too_many_positional_options_error& e) {
+    throw Usage_error();
+  } catch (po::invalid_command_line_syntax& e) {
+    throw Usage_error();
+  } catch (po::invalid_command_line_style& e) {
+    throw Usage_error();
+  }    
+}
+
+@ \paragraph{Exceptions.}  In addition to [[Early_stop_required]],
+[[ParametersCL]] can throw [[Usage_error]].  
+
+<<Exceptions>>=
+class Usage_error : public glsim::Runtime_error {
+public:
+  explicit Usage_error() :
+  Runtime_error("usage error, try -h or --help",Source_context())
+  {}
+} ;
