@@ -314,6 +314,8 @@ Explain design. Explain also:
 \item GSL
 \end{enumerate}
 
+\part{Tutorial}
+
 \part{GLSIM base library}
 \input blib.tex
 % \part{Lattice simulations}
@@ -324,6 +326,9 @@ Explain design. Explain also:
 % \input analysis.tex
 % \part{Util}
 % \input util.tex
+
+\part{Test and example programs}
+
 
 @
 
