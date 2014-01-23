@@ -182,11 +182,11 @@ inline std::ostream& operator<<(std::ostream& o,const Source_context& c)
 
 @ \subsection{Exceptions}
 
-Here we define the exception hierarchy for \glsim.  We create our own
+Here we define the base exceptions for \glsim.  We create our own
 [[Logic_error]] and [[Runtime_error]] exceptions that inherit
 from the standard [[logic_error]] and [[runtime_error]] exceptions,
 adding a [[Source_context]] argument.  These classes add the source
-context description to the excpetion description argument (so that it
+context description to the exception description argument (so that it
 can be displayed through the [[what()]] method, plus another method
 that gives access to the [[Backtrace]] object stored in
 [[Source_context]].
@@ -215,6 +215,7 @@ namespace glsim {
       scontext(c)
     {}
     const Backtrace &backtrace() const {return scontext.backtrace();}
+    ~Logic_error() throw () {}
   } ;
 
   class Runtime_error : public std::runtime_error {
@@ -227,7 +228,7 @@ namespace glsim {
        scontext(c)
     {}
     const Backtrace &backtrace() const {return scontext.backtrace();}
-    ~Runtime_error() throw() {}
+    ~Runtime_error() throw () {}
   } ;
 
   <<exception hierarchy>>
@@ -246,6 +247,18 @@ public:
     {}
 } ;
 
+class Invalid_value : public Logic_error {
+private:
+  std::string msg;
+public:
+  explicit Invalid_value(const std::string& value,const std::string& par,
+			 const Source_context &c=Source_context() ) :
+    Logic_error("invalid value ("+value+") for parameter "+par,c)
+  {}
+  ~Invalid_value() throw () {}
+} ;
+
+
 @ \subsubsection{Exceptions deriving from [[Runtime_error]].}
 
 <<exception hierarchy>>=
@@ -263,6 +276,18 @@ public:
   explicit Clib_error(const Source_context &c=Source_context()) :
     Runtime_error(std::string("C library error: ") + strerror(errno), c)
     {}
+} ;
+
+@ The following is not actually an error, but a condition that
+requires early stop.  It should be caught but not reported (i.e.\
+[[what()]] not called).
+
+<<exception hierarchy>>=
+class Early_stop : public Runtime_error {
+public:
+  explicit Early_stop() :
+    Runtime_error("Early stop",Source_context())
+  {}
 } ;
 
 
