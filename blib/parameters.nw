@@ -105,7 +105,7 @@ should be done only once (in the simulation, from an [[Environent]]
 object, which see).  After that, [[Parameters::count]] and
 [[Parameters::value]] may be called to load parameters as desired.
 
-The backend for parameter reading is Boost::program_options.  Though
+The backend for parameter reading is Boost::program\_options.  Though
 we allow that the parameter definition be scattered all over, the
 definitios are actually collected in a single static object.  All the
 parameters must be defined by the time the parser is called.  As a
@@ -202,7 +202,7 @@ it must \emph{not} be global. %'
 
 This class is abstract because [[show_usage]] is a pure virtual.
 Decent command-line parsing requires definition of ``positional
-parameters'' (in Boost::program_options jargon), and a good usage
+parameters'' (in Boost::program\_options jargon), and a good usage
 message to match.  See the test section for an example.
 
 <<ParametersCL declaration>>=

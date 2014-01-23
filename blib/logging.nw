@@ -102,7 +102,7 @@ The constructor initializes the logstream at the highest level and
 outputing to [[std::cout]] (this should be changed by [[main()]]), and
 sets up the null stream.  The easiest way to do the last appears to be
 the trick suggested in StackOverflow
-(http://stackoverflow.com/questions/6240950/platform-independent-dev-null-in-c/6240980#6240980):
+(http://stackoverflow.com/questions/6240950/platform-independent-dev-null-in-c/6240980\#6240980):
 define a [[std::ostream]] initialized with a null pointer.  This
 creates a stream without a [[streambuf]] buffer, so that the stream is
 left in an error state and never outputs anything (I also believe that

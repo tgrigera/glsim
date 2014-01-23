@@ -33,12 +33,14 @@
 % For details see the file LICENSE in the home directory. If the file is
 % missing, contact the maintainers.
 
-@ \chapter{Basic library classes}
+@ \chapter{Basic auxiliary classes}
 
 This chapter describes some classes that implement basic functionality
-and help.
+and help.  The next chapters describe the classes that represent the
+main \glsim\ abstractions.
 
 \include{errors}
 \include{logging}
+
 \include{parameters}
 
