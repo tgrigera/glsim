@@ -37,7 +37,7 @@
 @ \section{Logging}
 
 Here we present a simple log stream class.  The idea is that [[main]]
-will initialize the a global [[glsim::logs]] object (of type
+will initialize a global [[glsim::logs]] object (of type
 [[glsim::logger]] with the desired verbosity level.  Applicaiton code
 then writes to the log stream indicating the loglevel of the message as [[
 
