@@ -49,20 +49,25 @@ AC_CHECK_LIB([gslcblas], [cblas_dsdot],,exit)
 AC_CHECK_LIB([gsl], [gsl_rng_alloc],,exit)
 
 # Boost::program_options
-#AC_CHECK_LIB([boost_program_options],main,,exit)
 AC_MSG_CHECKING([for working -lboost_program_options])
 SAVED_LIBS=$LIBS
 LIBS="-lboost_program_options $LIBS"
 AC_LINK_IFELSE(
   [AC_LANG_PROGRAM([#include <boost/program_options.hpp>],
     [boost::program_options::options_description opt])],
-  AC_MSG_RESULT(yes) ; [HAVE_LIBBOOST_PROGRAM_OPTIONS=1],
+  AC_MSG_RESULT(yes) ; AC_DEFINE([HAVE_LIBBOOST_PROGRAM_OPTIONS],[1],[Define if Boost::program_options available]) ,
   AC_MSG_RESULT(no) ; [LIBS=$SAVED_LIBS] ; [AC_MSG_FAILURE([cannot build without boost::program_options])])
-
-
-# Netcdf
-AC_CHECK_LIB([netcdf], nc_create,,exit)
-AC_CHECK_LIB([netcdf_c++], nc_create,,exit)
+# Boost::serialization
+AC_MSG_CHECKING([for working -lboost_serialization])
+SAVED_LIBS=$LIBS
+LIBS="-lboost_serialization $LIBS"
+AC_LINK_IFELSE(
+  [AC_LANG_PROGRAM([#include <boost/archive/binary_oarchive.hpp>
+                    #include <fstream>],
+    [ std::ofstream os("tst.dat",std::ios::binary);
+      boost::archive::binary_oarchive oa(os);])],
+  AC_MSG_RESULT(yes) ; AC_DEFINE([HAVE_LIBBOOST_SERIALIZATION],[1],[Define if Boost::serialization is available]),
+  AC_MSG_RESULT(no) ; [LIBS=$SAVED_LIBS] ; [AC_MSG_FAILURE([cannot build without boost::serialization])])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
