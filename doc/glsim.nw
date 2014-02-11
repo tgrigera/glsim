@@ -1,4 +1,4 @@
-% -*- mode: Noweb; noweb-code-mode: c-mode -*-
+% -*- mode: Noweb; noweb-code-mode: c++-mode -*-
 %
 % This file is part of glsim, a numerical simulation class library and
 % helper programs.

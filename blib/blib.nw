@@ -42,6 +42,7 @@ main \glsim\ abstractions.
 \include{errors}
 \include{logging}
 \include{random}
-
 \include{parameters}
+\include{environment}
+
 
