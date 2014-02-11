@@ -66,26 +66,47 @@ public:
 filepars::filepars() : 
   Parameters()
 {
-  parm_file_options.add_options()
+  parm_file_options().add_options()
     ("steps",po::value<int>(),"Number of steps")
     ("alpha",po::value<double>()->default_value(1.2),"Weird tuning parameter")
     ;
 }
 
-@ This is the second class, it also demonstrate the use of sections.
+@ This is the second class, it also demonstrate the use of sections
+and allows the user to choose scope.
 
 <<partest.cc>>=
 class morepars : public Parameters {
 public:
-  morepars();
+  morepars(const char* scope=Parameters::default_scope);
 } ;
 
-morepars::morepars() : Parameters()
+morepars::morepars(const char*scope) : Parameters(scope)
 {
-  parm_file_options.add_options()
+  parm_file_options().add_options()
     ("title",po::value<std::string>()->default_value("[no title]"),"Simulation title")
     ("special.steps",po::value<int>(),"Number of special steps")
     ("special.T",po::value<double>()->required(),"Special temperature")
+    ;
+}
+
+@ A third and final class, as we'll see below, we'll use it to place
+parameters in a different scope.  These will be complete independent
+from the above, and will need a second [[.ini]] file and separate
+parsing.
+
+<<partest.cc>>=
+class myscopepars : public Parameters {
+public:
+  myscopepars(const char* scope);
+} ;
+
+myscopepars::myscopepars(const char* scope) :
+  Parameters(scope)
+{
+  parm_file_options().add_options()
+    ("other.title",po::value<std::string>()->default_value("[other scope I hope]"),"other title")
+    ("other.beta",po::value<double>()->required(),"Another weird param")
     ;
 }
 
@@ -97,7 +118,7 @@ usage message.
 class CLIpar : public ParametersCL {
 public:
   CLIpar();
-  void show_usage(const char* prog);
+  void show_usage();
 } ;
 
 CLIpar::CLIpar() :
@@ -105,16 +126,16 @@ CLIpar::CLIpar() :
 {
   command_line_options.add_options()
     ("output_file,o",po::value<std::string>(),"Output file")
-    ("data_description_file",po::value<std::string>()->required(),"Some data we need")
+    ("extra_parameters_file",po::value<std::string>()->required(),"another param file")
     ("input_file",po::value<std::vector<std::string> >()->required(),"Input files")
     ;
-  pos.add("parameter_file",1).add("data_description_file",1)
+  pos.add("parameter_file",1).add("extra_parameters_file",1)
     .add("input_file",-1);
 }
 
-void CLIpar::show_usage(const char* prog)
+void CLIpar::show_usage()
 {
-  std::cerr << "\nusage: " << prog << " [options] parameter_file data_desc_file ifile [ifile ...]\n\n"
+  std::cerr << "\nusage: " << progname << " [options] parameter_file extra_parameters_file ifile [ifile ...]\n\n"
     << "Options:\n"
     << "  -o  file      Output file\n"
     << "\n\n"
@@ -127,19 +148,22 @@ parse all options through [[CLIpar.parse_command_line]].
 <<partest.cc>>=
 int main(int argc, char *argv[])
 {
-  try {
+  int rcode=0;
 
   filepars fpar;
   morepars mpar;
   CLIpar   cl;
 
+  try {
+
+
   cl.parse_command_line(argc,argv);
 
-
   std::cout << "Parameters read:\n"
-	    << "parameter_file = "
-	    << ( (cl.count("parameter_file"))>0 ? cl.value("parameter_file").as<std::string>() : "N/A" ) << '\n'
-	    << "output_file = " << cl.value("output_file").as<std::string>() << '\n'
+	    << "parameter_file = " << cl.value("parameter_file").as<std::string>() << '\n'
+	    << "extra_parameter_file = " << cl.value("extra_parameters_file").as<std::string>() << '\n'
+	    << "output_file = "
+	    << ( cl.count("output_file")>0 ? cl.value("output_file").as<std::string>() : "N/A" ) << '\n'
    	    << "steps = " << fpar.value("steps").as<int>() << '\n'
    	    << "alpha = " << fpar.value("alpha").as<double>() << '\n'
     	    << "title = " << mpar.value("title").as<std::string>() << '\n'
@@ -154,17 +178,49 @@ int main(int argc, char *argv[])
 	    std::ostream_iterator<std::string>(std::cout," "));
   std::cout << "\n\n";
 
+  // Let's load the second scope
+
+  morepars secpar("second");
+  myscopepars ssecpar("second");
+
+  // the following would generate an unkown parameter exception, showing
+  // that scopes are separate:
+  //
+  // secpar.parse(cl.value("parameter_file").as<std::string>().c_str());
+  secpar.parse(cl.value("extra_parameters_file").as<std::string>().c_str());
+
+
+  std::cout << "\n\nSecond parfile:\n"
+    	    << "title = " << secpar.value("title").as<std::string>() << '\n'
+	    << "special.steps = ";
+  if (secpar.count("special.steps") > 0)
+    std::cout << secpar.value("special.steps").as<int>();
+  else
+    std::cout << "undefined";
+  std::cout << '\n'
+	    << "special.T = " << secpar.value("special.T").as<double>() << '\n'
+	    << "other.title = " << ssecpar.value("other.title").as<std::string>() << '\n'
+	    << "other.beta = " << ssecpar.value("other.beta").as<double>() << '\n';
+
 
   } catch (glsim::Early_stop &e) {
+  } catch (glsim::Usage_error &e) {
+    cl.show_usage();
+    rcode=1;
   } catch (glsim::Runtime_error& e) {
     std::cerr << e.what() << '\n';
     std::cerr << e.backtrace();
+    rcode=1;
   } catch (glsim::Logic_error& e) {
     std::cerr << e.what() << '\n';
     std::cerr << e.backtrace();
+    rcode=1;
   } catch (std::exception &e) {
     std::cerr << "Exception: " << e.what() << '\n';
+    rcode=1;
   }
+
+  return rcode;
 }
 
 @ And this is a suitable parameter file.  Note however that you can
@@ -180,3 +236,11 @@ steps=1000  # Steps is a mandatory parameter
 steps = 22  # Different from the above
 T = 1
 
+<<partest2.ini>>=
+title="A completely different title"
+
+[special]
+T=21
+
+[other]
+beta=0.99

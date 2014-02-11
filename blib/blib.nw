@@ -1,4 +1,4 @@
-% -*- mode: Noweb; noweb-code-mode: c-mode -*-
+% -*- mode: Noweb; noweb-code-mode: c++-mode -*-
 %
 % blib.nw
 %
@@ -41,6 +41,7 @@ main \glsim\ abstractions.
 
 \include{errors}
 \include{logging}
+\include{random}
 
 \include{parameters}
 
