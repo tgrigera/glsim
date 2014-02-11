@@ -118,7 +118,7 @@ backtrace produced by a program like [[context]] above, and processes
 it with [[addr2line]] to translate the return addresses to source
 lines and function names.  It can be run like this:
 
-[[./progname | readbt.sh ./progname]]
+[[./progname 2>&1 | readbt.sh ./progname]]
 
 (note that you must give [[progname]] again as an argument to
 [[readbt.sh]].  Alternatively you can copy the programs output to a
@@ -210,7 +210,7 @@ namespace glsim {
     const Source_context scontext;
 
   public:
-    Logic_error(const std::string& desc,const Source_context &c) :
+    Logic_error(const std::string& desc,const Source_context &c=Source_context() ) :
       std::logic_error(c.description()+desc),
       scontext(c)
     {}
@@ -223,7 +223,7 @@ namespace glsim {
     const Source_context scontext;
 
   public:
-     Runtime_error(const std::string& desc,const Source_context &c) :
+    Runtime_error(const std::string& desc,const Source_context &c=Source_context() ) :
        std::runtime_error(c.description()+desc),
        scontext(c)
     {}
