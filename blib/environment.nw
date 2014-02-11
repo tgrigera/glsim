@@ -1,0 +1,615 @@
+% -*- mode: Noweb; noweb-code-mode: c++-mode -*-
+%
+% environment.nw -- base class for Environment hierarchy
+%
+% This file is part of glsim, a numerical simulation class library and
+% helper programs.
+%
+% glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014
+% by Tomas S. Grigera.
+% 
+% glsim is free software; you can redistribute it and/or modify it under
+% the terms of the GNU General Public License (GPL) as published by the
+% Free Software Foundation, with the additional requirements of
+% attribution and nonmisrepresentation. You can use either version 3, or
+% (at your option) any later version.
+% 
+% Additional terms under GNU GPL version 3 section 7:
+% 
+% When you redistribute this software, you are required to preserve its
+% author attributions. If you distribute verbatim copies, you must not
+% alter the AUTHORS file or attributions inserted in the source files,
+% and you must not change the software's name. If you distribute a
+% modified copy, then you must give clear notice that your work is
+% different from but based on glsim. You must distribute it under a
+% different name, but include a prominent notice specifying that "(your
+% package) is based on glsim version x.x", and provide a pointer to the
+% glsim distribution.
+%
+% glsim is distributed in the hope that it will be useful, but WITHOUT
+% ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+% or FITNESS FOR A PARTICULAR PURPOSE.
+% 
+% For details see the file LICENSE in the home directory. If the file is
+% missing, contact the maintainers.
+%'
+
+@ \chapter{Environment}
+
+The concept of environment is one of the major abstractions of the
+library, and in this chapter we give the classes that represent it.
+
+By our definition, there should be an Environment class to match any
+Simulation class.  The Environment class corresponding to a given
+Simulation must hold \emph{all} the data needed to perform the
+simulation.  The [[Parameters]] objects are meant to be used only to
+initialize the environment, and not for storing data.  The environment
+is endowed with method to allow saving to disk and restoring, while
+the [[Parameters]] classes have no such capability.  This is
+important, as the environment can evolve during the simulation (see
+the method [[step()]] below.)
+
+The parts of the environment essential for the simulation should be
+represented by an object of a type derived from [[class]]
+[[SimEnvironment]] below.  However, observables (which see), which
+will require a part of the environment to store their internal data,
+are designed to be used as ``plug-ins'', and thus it is inconvenient
+to require that all the environment be in a single object.  Rather we
+allow to define several objects, belonging to several hierarchies
+(descending from [[Environment]]), which will consolidate with each
+other through a mechanism similar to the singleton construction, so
+that saving and restoring can be done through a single object, as
+required by the simulation.  To allow for several independent
+environments to coexist (as is useful for instance in parallel
+simulations), environments will be consolidated only if they belong to
+the same \emph{scope,} labeled with a string and defined at the time
+the object is created.
+
+The intended use of the hierarchy is as folows: for every simulation
+to be created, there will be an object of a type derived from
+[[SimEnvironment]].  Each of these would be in a different scope.
+Plugin-like object such as observables will create private
+environments (derived from Environment), in one of the scopes used
+when creating the [[SimEnvironment]]s.  The simulation then will deal
+with the [[SimEnvironment]]s only, and will call methods to
+initialize, load, or save automatically all the consolidated
+environments in the scope (in effect working conceptually as a single
+environment).
+
+We explain below how to correctly derive from [[Environment]] and how
+the saving and restoring of environments can be controlled.
+
+<<environment.hh>>=
+#ifndef _ENVIRONMENT_HH_
+#define _ENVIRONMENT_HH_
+
+#include <string>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/version.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+
+#include <glsim/parameters.hh>
+
+namespace glsim {
+<<Environment declaration>>
+<<BaseEnvironment declaration>>
+<<SimEnvironment declaration>>
+<<Exceptions>>
+}
+<<out-of-namespace declarations>>
+
+#endif /* _ENVIRONMENT_HH_ */
+
+<<environment.cc>>=
+#include <fstream>
+
+#include <glsim/environment.hh>
+
+namespace glsim {
+<<Environment methods>>
+<<BaseEnvironment methods>>
+<<SimEnvironment methods>>
+}
+
+@ \section{Environment}
+
+All environment types must be derived from this class.  This
+implements the consolidation by scope name, and provides two functions
+to build filenames according to the \glsim\ convention.
+[[Environment]] is an abstract class because [[step()]] is a pure
+virtual.
+
+The environment constructor must accept a scope name (a string), but
+must provide a default name to allow default construction.  The scope
+name will be also passed to the accompanying [[Parameters]] object.
+
+The constructor must initialize the object in a suitable default, but
+\emph{must not} attempt to read any value from [[Parameters]]:
+parameter parsing will be done only after all environment objects are
+created.  Thus initialization from parameters must be provided with
+separate [[init()]] methods, discussed further below.  Initialization
+comes in two flavors: full initialization ([[init()]]), which rebuilds
+the environment state from scratch, reading from the parameters object
+(and thus file), and warm initialization, which means that the
+environment is already initialized (typically, has been read from an
+earlier simulation) but needs partial initialization to be prepared to
+start a new simulation.  What exactly this means will depend on a
+simulation, but for instance, in a Monte Carlo simulation warm
+initialization would \emph{not} initialize the random number
+generator, while it \emph{would} initialize the requested number of
+steps.
+
+The user of the library will derive at least one class from
+[[SimEnvironment]] below: that class has the full interface for
+loading and saving complete scopes, and will be typically manged from
+the simulation class or from the main program.  In principle, only one
+object of this class per scope will be created.  Additionally and
+optionally, one or more classes can be derived directly from
+[[Environment]] below: these will be the ``floating'' environments,
+which will belong to the scope of one [[SimEnvironment]] descendant,
+and saving, loading and initialization will be managed from there.
+For this reason the initialization methods are kept protected at this
+level.
+
+<<Environment declaration>>=
+class Environment {
+public:
+  Environment(const char* scope=Parameters::default_scope);
+  virtual void step()=0;
+  virtual ~Environment();
+  const char * const scope() const {return scope_name.c_str();}
+
+protected:
+  // typedef boost::archive::binary_oarchive oarchive_t;
+  // typedef boost::archive::binary_iarchive iarchive_t;
+  typedef boost::archive::text_oarchive oarchive_t;
+  typedef boost::archive::text_iarchive iarchive_t;
+
+  virtual void init();
+  virtual void warm_init();
+  void initial_filename(std::string& name,const std::string& prefix);
+  void final_filename(std::string& name,const std::string& prefix);
+
+  std::string scope_name;
+
+  std::string ini_infix,fin_infix,extension;
+
+private:
+  Parameters par;
+
+  typedef std::list<Environment*> scope_t;
+  typedef std::map<std::string,scope_t> scopemap_t;
+  static  scopemap_t scopes;
+  
+  friend class BaseEnvironment;
+  virtual void vserial(iarchive_t &ar);
+  virtual void vserial(oarchive_t &ar);
+  friend class boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &ar,const unsigned int version);
+} ;
+
+<<out-of-namespace declarations>>=
+BOOST_CLASS_VERSION(glsim::Environment,0);
+
+@ %@<<
+
+\subsection{Creation, initialization and destruction}
+
+The default constructor below adds the object to the list of
+environments belonging to the specified scope.  This is managed with a
+[[std::map]] object.  The destructor clears it from the list.
+
+<<Environment methods>>=
+Environment::scopemap_t  Environment::scopes;
+
+Environment::Environment(const char* scope) : 
+  scope_name(scope),
+  ini_infix("+++"),
+  fin_infix("xxx"),
+  extension(".dat"),
+  par(scope)
+{
+  scopes[scope_name].push_back(this);
+}
+
+Environment::~Environment()
+{
+  scopes[scope_name].remove(this);
+}
+
+@ Initialization: in this case there is no difference between full and
+warm, so [[warm_init()]] just calls [[init()]. Note however that we
+must be careful because [[init()]] and [[warm_init()]] are virtual.
+At this level, it is correct to implement [[warm_init()]] by calling
+[[init()]], but if we must avoid the virtual call mechanism (by
+qualifying it with the class name), because otherwise way we would in
+effect be invoking the [[init()]] of the \emph{derived} class, which
+is not what we want.
+
+Note also that [[ini_infix]] and [[fin_infix]] are expected from a
+parameters object to be declared elsewhere.  Normally this would be a
+[[StandardCL]] with the same scope, but you may provide otherwise.  If
+you do not wish to use the filename creation functions just ignore
+them, it is not an error if the infixes are not declared.
+
+<<Environment methods>>=
+void Environment::warm_init() {Environment::init();}
+
+void Environment::init()
+{
+  if (par.count("initial_infix")>0)
+      ini_infix=par.value("initial_infix").as<std::string>();
+  if (par.count("final_infix")>0)
+    fin_infix=par.value("final_infix").as<std::string>();
+}
+
+@ \subsection{Serialization}
+
+\label{sec:init-seri}
+
+Serialization is done with [[Boost::serialization]], thus a
+[[serialize()]] function is needed.  However, to implement loading and
+saving at the scope level, two other functions must be provided,
+although they are one-liners.  The reason is that when saving a scope
+the serialize functions will be called on references, which are not
+handled by Boost (virtual functions are needed for serializing objects
+from a base class reference, but the mechanism used by Boost employs
+template functions, which cannot be virtual).  The functions
+[[vserial]] below will simply call the correct serialize function, but
+the \emph{must} be overridden (though written identically), otherwise
+only the base part will be saved (see tutorial).
+
+<<Environment declaration>>=
+template <typename Archive>
+inline void Environment::serialize(Archive &ar,const unsigned int version)
+{
+  ar & scope_name;
+  ar & ini_infix;
+  ar & fin_infix;
+}
+
+inline void Environment::vserial(oarchive_t &ar) {ar << *this;}
+inline void Environment::vserial(iarchive_t &ar) {ar >> *this;}
+
+@ \subsection{Filename building}
+
+Finally, these methods can be used to build an initial and final
+filenames.  If the first argument contains the string [["[AUTO]"]],
+then it will be replaced with a name of the form
+prefix+infix+extension.  The extension is [[.dat]] by default, but you
+can change it initializing [[extension]] to something else in your
+derived [[init()]] method.
+
+<<Environment methods>>=
+void Environment::initial_filename(std::string& name,
+					const std::string& prefix)
+{
+  if (name!="[AUTO]") return;
+  name=prefix+ini_infix+extension;
+}
+
+void Environment::final_filename(std::string& name,
+				      const std::string& prefix)
+{
+  if (name!="[AUTO]") return;
+  name=prefix+fin_infix+extension;
+}
+
+
+@ \section{BaseEnvironment}
+
+This class is the base for simulation environments, i.e.\ environments
+that can do loading, saving and initialization at the scope level.  We
+thus store here the filenames for reading and writing, and implement
+the scope-wide methods.
+
+<<BaseEnvironment declaration>>=
+class BaseEnv_par : public Parameters {
+public:
+  BaseEnv_par(const char *scope=Parameters::default_scope);
+} ;
+
+class BaseEnvironment : public Environment {
+public:
+  BaseEnvironment(const char* scope=Parameters::default_scope);
+  void parse_scope(const char*filename);
+  void init_base();
+  void init_scope();
+  void warm_init_scope();
+  void load_scope();
+  void save_scope();
+
+  bool        run_completed;
+  std::string configuration_file_ini,configuration_file_fin;
+  std::string environment_file_ini,environment_file_fin;
+
+protected:
+  void init();
+  void warm_init();
+
+private:
+  BaseEnv_par par;
+  std::string configuration_file_prefix,environment_file_prefix;
+
+  void init_local();
+
+  friend class boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &ar,const unsigned int version);
+  virtual void vserial(iarchive_t &ar) {ar >> *this;}
+  virtual void vserial(oarchive_t &ar) {ar << *this;}
+} ;
+
+<<out-of-namespace declarations>>=
+BOOST_CLASS_VERSION(glsim::BaseEnvironment,0);
+
+@ \subsection{Construction and initialization}
+
+The constructor loads everything with suitable defaults.  For
+initialization, we need first to write the corresponding parameters
+constructor, which declares the parameters to Boost::program\_options.
+
+<<BaseEnvironment declaration>>=
+inline BaseEnvironment::BaseEnvironment(const char* scope) :
+  Environment(scope),
+  run_completed(false),
+  configuration_file_ini("[AUTO]"),
+  configuration_file_fin("[AUTO]"),
+  environment_file_ini("[AUTO]"),
+  environment_file_fin("[AUTO]"),
+  configuration_file_prefix("conf"),
+  environment_file_prefix("env"),
+  par(scope)
+{
+}
+
+<<BaseEnvironment methods>>=
+BaseEnv_par::BaseEnv_par(const char* scope) :
+  Parameters(scope)
+{
+  parm_file_options().add_options()
+    ("initial_configuration_file",po::value<std::string>()->default_value("[AUTO]"),
+     "file to read inital configuration, if [AUTO], generated from prefix and infix")
+    ("final_configuration_file",po::value<std::string>()->default_value("[AUTO]"),
+     "file to write final configuration, if [AUTO], generated from prefix and infix")
+    ("initial_environment_file",po::value<std::string>()->default_value("[AUTO]"),
+     "file to read inital environment, if [AUTO], generated from prefix and infix")
+    ("final_environment_file",po::value<std::string>()->default_value("[AUTO]"),
+     "file to write final environment, if [AUTO], generated from prefix and infix")
+    ("configuration_file_prefix",po::value<std::string>()->default_value("conf"),
+     "prefix to generate initial and final configuration filenames")
+    ("environment_file_prefix",po::value<std::string>()->default_value("env"),
+     "prefix to generate initial and final environment filenames")
+    ;
+}
+
+@ Now the (object-level) initialization functions.  The local
+initizializtion is public because partial initialization is useful
+when checking for a partially completed simulation.  Note that the
+requirement to call the base class init functions is fulfilled.
+
+<<BaseEnvironment methods>>=
+void BaseEnvironment::init_base()
+{
+  Environment::init();
+  init_local();
+}
+
+void BaseEnvironment::warm_init()
+{
+  Environment::warm_init();
+  init_local();
+}
+
+void BaseEnvironment::init()
+{
+  Environment::init();
+  init_local();
+}
+
+void BaseEnvironment::init_local()
+{
+  configuration_file_ini=par.value("initial_configuration_file").as<std::string>();
+  configuration_file_fin=par.value("final_configuration_file").as<std::string>();
+  environment_file_ini=par.value("initial_environment_file").as<std::string>();
+  environment_file_fin=par.value("final_environment_file").as<std::string>();
+  configuration_file_prefix=par.value("configuration_file_prefix").as<std::string>();
+  environment_file_prefix=par.value("environment_file_prefix").as<std::string>();
+
+  initial_filename(configuration_file_ini,configuration_file_prefix);
+  final_filename(configuration_file_fin,configuration_file_prefix);
+  initial_filename(environment_file_ini,environment_file_prefix);
+  final_filename(environment_file_fin,environment_file_prefix);
+}
+
+@ \subsection{Serialization}
+
+<<BaseEnvironment declaration>>=
+template <typename Archive>
+inline void BaseEnvironment::serialize(Archive &ar,const unsigned int version)
+{
+  ar & boost::serialization::base_object<Environment>(*this);
+  ar & run_completed;
+  ar & configuration_file_ini & configuration_file_fin;
+  ar & environment_file_ini & environment_file_fin;
+  ar & configuration_file_prefix & environment_file_prefix;
+}
+
+@ \subsection{Scope-level functions}
+
+Parsing the scope is actually implemented in [[Parameters]].
+Initialization of the scope simply involves going through the list of
+environments and calling the corresponding methods.
+
+<<BaseEnvironment methods>>=
+void BaseEnvironment::init_scope()
+{
+  scope_t& scope=scopes[scope_name];
+
+  for (Environment* e : scope) e->init();
+}
+
+void BaseEnvironment::warm_init_scope()
+{
+  scope_t& scope=scopes[scope_name];
+
+  for (Environment* e : scope) e->warm_init();
+}
+
+void BaseEnvironment::parse_scope(const char* file)
+{
+  par.parse(file);
+}
+
+@ Loading and saving call the serialization methods after opening a
+binary archive.  Note that serialization here is done with
+\emph{objects} (actually, references) and not pointers.  Thus the
+environments must be created \emph{before} loading.  This is usually
+the case in the simulation use, but you may want some environments to
+be created dynamically as they are read.  If you want this, create
+them in a scope that is not shared by any [[BaseEnvironment]] object,
+and do the serialization through pointers yourself.
+
+<<BaseEnvironment methods>>=
+void BaseEnvironment::save_scope()
+{
+  std::ofstream os(environment_file_fin,std::ios::binary);
+  oarchive_t oa(os);
+
+  scope_t& scope=scopes[scope_name];
+  scope_t::size_type nenv=scope.size();
+  oa << nenv;
+  for (Environment* e : scope)
+    e->vserial(oa);
+}
+
+void BaseEnvironment::load_scope()
+{
+  std::ifstream is(environment_file_ini,std::ios::binary);
+  iarchive_t iar(is);
+
+  scope_t& scope=scopes[scope_name];
+  scope_t::size_type nenv;
+  iar >> nenv;
+  if (nenv!=scope.size())
+    throw Environment_unreadable("Number of objects has changed (now "+
+				  std::to_string(scope.size()) + ", in file "+
+				  std::to_string(nenv)+")");
+  for (Environment* e : scope)
+    e->vserial(iar);
+}
+
+@ Exception classes for problems with environment i/o.
+
+<<Exceptions>>=
+class Environment_unreadable : public glsim::Runtime_error {
+public:
+  explicit Environment_unreadable(const std::string& msg,
+				  const Source_context &c=Source_context()) :
+      Runtime_error("ERROR: cannot read enviromnet: "+msg,c) {}
+  ~Environment_unreadable() throw() {}
+} ;
+
+
+@ \section{SimEnvironment}
+
+This is the environment that will be needed by the base Simulation
+object.  We shall store here a title, the number of steps completed
+([[total_steps]]) and [[log_step]] (every how many steps to call the
+logging function).
+
+We also provide [[step()]] (a noop function here) so that the class
+can be instantiated.
+
+% enviromnet corresponding to the base sim will store
+%  - steps and time completed
+%  - observables and obs_step (????)
+
+
+<<SimEnvironment declaration>>=
+class SimEnvironment_par : public Parameters {
+public:
+  SimEnvironment_par(const char* scope=Parameters::default_scope);
+} ;
+
+class SimEnvironment : public BaseEnvironment {
+public:
+  SimEnvironment(const char* scope=Parameters::default_scope);
+  virtual void step() {}
+  
+  std::string title;
+  int         log_step;
+
+protected:
+  void init();
+  void warm_init();
+
+private:
+  long        total_steps;
+
+  SimEnvironment_par par;
+
+private:
+  void common_init();
+
+  friend class boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &ar,const unsigned int version);
+  virtual void vserial(iarchive_t &ar) {ar >> *this;}
+  virtual void vserial(oarchive_t &ar) {ar << *this;}
+} ;
+
+<<out-of-namespace declarations>>=
+BOOST_CLASS_VERSION(glsim::SimEnvironment,0);
+
+<<SimEnvironment declaration>>=
+template <typename Archive>
+inline void SimEnvironment::serialize(Archive &ar,const unsigned int version)
+{
+  ar & boost::serialization::base_object<BaseEnvironment>(*this);
+  ar & title & log_step;
+  ar & total_steps;
+}
+
+inline SimEnvironment::SimEnvironment(const char* scope) :
+  BaseEnvironment(scope),
+  title("[not given]"),
+  log_step(0),
+  total_steps(0),
+  par(scope)
+{}
+
+<<SimEnvironment methods>>=
+SimEnvironment_par::SimEnvironment_par(const char* scope) :
+  Parameters(scope)
+{
+  parm_file_options().add_options()
+    ("title",po::value<std::string>()->default_value("[untitled]"),
+     "Simulation title")
+    ("log_step",po::value<int>()->default_value(0),
+     "log progress every ... steps")
+    ;
+}
+
+void SimEnvironment::warm_init()
+{
+  BaseEnvironment::warm_init();
+  common_init();
+}
+
+void SimEnvironment::init()
+{
+  BaseEnvironment::init();
+  common_init();
+  total_steps=0;
+}
+
+void SimEnvironment::common_init()
+{
+  title=par.value("title").as<std::string>();
+  log_step=par.value("log_step").as<int>();
+}

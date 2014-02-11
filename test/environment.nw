@@ -1,0 +1,286 @@
+% -*- mode: Noweb; noweb-code-mode: c++-mode -*-
+%
+% test/environment.nw -- Test of Environment class
+%
+% This file is part of glsim, a numerical simulation class library and
+% helper programs.
+%
+% glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014
+% by Tomas S. Grigera.
+% 
+% glsim is free software; you can redistribute it and/or modify it under
+% the terms of the GNU General Public License (GPL) as published by the
+% Free Software Foundation, with the additional requirements of
+% attribution and nonmisrepresentation. You can use either version 3, or
+% (at your option) any later version.
+% 
+% Additional terms under GNU GPL version 3 section 7:
+% 
+% When you redistribute this software, you are required to preserve its
+% author attributions. If you distribute verbatim copies, you must not
+% alter the AUTHORS file or attributions inserted in the source files,
+% and you must not change the software's name. If you distribute a
+% modified copy, then you must give clear notice that your work is
+% different from but based on glsim. You must distribute it under a
+% different name, but include a prominent notice specifying that "(your
+% package) is based on glsim version x.x", and provide a pointer to the
+% glsim distribution.
+%
+% glsim is distributed in the hope that it will be useful, but WITHOUT
+% ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+% or FITNESS FOR A PARTICULAR PURPOSE.
+% 
+% For details see the file LICENSE in the home directory. If the file is
+% missing, contact the maintainers.
+%
+%'
+
+@ \section{Environment}
+
+\subsection{Simple serialization}
+
+This code tests and demonstrates simple serialization of a
+[[SimEnvironment]] object.  This writes/reads only one object
+(explicitly mentioned in the [[operator<<]]), but will fail to write
+environments created independently and consolidated under the same
+scope.  See the next example for that case.
+
+<<envtest.cc>>=
+#include <fstream>
+#include <iomanip>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+
+#include <glsim/log.hh>
+#include <glsim/environment.hh>
+
+glsim::logger glsim::logs;
+
+void print_environment(glsim::SimEnvironment &env)
+{
+  std::cout
+    << "   config file ini/fin = " << env.configuration_file_ini << '/'
+    << env.configuration_file_fin << '\n'
+    << "   env file ini/fin    = " << env.environment_file_ini << '/'
+    << env.environment_file_fin << '\n'
+    << "   title               = " << env.title << '\n'
+    << "   log_step            = " << env.log_step << '\n'
+    ;
+}
+
+int main(int argc, char *argv[])
+{
+  glsim::StandardCL CL;
+
+  int rcode=1;
+
+  try {
+
+    glsim::SimEnvironment env;
+    CL.parse_command_line(argc,argv);
+
+    std::cout << "Default environment:\n";
+    print_environment(env);
+
+    env.init_scope();
+    std::cout << "\nFrom parfile:\n";
+    print_environment(env);
+
+    std::cout << "\n\nNow trying to serialize...";
+    {
+      std::ofstream os("env.dat",std::ios::binary);
+      //      boost::archive::binary_oarchive oa(os);
+      boost::archive::text_oarchive oa(os);
+      oa << env;
+    }
+    std::cout << "wrote archive\n";
+
+    std::cout <<"\nNow reading archive into new environment\n";
+    glsim::SimEnvironment env2;
+    {
+      std::ifstream is("env.dat",std::ios::binary);
+      //boost::archive::binary_iarchive ia(is);
+      boost::archive::text_iarchive ia(is);
+      ia >> env2;
+    }
+    print_environment(env2);
+
+    rcode=0;
+
+  } catch (glsim::Early_stop &e) {
+  } catch (glsim::Usage_error &e) {
+    CL.show_usage();
+  } catch (glsim::Runtime_error& e) {
+    std::cerr << e.what() << '\n';
+    std::cerr << e.backtrace();
+  } catch (glsim::Logic_error& e) {
+    std::cerr << e.what() << '\n';
+    std::cerr << e.backtrace();
+  } catch (std::exception &e) {
+    std::cerr << "Exception: " << e.what() << '\n';
+  }
+
+  return rcode;
+}
+
+<<envtest.ini>>=
+title="TEST title"
+log_step=100
+
+
+@ \subsection{Reading and writing a full scope}
+
+<<envscope_test.cc>>=
+#include <fstream>
+#include <iomanip>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+
+#include <glsim/log.hh>
+#include <glsim/environment.hh>
+
+glsim::logger glsim::logs;
+
+using namespace glsim;
+
+class floating_pars : public glsim::Parameters {
+public:
+  floating_pars(const char* scope=Parameters::default_scope);
+} ;
+
+floating_pars::floating_pars(const char* scope) :
+  Parameters(scope)
+{
+  parm_file_options().add_options()
+    ("float.alpha",po::value<double>())
+    ("float.beta",po::value<double>())
+    ;
+}
+
+class floating_environment : public Environment {
+public:
+  floating_environment(const char* scope=Parameters::default_scope);
+  void step() {}
+
+  double alpha,beta;
+
+protected:
+  virtual void init(),warm_init();
+
+private:
+  floating_pars par;
+
+  friend class boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &ar,const unsigned int version);
+  friend class BaseEnvironment;
+  virtual void vserial(iarchive_t &ar) {ar >> *this;}
+  virtual void vserial(oarchive_t &ar) {ar << *this;}
+} ;
+
+inline floating_environment::floating_environment(const char* scope) :
+  Environment(scope),
+  par(scope),
+  alpha(0), beta(0)
+{}
+
+template <typename Archive>
+void floating_environment::serialize(Archive &ar,const unsigned int version)
+{
+  ar & boost::serialization::base_object<Environment>(*this);
+  ar & alpha;
+  ar & beta;
+}
+
+void floating_environment::init()
+{
+  Environment::init();
+  floating_environment::warm_init();
+}
+
+void floating_environment::warm_init()
+{
+  Environment::warm_init();
+  alpha=par.value("float.alpha").as<double>();
+  beta=par.value("float.beta").as<double>();
+}
+
+
+void print_environment(glsim::SimEnvironment &env,floating_environment &fl)
+{
+  std::cout
+    << "   config file ini/fin = " << env.configuration_file_ini << '/'
+    << env.configuration_file_fin << '\n'
+    << "   env file ini/fin    = " << env.environment_file_ini << '/'
+    << env.environment_file_fin << '\n'
+    << "   title               = " << env.title << '\n'
+    << "   log_step            = " << env.log_step << '\n'
+    << "   [float]\n"
+    << "   alpha               = " << fl.alpha << '\n'
+    << "   beta                = " << fl.beta << '\n'
+    ;
+}
+
+int main(int argc, char *argv[])
+{
+  int rcode=1;
+
+  StandardCL CL("Myscope");
+  SimEnvironment main_env("Myscope");
+  floating_environment fl("Myscope");
+
+  try {
+
+  CL.parse_command_line(argc,argv);
+  main_env.init_scope();
+  fl.alpha*=1.2;
+  print_environment(main_env,fl);
+
+  main_env.save_scope();
+  main_env.log_step=10000;
+  fl.alpha=0;
+  fl.beta=0;
+
+  std::cout << "\nSaved and modified:\n";
+  print_environment(main_env,fl);
+
+  main_env.environment_file_ini=main_env.environment_file_fin;
+  main_env.load_scope();
+  std::cout << "\nReloaded:\n";
+  print_environment(main_env,fl);
+
+  std::cout << "\nNew envs:\n";
+  SimEnvironment newSE;
+  newSE.environment_file_ini=main_env.environment_file_fin;
+  floating_environment newfl;
+  newSE.load_scope();
+  print_environment(newSE,newfl);
+
+
+  } catch (glsim::Early_stop &e) {
+  } catch (glsim::Usage_error &e) {
+    CL.show_usage();
+  } catch (glsim::Runtime_error& e) {
+    std::cerr << e.what() << '\n';
+    std::cerr << e.backtrace();
+  } catch (glsim::Logic_error& e) {
+    std::cerr << e.what() << '\n';
+    std::cerr << e.backtrace();
+  } catch (std::exception &e) {
+    std::cerr << "Exception: " << e.what() << '\n';
+  }
+  return rcode;
+}
+
+<<envscope_test.ini>>=
+title="TEST title"
+log_step=100
+
+[float]
+alpha=121.2
+beta=400.04
+

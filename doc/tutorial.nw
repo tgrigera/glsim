@@ -1,4 +1,4 @@
-% -*- mode: Noweb; noweb-code-mode: c-mode -*-
+% -*- mode: Noweb; noweb-code-mode: c++-mode -*-
 %
 % tutorial.nw -- tutorial/example of use
 %
@@ -39,6 +39,70 @@
   - Parameters works differently, no need to build a big hierarchy
   - Environment can be built with hierarchy or piecewise
 
+%'
+
+Explain the basic objects.
+
+How to derive from each one.
+
+For environment:
+
+When deriving from this, must provide default constructor, init() and
+init_warm() to read from parameters.  init is protected, must call
+parent.
+
+also: must serialize accordign to boost.  will be called by simenv.
+
+SOMEWHERE explain step virtual and init must call parent, as well as serialize.
+
+also: note that versioning is of limited use due to the problem of
+plugins, which makes versioning of a file very difficult.  For now, I
+just add a check on the number of envs belonging to the scope.
+
+ - quien maneja los observables
+ - como hacer la inicializacion de la sim.  hay que leer la linea de
+ comando, pero eso necesita de Parameters.  Sin embargo, es necesario
+ que este creado Environment antes del parsing.  Lo que se podria
+ hacer es exigir que cada environment cree su propio parameters.
+ SIII.  explicitar bien quine va a llamar a parse().
+
+- load/save is absolutely needed.  they unconfortable part of this are
+pointers, and that is mostly what boost::serialize is supposed to help
+out with.  That's mostly tthe point of using boost, which supposedly
+handles well pointer loops etc.
+
+also: serialization here is not done with pointers but objects,
+i.e. each environment must be created *BEFORE* load.  If one wants
+dynamic environments, give them a scope that is not shared by any
+BaseEnv, and explicty serialize those pointers in the derived class.
+
+ex:
+
+class EE : public Environment {
+} ;
+
+class EEE : public SimEnvironment {
+
+EE *ufa = new EE;
+
+serialize() {
+ar & EE;
+}
+}
+
+
+Methods:
+ - step (virtual), to advance time
+ - how to advance time ??
+
+
+- note that environ and sons must support (un)marshalling, but the
+decision when to save or restore will be taken ONLY by
+Simulation::init ? or run? . NOT by main (I think).
+
+
+
+
 
 <<main.cc>>=
 #include <glsim/glsim.hh>
@@ -47,7 +111,16 @@ using namespace glsim;
 
 glsim::logger glsim::log(glsim::warn,std::cerr);
 
+ Parameters;
+
+Envirnoment xx {
+
+  // In the env constructor, create the corresponding Parameters object
+
+} ;
+
 int main(int argc,char *argv[])
 {
-  Parameters xx;
+
+  // create here a ParametersCL object
 }
