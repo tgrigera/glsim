@@ -4,7 +4,8 @@
 # This file is part of glsim, a numerical simulation class library and
 # helper programs.
 #
-# glsim is copyright (C) 2009, 2010, 2011, 2012, 2013 by Tomas S. Grigera.
+# glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014
+#                        by Tomas S. Grigera.
 # 
 #
 

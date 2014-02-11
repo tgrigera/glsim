@@ -32,6 +32,16 @@ $(logging_hdr) : logging.nw
 	@TANGLE@ -L -R$@ $? | @CPIF@ $@
 	ln -s -f $(PWD)/$@ $(top_builddir)/include/glsim
 
+EXTRA_DIST += random.nw
+random_hdr = random.hh
+random_src = random.cc
+BUILT_SOURCES += $(random_hdr) $(random_src)
+$(random_src) : random.nw
+	@TANGLE@ -L -R$@ $? | @CPIF@ $@
+$(random_hdr) : random.nw
+	@TANGLE@ -L -R$@ $? | @CPIF@ $@
+	ln -s -f $(PWD)/$@ $(top_builddir)/include/glsim
+
 EXTRA_DIST += parameters.nw
 parameters_hdr = parameters.hh
 parameters_src = parameters.cc
@@ -42,8 +52,40 @@ $(parameters_hdr) : parameters.nw
 	@TANGLE@ -L -R$@ $? | @CPIF@ $@
 	ln -s -f $(PWD)/$@ $(top_builddir)/include/glsim
 
+EXTRA_DIST += environment.nw
+environment_hdr = environment.hh
+environment_src = environment.cc
+BUILT_SOURCES += $(environment_hdr) $(environment_src)
+$(environment_src) : environment.nw
+	@TANGLE@ -L -R$@ $? | @CPIF@ $@
+$(environment_hdr) : environment.nw
+	@TANGLE@ -L -R$@ $? | @CPIF@ $@
+	ln -s -f $(PWD)/$@ $(top_builddir)/include/glsim
+
+EXTRA_DIST += configuration.nw
+configuration_hdr = configuration.hh
+configuration_src = configuration.cc
+BUILT_SOURCES += $(configuration_hdr) $(configuration_src)
+$(configuration_src) : configuration.nw
+	@TANGLE@ -L -R$@ $? | @CPIF@ $@
+$(configuration_hdr) : configuration.nw
+	@TANGLE@ -L -R$@ $? | @CPIF@ $@
+	ln -s -f $(PWD)/$@ $(top_builddir)/include/glsim
+
+EXTRA_DIST += simulation.nw
+simulation_hdr = simulation.hh
+simulation_src = simulation.cc
+BUILT_SOURCES += $(simulation_hdr) $(simulation_src)
+$(simulation_src) : simulation.nw
+	@TANGLE@ -L -R$@ $? | @CPIF@ $@
+$(simulation_hdr) : simulation.nw
+	@TANGLE@ -L -R$@ $? | @CPIF@ $@
+	ln -s -f $(PWD)/$@ $(top_builddir)/include/glsim
+
+
 EXTRA_DIST += $(BUILT_SOURCES)
 
-pkginclude_HEADERS = $(errors_hdr) $(logging_hdr) $(parameters_hdr)
+pkginclude_HEADERS = $(errors_hdr) $(logging_hdr) $(random_hdr) $(parameters_hdr) \
+		     $(environment_hdr) $(configuration_hdr) $(simulation_hdr)
 
 bin_SCRIPTS = readbt.sh
