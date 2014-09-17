@@ -1,0 +1,270 @@
+% -*- mode: Noweb; noweb-code-mode: c++-mode -*-
+%
+% simulation.nw -- base class for Simulation hierarchy
+%
+% This file is part of glsim, a numerical simulation class library and
+% helper programs.
+%
+% glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014
+% by Tomas S. Grigera.
+% 
+% glsim is free software; you can redistribute it and/or modify it under
+% the terms of the GNU General Public License (GPL) as published by the
+% Free Software Foundation, with the additional requirements of
+% attribution and nonmisrepresentation. You can use either version 3, or
+% (at your option) any later version.
+% 
+% Additional terms under GNU GPL version 3 section 7:
+% 
+% When you redistribute this software, you are required to preserve its
+% author attributions. If you distribute verbatim copies, you must not
+% alter the AUTHORS file or attributions inserted in the source files,
+% and you must not change the software's name. If you distribute a
+% modified copy, then you must give clear notice that your work is
+% different from but based on glsim. You must distribute it under a
+% different name, but include a prominent notice specifying that "(your
+% package) is based on glsim version x.x", and provide a pointer to the
+% glsim distribution.
+%
+% glsim is distributed in the hope that it will be useful, but WITHOUT
+% ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+% or FITNESS FOR A PARTICULAR PURPOSE.
+% 
+% For details see the file LICENSE in the home directory. If the file is
+% missing, contact the maintainers.
+%'
+
+@ \chapter{Simulation}
+
+- sim::run() executes the abstract simulation algorithm
+
+Before the simulation is created, Env and configuration must be ready
+to run.   Simulation wil \emph{not} initialize config or env.  To aid
+in this initialization we provide a [[prepare]] function below.
+
+<<simulation.hh>>=
+#ifndef _SIMULATION_HH_
+#define _SIMULATION_HH_
+
+#include <csignal>
+
+#include <glsim/log.hh>
+#include <glsim/environment.hh>
+#include <glsim/configuration.hh>
+
+namespace glsim {
+<<Simulation declaration>>
+<<prepare declaration>>
+}
+
+#endif /* _SIMULATION_HH_ */
+
+<<simulation.cc>>=
+#include <sys/stat.h>
+#include <unistd.h>
+
+#include <glsim/simulation.hh>
+
+namespace glsim {
+<<static data>>
+<<Simulation methods>>
+<<prepare definition>>
+}
+
+@ \section{The simulation class}
+
+<<Simulation declaration>>=
+class Simulation {
+public:
+  Simulation(glsim::SimEnvironment&,glsim::Configuration&);
+  virtual const char *name() const=0;
+  virtual long run();
+
+  virtual void step()=0;
+  virtual void log() {}
+  virtual void log_start_run() {}
+  virtual void log_stop_run() {}
+  virtual ~Simulation() {}
+
+protected:
+  SimEnvironment &env;
+  Configuration  &conf;
+
+private:
+  static void sigterm_handler(int);
+  void   set_up_signals();
+
+  static volatile sig_atomic_t termination_requested,signal_received;
+  static struct sigaction postpone_term;
+} ;
+
+@ \subsection{Construction and static data}
+
+<<static data>>=
+volatile sig_atomic_t Simulation::termination_requested,
+                             Simulation::signal_received;
+struct sigaction Simulation::postpone_term;
+
+<<Simulation methods>>=
+Simulation::Simulation(glsim::SimEnvironment& e,glsim::Configuration& c) :
+  env(e),conf(c)
+{}
+
+
+@ \subsection{The run method}
+
+<<Simulation methods>>=
+long Simulation::run()
+{
+  long actual_steps=0;
+
+  set_up_signals();
+  log_start_run();
+  while (!env.run_completed && termination_requested==0) {
+    env.step_number++;
+    env.pre_step();
+    step();
+    env.steps_in_run++;
+    env.post_step();
+    if (env.log_request) {log(); env.log_request=false;}
+    actual_steps++;
+  }
+  if (termination_requested>0)
+    std::cout << "\nWARNING: Terminating on signal " << signal_received <<
+      "\nCompleted " << env.steps_in_run << " (" << actual_steps << 
+      " in this invocation)\n\n";
+  log_stop_run();
+  return actual_steps;
+}
+
+@ \paragraph{Signals.}  We install a new handler for SIGTERM and
+SIGINT so that the sim can terminate gracefully at the end of the
+current step.  The handler is installed with the [[SA_RESTART]] flag
+so that library functions are resumed after the handler ends.  Signals
+are blocked until handler is installed.
+
+<<Simulation methods>>=
+void Simulation::set_up_signals()
+{
+  sigemptyset(&postpone_term.sa_mask);
+  sigaddset(&postpone_term.sa_mask,SIGTERM);
+  sigaddset(&postpone_term.sa_mask,SIGINT);
+  sigprocmask(SIG_BLOCK,&postpone_term.sa_mask,0);
+
+  postpone_term.sa_handler=Simulation::sigterm_handler;
+  postpone_term.sa_flags=SA_RESTART;
+  sigaction(SIGTERM,&postpone_term,0);
+  sigaction(SIGINT,&postpone_term,0);
+  sigprocmask(SIG_UNBLOCK,&postpone_term.sa_mask,0);
+}
+
+void Simulation::sigterm_handler(int signal)
+{
+  sigprocmask(SIG_BLOCK,&postpone_term.sa_mask,0);
+  termination_requested=1;
+  signal_received=signal;
+}
+
+@ \section{Preparing configuration and environment}
+
+Configuration and environment must be ready to run before the
+simulation is created.  The following function can be used to set them
+up.  They rely on [[StandardCL]] to find the appropriate files from
+the command line and through partial initialization of the
+environment.  Before the [[prepare()]] call, all the environments
+belonging to the scope of the environment passed to [[prepare()]] must
+have been constructed in their default state, or the call will fail
+(perhaps silently and miserably).
+
+<<prepare declaration>>=
+void prepare(int argc,char *argv[],BaseEnvironment &env,Configuration &conf);
+
+<<prepare definition>>=  
+enum existing_file_status {none, partial, exist};
+static existing_file_status check_existing_files(const char *envfile,
+						 const char *conffile,
+						 bool ignore_partial,
+						 const std::string& tempscope);
+
+void prepare(int argc,char *argv[],BaseEnvironment &env,Configuration &conf)
+{
+  StandardCL CL(env.scope());
+  try {
+    CL.parse_command_line(argc,argv);
+  } catch (const Usage_error& e) {
+    CL.show_usage();
+    throw;
+  }
+
+  env.init_base();
+  std::string tempscope=std::string(env.scope())+"tt";
+  existing_file_status old_files=
+    check_existing_files(env.environment_file_fin.c_str(),
+			 env.configuration_file_fin.c_str(),
+			 CL.value("ignore-partial-run").as<bool>(),
+			 tempscope);
+
+  if (old_files==partial) {
+    logs(info) << "\nResuming previous run\n";
+    env.environment_file_ini=env.environment_file_fin;
+    env.load();
+    conf.load(env.configuration_file_fin);
+    return;
+  }
+
+  if (old_files==exist && CL.value("force-overwrite").as<bool>()==false)
+    throw glsim::Runtime_error("Existing files would be overwritten, use -f to force");
+
+  if (CL.value("initial_infix").as<std::string>()=="+++") {
+    env.init();
+    CL.count("configuration-init")>0 ? 
+      conf.init(CL.value("configuration-init").as<std::string>()) :
+      conf.init();
+  } else {
+    env.load();
+    conf.load(env.configuration_file_ini);
+    env.warm_init();
+  }
+}
+
+static existing_file_status check_existing_files(const char *envfile,
+						 const char *conffile,
+						 bool ignore_partial,
+						 const std::string& tempscope)
+{
+  struct stat s;
+  bool env_exist,conf_exist,partial_run;
+
+  logs(info) << "Checking for existing files...";
+  if (stat(envfile,&s)!=0) {
+    logs(info) << " environment not found...";
+    env_exist=false;
+  } else {
+    logs(info) << " environment found...";
+    env_exist=true;
+  }
+  if (stat(conffile,&s)!=0) {
+    logs(info) << " configuration not found.\n";
+    conf_exist=false;
+  } else {
+    logs(info) << " configuration found.\n";
+    conf_exist=true;
+  }
+
+  if (!conf_exist && !env_exist) return none;
+  if (conf_exist && !env_exist) return exist;
+
+  if (ignore_partial) {
+    logs(info) << "\n--ignore-partial-run given, not checking for partially completed run\n";
+    return exist;
+  }
+
+  SimEnvironment newenv(tempscope.c_str());
+  newenv.environment_file_ini=envfile;
+  newenv.load();
+  if (newenv.run_completed) return exist;
+  else {
+    logs(info) << "Incomplete simulation found.\n";
+    return partial;
+  }
+}

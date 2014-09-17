@@ -58,7 +58,7 @@ $(random_hdr) : random.nw
 
 EXTRA_DIST += simulation.nw
 simulation_hdr = 
-simulation_src = simtest.cc
+simulation_src = simtest.cc simtest.ini
 BUILT_SOURCES += $(simulation_hdr) $(simulation_src)
 $(simulation_src) : simulation.nw
 	@TANGLE@ -L -R$@ $? | @CPIF@ $@
@@ -72,7 +72,7 @@ AM_CPPFLAGS = -I$(top_builddir)/include
 AM_CXXFLAGS=--std=c++11
 
 check_PROGRAMS = context cerrors-test logtest partest envtest	\
-	         envscope_test rantest
+	         envscope_test rantest simtest
 
 context_SOURCES = context.cc ../blib/scontext.cc
 cerrors_test_SOURCES = cerrors-test.c ../blib/cerrors.c
@@ -86,6 +86,6 @@ envscope_test_SOURCES = envscope_test.cc ../blib/environment.cc	\
                   ../blib/parameters.cc ../blib/log.cc	\
                   ../blib/scontext.cc
 rantest_SOURCES = rantest.cc ../blib/random.cc ../blib/scontext.cc
-#simtest_SOURCES = simtest.cc ../blib/simulation.cc		\
-#		  ../blib/environment.cc ../blib/parameters.cc	\
-#		  ../blib/log.cc ../blib/scontext.cc
+simtest_SOURCES = simtest.cc ../blib/simulation.cc		\
+		  ../blib/environment.cc ../blib/parameters.cc	\
+		  ../blib/log.cc ../blib/scontext.cc

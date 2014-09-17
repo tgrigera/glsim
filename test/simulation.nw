@@ -1,0 +1,131 @@
+% -*- mode: Noweb; noweb-code-mode: c++-mode -*-
+%
+% test/simulation.nw -- test of class Simulation
+%
+% This file is part of glsim, a numerical simulation class library and
+% helper programs.
+%
+% glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014
+% by Tomas S. Grigera.
+% 
+% glsim is free software; you can redistribute it and/or modify it under
+% the terms of the GNU General Public License (GPL) as published by the
+% Free Software Foundation, with the additional requirements of
+% attribution and nonmisrepresentation. You can use either version 3, or
+% (at your option) any later version.
+% 
+% Additional terms under GNU GPL version 3 section 7:
+% 
+% When you redistribute this software, you are required to preserve its
+% author attributions. If you distribute verbatim copies, you must not
+% alter the AUTHORS file or attributions inserted in the source files,
+% and you must not change the software's name. If you distribute a
+% modified copy, then you must give clear notice that your work is
+% different from but based on glsim. You must distribute it under a
+% different name, but include a prominent notice specifying that "(your
+% package) is based on glsim version x.x", and provide a pointer to the
+% glsim distribution.
+%
+% glsim is distributed in the hope that it will be useful, but WITHOUT
+% ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+% or FITNESS FOR A PARTICULAR PURPOSE.
+% 
+% For details see the file LICENSE in the home directory. If the file is
+% missing, contact the maintainers.
+%'
+
+@ \section{Simulation}
+
+This serves as a minimal example of how to derive from [[Simulation]].
+
+The simulation needs appropriate configuration and environment.
+
+We need first to derive from [[Configuration]], defining the pure
+virtuals [[init]], [[load]] and [[save]].
+
+<<configuration>>=
+#include <glsim/configuration.hh>
+
+class MyConf : public glsim::Configuration {
+public:
+  MyConf() {}
+
+  using glsim::Configuration::save;
+  using glsim::Configuration::load;
+  using glsim::Configuration::init;
+  void init(const char *f) {std::cerr << "Initialized config\n";}
+  void load(const char *f) {std::cerr << "Read from " << f <<'\n';}
+  void save(const char *f) {std::cerr << "Write to " << f <<'\n';}
+} ;
+
+@ Now the simulation needs a name and the step.
+
+<<simulation>>=
+#include <glsim/simulation.hh>
+
+class Simtest : public glsim::Simulation {
+public:
+  Simtest(glsim::SimEnvironment &e,glsim::Configuration &c) :
+    Simulation(e,c) {}
+  const char *name() const {return "Simulation test";}
+  void step() {}
+} ;
+
+@ Finally putting it all together.
+
+<<simtest.cc>>=
+#include <glsim/log.hh>
+
+glsim::logger glsim::logs;
+
+<<configuration>>
+<<simulation>>
+
+enum return_codes
+    {no_error=0,early_stop=1,usage_error=2,runtime_error=10,
+     logic_error=20,other_exception=255} ;
+
+int main(int argc,char *argv[])
+{
+  return_codes rcode=no_error;
+
+  try {
+
+    glsim::SimEnvironment env;
+    MyConf  conf;
+
+    glsim::prepare(argc,argv,env,conf);
+
+    // if there are other scopes, must init them separately
+
+    Simtest sim(env,conf);
+    sim.run();
+    env.save();
+    conf.save((const std::string&) env.configuration_file_fin);
+  
+  } catch (const glsim::Early_stop &e) {
+    rcode=early_stop;
+  } catch (const glsim::Usage_error &e) {
+    rcode=usage_error;
+  } catch (const glsim::Runtime_error& e) {
+    std::cerr << e.what() << '\n';
+    std::cerr << e.backtrace();
+    rcode=runtime_error;
+  } catch (const glsim::Logic_error& e) {
+    std::cerr << e.what() << '\n';
+    std::cerr << e.backtrace();
+    rcode=logic_error;
+  } catch (const std::exception &e) {
+    std::cerr << "Exception: " << e.what() << '\n';
+    rcode=other_exception;
+  }
+  return 0;
+}
+
+<<simtest.ini>>=
+title="Test simulation"
+configuration_file_prefix=conf
+environment_file_prefix=env
+steps=200
+log_step=100
+
