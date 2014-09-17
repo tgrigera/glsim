@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
     std::cout << "Default environment:\n";
     print_environment(env);
 
-    env.init_scope();
+    env.init();
     std::cout << "\nFrom parfile:\n";
     print_environment(env);
 
@@ -169,7 +169,7 @@ public:
   double alpha,beta;
 
 protected:
-  virtual void init(),warm_init();
+  virtual void init_local(),warm_init_local();
 
 private:
   floating_pars par;
@@ -196,15 +196,15 @@ void floating_environment::serialize(Archive &ar,const unsigned int version)
   ar & beta;
 }
 
-void floating_environment::init()
+void floating_environment::init_local()
 {
-  Environment::init();
-  floating_environment::warm_init();
+  Environment::init_local();
+  floating_environment::warm_init_local();
 }
 
-void floating_environment::warm_init()
+void floating_environment::warm_init_local()
 {
-  Environment::warm_init();
+  Environment::warm_init_local();
   alpha=par.value("float.alpha").as<double>();
   beta=par.value("float.beta").as<double>();
 }
@@ -236,11 +236,11 @@ int main(int argc, char *argv[])
   try {
 
   CL.parse_command_line(argc,argv);
-  main_env.init_scope();
+  main_env.init();
   fl.alpha*=1.2;
   print_environment(main_env,fl);
 
-  main_env.save_scope();
+  main_env.save();
   main_env.log_step=10000;
   fl.alpha=0;
   fl.beta=0;
@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
   print_environment(main_env,fl);
 
   main_env.environment_file_ini=main_env.environment_file_fin;
-  main_env.load_scope();
+  main_env.load();
   std::cout << "\nReloaded:\n";
   print_environment(main_env,fl);
 
@@ -257,20 +257,21 @@ int main(int argc, char *argv[])
   SimEnvironment newSE;
   newSE.environment_file_ini=main_env.environment_file_fin;
   floating_environment newfl;
-  newSE.load_scope();
+  newSE.load();
   print_environment(newSE,newfl);
 
+  rcode=0;
 
-  } catch (glsim::Early_stop &e) {
-  } catch (glsim::Usage_error &e) {
+  } catch (const glsim::Early_stop &e) {
+  } catch (const glsim::Usage_error &e) {
     CL.show_usage();
-  } catch (glsim::Runtime_error& e) {
+  } catch (const glsim::Runtime_error& e) {
     std::cerr << e.what() << '\n';
     std::cerr << e.backtrace();
-  } catch (glsim::Logic_error& e) {
+  } catch (const glsim::Logic_error& e) {
     std::cerr << e.what() << '\n';
     std::cerr << e.backtrace();
-  } catch (std::exception &e) {
+  } catch (const std::exception &e) {
     std::cerr << "Exception: " << e.what() << '\n';
   }
   return rcode;

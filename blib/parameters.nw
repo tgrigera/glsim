@@ -276,7 +276,7 @@ po::positional_options_description ParametersCL::pos;
 [[-h]] to request usage help, [[--parameter-help]] to show all the
 accepted parameters, and the optional [[parameter_file]] to name the
 [[.ini]] file to be used).  The rest must be added by the user through
-the [[comand_line_options]] object.  Positional options can be
+the [[command_line_options]] object.  Positional options can be
 declared through the [[pos]] protected object, as documented in the
 Boost library (see also the examples in the test section).
 
