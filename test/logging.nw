@@ -40,8 +40,6 @@
 <<logtest.cc>>=
 #include "glsim/log.hh"
 
-glsim::logger glsim::logs;
-
 void flog()
 {
   using glsim::logs;

@@ -5,7 +5,8 @@
 % This file is part of glsim, a numerical simulation class library and
 % helper programs.
 %
-% glsim is copyright (C) 2009, 2010, 2011, 2012, 2013 by Tomas S. Grigera.
+% glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014 by
+% Tomas S. Grigera.
 % 
 % glsim is free software; you can redistribute it and/or modify it under
 % the terms of the GNU General Public License (GPL) as published by the
@@ -43,13 +44,10 @@ then writes to the log stream indicating the loglevel of the message as [[
 
      logs(glsim::info) << "Information message\n";
 
-]]. To initialize the log stream, the main module must do two things
-(see example in chapter XXXXREF):
-\begin{enumerate}
-\item Define a global object [[glsim::logger glsim::logs]].
-\item Set the verbosity level and actual output stream with
-  [[glsim::logs.set_stream(stream,loglevel)]].
-\end{enumerate}
+     ]]. To initialize the log stream, the main module must (see
+example in chapter XXXXREF) set the verbosity level and actual
+output stream calling [[glsim::logs.set_stream(stream,loglevel)]].
+
 \textbf{NOT IMPLEMENTED} A second output stream can be set with
 [[set_additional_stream]] (same syntax), possibly with a different
 verbosity level.  This will result in some messages being copied to
@@ -81,7 +79,11 @@ private:
 
 <<logger inline methods>>
 
+#ifdef _LOGGING_CC_
+logger logs;
+#else
 extern logger logs;
+#endif
 
 } /* namespace */
 
@@ -128,6 +130,7 @@ add an aditional ``tee'' stream (TODO).
 
 <<log.cc>>=
 #include "glsim/exception.hh"
+#define _LOGGING_CC_
 #include "glsim/log.hh"
 
 namespace glsim{

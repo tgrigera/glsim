@@ -51,8 +51,6 @@ to be read from a parameter file or from the command-line.
 
 using namespace glsim;
 
-logger glsim::logs;
-
 @ We now declare parameters intended to be read from a [[.ini]] file.
 As shown, many independent [[Parameters]] objects can be declared, and
 all parameters will be consolidated and read from the same file.

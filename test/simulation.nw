@@ -76,8 +76,6 @@ public:
 <<simtest.cc>>=
 #include <glsim/log.hh>
 
-glsim::logger glsim::logs;
-
 <<configuration>>
 <<simulation>>
 

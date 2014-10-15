@@ -56,8 +56,6 @@ scope.  See the next example for that case.
 #include <glsim/log.hh>
 #include <glsim/environment.hh>
 
-glsim::logger glsim::logs;
-
 void print_environment(glsim::SimEnvironment &env)
 {
   std::cout
