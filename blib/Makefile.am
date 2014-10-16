@@ -4,7 +4,12 @@
 ## This file is part of glsim, a numerical simulation class library and
 ## helper programs.
 ##
-## glsim is copyright (C) 2009, 2010, 2011, 2012, 2013 by Tomas S. Grigera.
+## glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014
+## by Tomas S. Grigera.
+
+#
+# Build sources from noweb files
+#
 
 EXTRA_DIST = blib.nw
 
@@ -82,10 +87,34 @@ $(simulation_hdr) : simulation.nw
 	@TANGLE@ -L -R$@ $? | @CPIF@ $@
 	ln -s -f $(PWD)/$@ $(top_builddir)/include/glsim
 
+#
+# General compiler and linker options
+#
+
+AM_CPPFLAGS = -I$(top_builddir)/include
+AM_CXXFLAGS=--std=c++11
+
+#
+# Distribute built sources, install headers
+#
 
 EXTRA_DIST += $(BUILT_SOURCES)
 
 pkginclude_HEADERS = $(errors_hdr) $(logging_hdr) $(random_hdr) $(parameters_hdr) \
 		     $(environment_hdr) $(configuration_hdr) $(simulation_hdr)
 
+#
+# binaries
+#
+
 bin_SCRIPTS = readbt.sh
+
+#
+# library
+#
+
+lib_LTLIBRARIES = libglsim.la
+libglsim_la_LDFLAGS = -version-info @LIBGLSIM_VERSION@
+libglsim_la_SOURCES = scontext.cc cerrors.c log.cc random.cc		\
+                      parameters.cc environment.cc configuration.cc	\
+                      simulation.cc

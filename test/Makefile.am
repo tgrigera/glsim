@@ -6,8 +6,11 @@
 ##
 ## glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014
 ## by Tomas S. Grigera.
+##
 
-##idir = $(top_builddir)/offlattice/offlattice
+#
+# Build sources from noweb files
+#
 
 EXTRA_DIST = test.nw
 
@@ -65,27 +68,33 @@ $(simulation_src) : simulation.nw
 $(simulation_hdr) : simulation.nw
 	@TANGLE@ -L -R$@ $? | @CPIF@ $@
 
-
-EXTRA_DIST += $(BUILT_SOURCES)
+#
+# Compiler and linker options
+#
 
 AM_CPPFLAGS = -I$(top_builddir)/include
 AM_CXXFLAGS=--std=c++11
+LDADD = $(top_builddir)/blib/libglsim.la
+
+#
+# Distribute built sources
+#
+
+EXTRA_DIST += $(BUILT_SOURCES)
+
+#
+# program binaries (in make check)
+#
 
 check_PROGRAMS = context cerrors-test logtest partest envtest	\
 	         envscope_test rantest simtest
 
-context_SOURCES = context.cc ../blib/scontext.cc
-cerrors_test_SOURCES = cerrors-test.c ../blib/cerrors.c
-logtest_SOURCES = logtest.cc ../blib/log.cc
-partest_SOURCES = partest.cc ../blib/parameters.cc ../blib/log.cc	\
-	          ../blib/scontext.cc
-envtest_SOURCES = envtest.cc ../blib/environment.cc	\
-                  ../blib/parameters.cc ../blib/log.cc	\
-                  ../blib/scontext.cc
-envscope_test_SOURCES = envscope_test.cc ../blib/environment.cc	\
-                  ../blib/parameters.cc ../blib/log.cc	\
-                  ../blib/scontext.cc
-rantest_SOURCES = rantest.cc ../blib/random.cc ../blib/scontext.cc
-simtest_SOURCES = simtest.cc ../blib/simulation.cc		\
-		  ../blib/environment.cc ../blib/parameters.cc	\
-		  ../blib/log.cc ../blib/scontext.cc
+context_SOURCES = context.cc
+cerrors_test_SOURCES = cerrors-test.c 
+logtest_SOURCES = logtest.cc
+partest_SOURCES = partest.cc
+envtest_SOURCES = envtest.cc
+envscope_test_SOURCES = envscope_test.cc
+rantest_SOURCES = rantest.cc
+simtest_SOURCES = simtest.cc
+

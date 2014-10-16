@@ -12,12 +12,16 @@ AC_LANG(C++)
 AM_INIT_AUTOMAKE
 LT_INIT
 
+# Set version numbers for libtool libraries (note that they are
+# different from the package version, see
+# https://www.sourceware.org/autobook/autobook/autobook_91.html#SEC91
+AC_SUBST(LIBGLSIM_VERSION,[1:0:0])
+
 # Checks for programs.
 AC_PROG_MAKE_SET
 AC_PROG_CPP
 AC_PROG_CC
 AC_PROG_CXX
-LT_INIT
 AC_PROG_LN_S
 AC_PROG_INSTALL
 AC_CHECK_PROG(LATEX,latex,latex,[not found])
