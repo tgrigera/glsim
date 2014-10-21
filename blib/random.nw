@@ -39,12 +39,25 @@
 Random numbers are not needed in all simulations, but they are so
 frequently used that we provide an interface integrated into \glsim's
 conventions.  \glsim\ uses the GSL's generators.  These classes are
-just a C++ wrapper around the GSL interface, which is not hard since
+basically a C++ wrapper around the GSL interface, which is not hard since
 the GSL design is object-oriented.  We use a class to hold one of the
 available generators, and another set that represent random number
 distributions.  These provide the actual numbers to be used in the
 simulation, but rely on (pseudo)random numbers provided by
 [[random_number_generator]].
+
+The design of the classes allows to define a random distribution
+object (descended from [[distribution_base]]) without providing a
+generator.  This is allows the programmer to write a class or function
+that uses random numbers without initializing its own private
+generator (which in general is not desired as, among other things it
+would introduce the need for several seeds) or requiring to receive a
+reference or pointer to a generator as an argument.  In this way the
+user of the class still gets to decide which generator will be used,
+while keeping the interface simpler.  At present this is achieved with
+a simple singleton mechanism, thus precluding the simultaneous use of
+more than one generator.  A more flexible scope mechanism (similar to
+that of the Environment classes) is planned but not yet implemented.
 
 %'
 
@@ -53,6 +66,7 @@ simulation, but rely on (pseudo)random numbers provided by
 #define _RANDOM_HH_
 
 #include <fstream>
+#include <map>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 #include <boost/serialization/version.hpp>
@@ -61,8 +75,8 @@ simulation, but rely on (pseudo)random numbers provided by
 #include <glsim/exception.hh>
 
 namespace glsim {
-<<distribution_base declaration>>
 <<generator declaration>>
+<<distribution_base declaration>>
 <<distribution_base inline methods>>
 <<uniform_integer declaration>>
 <<uniform_real declaration>>
@@ -83,6 +97,7 @@ namespace glsim {
 
 namespace glsim {
 <<generator methods>>
+<<static data>>
 }
 
 @ \subsection{Random number generator}
@@ -99,7 +114,8 @@ defined below.
 <<generator declaration>>=
 class random_number_generator {
 public:
-  random_number_generator(const gsl_rng_type *type,const unsigned long seed=0);
+  random_number_generator(const gsl_rng_type *type,const unsigned long seed=0,
+			  const char* scope=default_scope);
   random_number_generator(random_number_generator&);
   random_number_generator& operator=(random_number_generator&);
   ~random_number_generator();
@@ -114,11 +130,20 @@ public:
   unsigned long max() const;
   unsigned long range() const;
 
-private:
-  gsl_rng *generator;
+  static const char* default_scope;
 
-  friend rdbase_ulong;
-  friend rdbase_double;
+private:
+  typedef std::map<std::string,gsl_rng*> genmap_t;
+  typedef std::map<std::string,random_number_generator*> glsim_genmap_t;
+  static genmap_t generator_map;
+  static glsim_genmap_t glsim_generator_map;
+
+  std::string      scope;
+  gsl_rng          *generator;
+
+  template<typename T> friend class random_distribution_base;
+  // friend rdbase_ulong;
+  // friend rdbase_double;
 
   template <typename Ar>
   void serialize(Ar& ar,const unsigned int version) const;
@@ -136,17 +161,29 @@ declaration needs to be in the global namespace.
 BOOST_CLASS_VERSION(glsim::random_number_generator,0)
 
 
-@ \paragraph{Implementation.}  Creation and destruction simply involve
-calling the corresponding [[gsl_rng]] functions.  Copying is
-complicated and not immediatly useful, not supported at this time.
+@ \paragraph{Implementation.}  Let us first define the static data.
+
+<<static data>>=
+const char* random_number_generator::default_scope="[default]";
+random_number_generator::genmap_t random_number_generator::generator_map;
+random_number_generator::glsim_genmap_t random_number_generator::glsim_generator_map;
+
+@ Creation and destruction simply involve locating the corresponding
+scope and eventually calling the corresponding [[gsl_rng]] functions.
+Copying is complicated and not immediatly useful, not supported at
+this time.
 
 <<generator methods>>=
 random_number_generator::
-random_number_generator(const gsl_rng_type *type,const unsigned long seed) :
-  generator(0)
+  random_number_generator(const gsl_rng_type *type,const unsigned long seed,
+			  const char* scope_) :
+  scope(scope_)
 {
-  generator=gsl_rng_alloc(type);
-  gsl_rng_set(generator,seed);
+  if (generator_map.count(scope)==0)
+    generator_map[scope]=gsl_rng_alloc(type);
+  else throw glsim::Logic_error("Only one generator per scope is allowed");
+  generator=generator_map[scope];
+  glsim_generator_map[scope]=this;
 }
 
 random_number_generator::random_number_generator(random_number_generator& r)
@@ -163,7 +200,8 @@ random_number_generator::operator=(random_number_generator&)
 random_number_generator::~random_number_generator()
 {
   gsl_rng_free(generator);
-  generator=0;
+  generator_map.erase(scope);
+  glsim_generator_map.erase(scope);
 }
 
 @ Setting the seed and saving/loading to file are immediate,
@@ -246,12 +284,10 @@ function here for convenience.
 
 %'
 <<distribution_base declaration>>=
-class random_number_generator;
-
 template <typename ranT>
 class random_distribution_base {
 public:
-  random_distribution_base(random_number_generator &rng);
+  random_distribution_base(const char* scope=random_number_generator::default_scope);
   virtual ranT operator()()=0;
 
   unsigned long raw();
@@ -261,7 +297,10 @@ public:
 
 protected:
   gsl_rng                 *generator;
-  random_number_generator *glsim_generator;
+  glsim::random_number_generator *glsim_generator;
+
+private:
+  std::string scope;
 } ;
 
 typedef random_distribution_base<double> rdbase_double;
@@ -269,10 +308,14 @@ typedef random_distribution_base<unsigned long> rdbase_ulong;
 
 <<distribution_base inline methods>>=
 template <typename ranT> inline random_distribution_base<ranT>::
-random_distribution_base(random_number_generator &r) :
-  generator(r.generator),
-  glsim_generator(&r)
-{}
+random_distribution_base(const char* scope_) :
+  scope(scope_)
+{
+  if (random_number_generator::generator_map.count(scope)==0)
+    throw glsim::Invalid_operation("Random number distribution called without random_number_generator defined in scope "+scope);
+  generator=random_number_generator::generator_map[scope];
+  glsim_generator=random_number_generator::glsim_generator_map[scope];
+}
 
 template <typename ranT>
 unsigned long random_distribution_base<ranT>::raw()
@@ -296,8 +339,6 @@ unsigned long random_distribution_base<ranT>::range() const {
 }
 
 
-
-
 @ \subsubsection{Uniform random numbers}
 
 These classes return real and integer random numbers with a uniform
@@ -307,25 +348,33 @@ integer ([[unsigned long]]) numbers from 0 to a given integer.
 <<uniform_integer declaration>>=
 class uniform_integer : public rdbase_ulong {
 public:
-  uniform_integer(random_number_generator&,unsigned long);
+  uniform_integer(unsigned long default_m,const char* scope=
+		  random_number_generator::default_scope);
   unsigned long operator()();
+  unsigned long operator()(unsigned long m);
 
 private:
-  unsigned long gsl_m;
+  unsigned long default_m;
 } ;
 
-@ The range will be $[0,\ldots,m-1]$, where $m$ is specified on construction:
+@ The range will be $[0,\ldots,m-1]$, where $m$ is specified as
+argument or taken from the default specified on construction.
 
 <<uniform_integer declaration>>=
 inline
-uniform_integer::uniform_integer(random_number_generator &rng,unsigned long m) :
-  random_distribution_base(rng),
-  gsl_m(m)
+uniform_integer::uniform_integer(unsigned long m,const char *scope) :
+  random_distribution_base(scope),
+  default_m(m)
 {}
 
 inline unsigned long uniform_integer::operator()()
 {
-  return gsl_rng_uniform_int(generator,gsl_m);
+  return gsl_rng_uniform_int(generator,default_m);
+}
+
+inline unsigned long uniform_integer::operator()(unsigned long m)
+{
+  return gsl_rng_uniform_int(generator,m);
 }
 
 @ And now a uniformly-distributed real numbers in the range
@@ -334,15 +383,15 @@ $[a,b)$ ($b$ excluded).
 <<uniform_real declaration>>=
 class uniform_real : public rdbase_double {
 public:
-  uniform_real(random_number_generator&,double a=0,double b=1);
+  uniform_real(double a=0,double b=1,const char *scope=random_number_generator::default_scope);
   double operator()();
 
 private:
   double a,range;
 } ;
 
-inline uniform_real::uniform_real(random_number_generator &r,double a,double b) :
-  random_distribution_base(r),
+inline uniform_real::uniform_real(double a,double b,const char* scope) :
+  random_distribution_base(scope),
   a(a)
 {
   range=b-a;
@@ -365,17 +414,17 @@ $$
 <<gaussian_distribution delcaration>>=
 class gaussian_distribution : public rdbase_double {
 public:
-  gaussian_distribution(random_number_generator &r,double sigma=1.,
-			double mean=0.);
+  gaussian_distribution(double sigma=1.,double mean=0.,
+			const char* scope=random_number_generator::default_scope);
   double operator()();
 
 private:
   double sigma,mean;
 } ;
 
-inline gaussian_distribution::gaussian_distribution(random_number_generator &r,
-						    double sigma_,double mean_) :
-  random_distribution_base(r),
+inline gaussian_distribution::gaussian_distribution(double sigma_,double mean_,
+						    const char *scope) :
+  random_distribution_base(scope),
   sigma(sigma_),
   mean(mean_)
 {}
@@ -395,7 +444,8 @@ $$
 <<exponential_declaration>>=
 class exponential_distribution : public random_distribution_base<double> {
 public:
-  exponential_distribution(random_number_generator &r,double mu);
+  exponential_distribution(double mu,
+			   const char *scope=random_number_generator::default_scope);
   double operator()();
 
 private:
@@ -403,9 +453,8 @@ private:
 } ;
 
 inline
-exponential_distribution::exponential_distribution(random_number_generator &r,
-						   double mu_) :
-  random_distribution_base(r),
+exponential_distribution::exponential_distribution(double mu_,const char *scope) :
+  random_distribution_base(scope),
   mu(mu_)
 {}
 
@@ -425,17 +474,18 @@ $$
 <<lognormal declaration>>=
 class lognormal_distribution : public rdbase_double {
 public:
-  lognormal_distribution(random_number_generator &r,double zeta,double sigma);
+  lognormal_distribution(double zeta,double sigma,
+			 const char *scope=random_number_generator::default_scope);
   double operator()();
 
 private:
   double zeta,sigma;
 } ;
 
-inline lognormal_distribution::lognormal_distribution(random_number_generator &r,
-						      double zeta_,
-						      double sigma_) :
-  random_distribution_base(r),
+inline lognormal_distribution::lognormal_distribution(double zeta_,
+						      double sigma_,
+						      const char *scope) :
+  random_distribution_base(scope),
   zeta(zeta_),
   sigma(sigma_)
 {}
@@ -455,16 +505,18 @@ $$
 <<levy declaration>>=
 class levy_distribution : public rdbase_double {
 public:
-  levy_distribution(random_number_generator &r,double C,double alpha);
+  levy_distribution(double C,double alpha,
+		    const char *scope=random_number_generator::default_scope);
   double operator()();
 
 private:
   double C,alpha;
 } ;
 
-inline levy_distribution::levy_distribution(random_number_generator &r,double C_,
-					    double alpha_):
-  random_distribution_base(r),
+inline levy_distribution::levy_distribution(double C_,
+					    double alpha_,
+					    const char *scope) :
+  random_distribution_base(scope),
   C(C_), alpha(alpha_)
 {}
 
@@ -482,8 +534,8 @@ direction in three dimensions).
 <<spherical3d declaration>>=
 class spherical3d_distribution : public rdbase_double {
 public:
-  spherical3d_distribution(random_number_generator &r) :
-  random_distribution_base(r) {}
+  spherical3d_distribution(const char *scope=random_number_generator::default_scope) :
+  random_distribution_base(scope) {}
 
   double operator()();
   void operator()(double *r);
@@ -499,6 +551,3 @@ inline void spherical3d_distribution::operator()(double *r)
 {
   gsl_ran_dir_3d(generator,r,r+1,r+2);
 }
-
-
-

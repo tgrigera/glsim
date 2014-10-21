@@ -56,7 +56,7 @@ void print_rn(glsim::random_distribution_base<ranT> &ran)
 int main(int argc, char *argv[])
 {
   glsim::random_number_generator RNG(gsl_rng_mt19937);
-  glsim::uniform_integer ran(RNG,10);
+  glsim::uniform_integer ran(10);
 
   std::cout << "Using seed1\n";
   RNG.set_seed(3838);
