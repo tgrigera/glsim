@@ -44,9 +44,9 @@
 
 #include <glsim/random.hh>
 
-template <typename ranT>
-void print_rn(glsim::random_distribution_base<ranT> &ran)
+void print_rn()
 {
+  glsim::uniform_integer ran(10);
   std::cout << "Sequence of 10 random numbers:\n     ";
   for (int i=0; i<10; i++)
     std::cout << ran() << ' ';
@@ -55,36 +55,77 @@ void print_rn(glsim::random_distribution_base<ranT> &ran)
 
 int main(int argc, char *argv[])
 {
-  glsim::random_number_generator RNG(gsl_rng_mt19937);
-  glsim::uniform_integer ran(10);
 
-  std::cout << "Using seed1\n";
-  RNG.set_seed(3838);
-  print_rn(ran);
-  std::cout << "\nUsing seed2\n";
-  RNG.set_seed(9981);
-  print_rn(ran);
-  std::cout << "\nUsing seed1 again\n";
-  RNG.set_seed(3838);
-  print_rn(ran);
+  { // with objects
 
-  std::cout << "\n\nNow testing serialization:\n";
-  std::cout << "First 10:\n";
-  print_rn(ran);
-  std::cout << "Save and second batch of 10:\n";
-  {
-    std::ofstream of("rng.bin",std::ios::binary);
-    boost::archive::binary_oarchive oa(of);
-    oa << RNG;
+    glsim::random_number_generator RNG(glsim::gsl_rng_mt19937);
+
+    std::cout << "Using seed1\n";
+    RNG.set_seed(3838);
+    print_rn();
+    std::cout << "\nUsing seed2\n";
+    RNG.set_seed(9981);
+    print_rn();
+    std::cout << "\nUsing seed1 again\n";
+    RNG.set_seed(3838);
+    print_rn();
+
+    std::cout << "\n\nNow testing serialization:\n";
+    std::cout << "First 10:\n";
+    print_rn();
+    std::cout << "Save and second batch of 10:\n";
+    {
+      std::ofstream of("rng.bin",std::ios::binary);
+      boost::archive::binary_oarchive oa(of);
+      oa << RNG;
+    }
+    print_rn();
+    
+    std::cout << "Read and batch:\n";
+    {
+      std::ifstream ifs("rng.bin",std::ios::binary);
+      boost::archive::binary_iarchive ia(ifs);
+      ia >> RNG;
+    }
+    print_rn();
   }
-  print_rn(ran);
-  std::cout << "Read and batch:\n";
+
+  std::cout << "\n\nNow repeating test with pointers\n";
   {
-    std::ifstream ifs("rng.bin",std::ios::binary);
-    boost::archive::binary_iarchive ia(ifs);
-    ia >> RNG;
+    glsim::random_number_generator *RNGP;
+
+    RNGP=new glsim::random_number_generator(glsim::gsl_rng_mt19937);
+    std::cout << "Using seed1\n";
+    RNGP->set_seed(3838);
+    print_rn();
+    std::cout << "\nUsing seed2\n";
+    RNGP->set_seed(9981);
+    print_rn();
+    std::cout << "\nUsing seed1 again\n";
+    RNGP->set_seed(3838);
+    print_rn();
+
+    std::cout << "\n\nNow testing serialization:\n";
+    std::cout << "First 10:\n";
+    print_rn();
+    std::cout << "Save and second batch of 10:\n";
+    {
+      std::ofstream of("rng.bin",std::ios::binary);
+      boost::archive::binary_oarchive oa(of);
+      oa << RNGP;
+    }
+    print_rn();
+    delete RNGP;
+    
+    std::cout << "Read and batch:\n";
+    {
+      std::ifstream ifs("rng.bin",std::ios::binary);
+      boost::archive::binary_iarchive ia(ifs);
+      ia >> RNGP;
+    }
+    print_rn();
+    delete RNGP;
   }
-  print_rn(ran);
 
   return 0;
 }

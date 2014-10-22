@@ -44,5 +44,5 @@ main \glsim\ abstractions.
 \include{random}
 \include{parameters}
 \include{environment}
-
-
+\include{configuration}
+\include{simulation}

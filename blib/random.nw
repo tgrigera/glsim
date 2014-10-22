@@ -54,10 +54,21 @@ generator (which in general is not desired as, among other things it
 would introduce the need for several seeds) or requiring to receive a
 reference or pointer to a generator as an argument.  In this way the
 user of the class still gets to decide which generator will be used,
-while keeping the interface simpler.  At present this is achieved with
-a simple singleton mechanism, thus precluding the simultaneous use of
-more than one generator.  A more flexible scope mechanism (similar to
-that of the Environment classes) is planned but not yet implemented.
+while keeping the interface simpler.  This is achieved with
+a scope mechanism as that of the Environment classes.  Only one
+generator per scope is allowed (though it is fine to define multiple
+distributions sharing scope and thus generator).
+
+Saving and loading are supported, but loading into an object
+initialized to use a GSL generator different than the one it is
+initialized to is not correctly handled.  This should be considered a
+bug.
+
+The scope cannot be changed through loading; it is not written
+but taken and left unchanged from creation time.  An exception is when
+deserializing through pointers, where the scope cannot be provided
+beforehand.  This maybe counterintuitive and can perhaps be considered
+a bug; but at present I see no cheap solution.
 
 %'
 
@@ -71,8 +82,20 @@ that of the Environment classes) is planned but not yet implemented.
 #include <gsl/gsl_randist.h>
 #include <boost/serialization/version.hpp>
 #include <boost/serialization/binary_object.hpp>
+#include <boost/serialization/base_object.hpp>
 
 #include <glsim/exception.hh>
+
+namespace glsim {
+  class random_number_generator;
+}
+
+namespace boost { namespace serialization {
+template<class Archive>
+inline void save_construct_data(Archive & ar,
+				const glsim::random_number_generator *rng,
+				const unsigned int file_version);
+}}
 
 namespace glsim {
 <<generator declaration>>
@@ -112,9 +135,11 @@ random numbers will be obtained through one of the distributions
 defined below.
 
 <<generator declaration>>=
+enum rng_type {gsl_rng_mt19937,gsl_rng_mrg} ;
+
 class random_number_generator {
 public:
-  random_number_generator(const gsl_rng_type *type,const unsigned long seed=0,
+  random_number_generator(rng_type type,const unsigned long seed=0,
 			  const char* scope=default_scope);
   random_number_generator(random_number_generator&);
   random_number_generator& operator=(random_number_generator&);
@@ -138,16 +163,19 @@ private:
   static genmap_t generator_map;
   static glsim_genmap_t glsim_generator_map;
 
-  std::string      scope;
-  gsl_rng          *generator;
+  std::string scope;
+  rng_type    type;
+  gsl_rng     *generator;
 
   template<typename T> friend class random_distribution_base;
-  // friend rdbase_ulong;
-  // friend rdbase_double;
 
+  friend class boost::serialization::access;
   template <typename Ar>
   void serialize(Ar& ar,const unsigned int version) const;
-  friend class boost::serialization::access;
+
+  template <class Archive>
+  friend void boost::serialization::save_construct_data(Archive &,const glsim::random_number_generator*,
+				  const unsigned int);
 }  ;
 
 @ The [[friend rdbase]] declarations above refer to
@@ -175,13 +203,25 @@ this time.
 
 <<generator methods>>=
 random_number_generator::
-  random_number_generator(const gsl_rng_type *type,const unsigned long seed,
+  random_number_generator(rng_type type_,const unsigned long seed,
 			  const char* scope_) :
-  scope(scope_)
+  scope(scope_),
+  type(type_)
 {
-  if (generator_map.count(scope)==0)
-    generator_map[scope]=gsl_rng_alloc(type);
-  else throw glsim::Logic_error("Only one generator per scope is allowed");
+  if (generator_map.count(scope)>0)
+  throw glsim::Logic_error("Only one generator per scope is allowed");
+
+  const gsl_rng_type *gt;
+  switch (type) {
+  case gsl_rng_mt19937:
+    gt=::gsl_rng_mt19937;
+    break;
+  case gsl_rng_mrg:
+    gt=::gsl_rng_mrg;
+    break;
+  }
+
+  generator_map[scope]=gsl_rng_alloc(gt);
   generator=generator_map[scope];
   glsim_generator_map[scope]=this;
 }
@@ -270,6 +310,34 @@ void random_number_generator::serialize(Ar& ar,const unsigned int ver) const
   boost::serialization::binary_object bo(gsl_rng_state(generator),gsl_rng_size(generator));
   ar & bo;
 }
+
+@ The following is to allow serialization through pointers.
+
+<<out-of-namespace-declarations>>=
+namespace boost { namespace serialization {
+
+template<class Archive>
+inline void save_construct_data(Archive & ar,
+				const glsim::random_number_generator *rng,
+				const unsigned int file_version)
+{
+  ar << rng->scope;
+  ar << rng->type;
+}
+
+template<class Archive>
+inline void load_construct_data(Archive & ar,
+				glsim::random_number_generator *rng,
+				const unsigned int file_version)
+{
+  std::string scope;
+  glsim::rng_type type;
+  ar >> scope;
+  ar >> type;
+  ::new(rng) glsim::random_number_generator(type,0,scope.c_str());
+}
+
+}} 
 
 @ \subsection{Random distributions}
 
