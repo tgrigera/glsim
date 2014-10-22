@@ -59,7 +59,7 @@ also: note that versioning is of limited use due to the problem of
 plugins, which makes versioning of a file very difficult.  For now, I
 just add a check on the number of envs belonging to the scope.
 
- - quien maneja los observables
+ - quien maneja los observables ---> seran un environment
  - como hacer la inicializacion de la sim.  hay que leer la linea de
  comando, pero eso necesita de Parameters.  Sin embargo, es necesario
  que este creado Environment antes del parsing.  Lo que se podria
@@ -93,16 +93,24 @@ ar & EE;
 
 Methods:
  - step (virtual), to advance time
- - how to advance time ??
+ - how to advance time ?? --> two base classes (step-based and
+ continuous time)
+ - 
 
 
 - note that environ and sons must support (un)marshalling, but the
-decision when to save or restore will be taken ONLY by
-Simulation::init ? or run? . NOT by main (I think).
+decision is taken by main (with help from prepare).
 
 
+NOTE that now env.step comes AFTER sim.step (rationale: env is
+initialized at ease beforehand, no need to run a step befor the
+simulation is started; also env must NOT depend on sim in any way,
+except perhaps for the observers but that is handled specially).
 
-
+Also note: the observer is allowed to ``time-stamp'', or otherwise ID
+the configuration when observing it (time requested from
+environment).  This is reasonable at least when saving, discuss
+whether it should be allowed to alter the config object itself.
 
 <<main.cc>>=
 #include <glsim/glsim.hh>
@@ -124,3 +132,14 @@ int main(int argc,char *argv[])
 
   // create here a ParametersCL object
 }
+
+
+@ To derive:
+
+ 1. Derive simulation.  Write the new step()
+ 2. Write logging.
+ 3. This tells you what environment you need
+ 4. In turn this defines parameters
+
+Environment vars to control steps etc:
+
