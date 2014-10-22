@@ -619,30 +619,176 @@ SimEnvironment_par::SimEnvironment_par(const char* scope) :
   Parameters(scope)
 {
   parm_file_options().add_options()
-    ("title",po::value<std::string>()->default_value("[untitled]"),
-     "Simulation title")
-    ("steps",po::value<long>()->default_value(10),"requested steps")
-    ("log_step",po::value<int>()->default_value(0),
-     "log progress every ... steps")
+    ("steps_requested",po::value<long>()->default_value(10),"requested steps")
+    ("log_interval",po::value<int>()->default_value(0),
+     "interval (in steps) to write logs")
     ;
 }
 
 void SimEnvironment::warm_init_local()
 {
   BaseEnvironment::warm_init_local();
-  steps_requested=par.value("steps").as<long>();
-  log_step=par.value("log_step").as<int>();
-  steps_in_run=0;
-  log_request=false;
+  steps_requested=par.value("steps_requested").as<long>();
+  log_interval=par.value("log_interval").as<int>();
 }
 
 void SimEnvironment::init_local()
 {
   BaseEnvironment::init_local();
-  title=par.value("title").as<std::string>();
-  steps_requested=par.value("steps").as<long>();
-  log_step=par.value("log_step").as<int>();
-  step_number=0;
-  steps_in_run=0;
-  log_request=false;
+  steps_requested=par.value("steps_requested").as<long>();
+  log_interval=par.value("log_interval").as<int>();
 }
+
+
+<<SimEnvironment declaration>>=
+inline void SimEnvironment::step_local()
+{
+  steps_completed++;
+  steps_in_run++;
+  steps_in_stage++;
+  log_requested = steps_in_run % log_interval==0;
+  run_completed = steps_in_run>=steps_requested;
+}
+
+
+@ \section{Continuous time environment}
+
+Environment for continuous time simulations (i.e. where the ``real''
+time, rather than the number of steps is the meaningful control
+parameter for the span of the run).
+
+<<ctenvironment.hh>>=
+#ifndef _CTENVIRONMENT_HH_
+#define _CTENVIRONMENT_HH_
+
+#include <string>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/version.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+
+#include <glsim/environment.hh>
+
+namespace glsim {
+<<CTSimEnvironment declaration>>
+}
+<<out-of-namespace ct-declarations>>
+
+#endif /* _CTENVIRONMENT_HH_ */
+
+<<ctenvironment.cc>>=
+#include <glsim/ctenvironment.hh>
+
+namespace glsim {
+<<CTSimEnvironment methods>>
+}
+
+@ \paragraph{Declaration.}
+
+<<CTSimEnvironment declaration>>=
+class CTSimEnvironment_par : public Parameters {
+public:
+  CTSimEnvironment_par(const char* scope=Parameters::default_scope);
+} ;
+
+class CTSimEnvironment : public SimEnvironment {
+public:
+  CTSimEnvironment(const char* scope=Parameters::default_scope);
+  
+  double  time_completed,time_in_run,time_requested;
+  double  log_interval;
+  int     max_steps;
+
+protected:
+  void step_local();
+  void init_local();
+  void warm_init_local();
+
+private:
+  CTSimEnvironment_par par;
+  double               last_log_request;
+
+  friend class boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &ar,const unsigned int version);
+  virtual void vserial(iarchive_t &ar) {ar >> *this;}
+  virtual void vserial(oarchive_t &ar) {ar << *this;}
+} ;
+
+<<out-of-namespace ct-declarations>>=
+BOOST_CLASS_VERSION(glsim::CTSimEnvironment,0);
+
+@ \paragraph{Construction and serialization.}
+
+<<CTSimEnvironment declaration>>=
+inline CTSimEnvironment::CTSimEnvironment(const char* scope) :
+  SimEnvironment(scope),
+  time_completed(0.), time_in_run(0.),
+  time_requested(0.),
+  log_interval(0.),
+  max_steps(0),
+  par(scope),
+  last_log_request(0.)
+{}
+
+template <typename Archive>
+inline void CTSimEnvironment::serialize(Archive &ar,const unsigned int version)
+{
+  ar & boost::serialization::base_object<SimEnvironment>(*this);
+  ar & time_completed & time_in_run;
+  ar & time_requested & log_interval;
+  ar & max_steps & last_log_request;
+}
+
+@ \pargraph{Parameter definition and environment initialization.}
+
+<<CTSimEnvironment methods>>=
+CTSimEnvironment_par::CTSimEnvironment_par(const char* scope) :
+  Parameters(scope)
+{
+  parm_file_options().add_options()
+    ("time_requested",po::value<double>(),"time to reach in this run")
+    ("max_steps",po::value<int>()->default_value(0),"if >0, maximum number of allowed simulation steps")
+    ("log_interval",po::value<double>()->default_value(0.),
+     "interval to log progress")
+    ;
+}
+
+void CTSimEnvironment::warm_init_local()
+{
+  SimEnvironment::warm_init_local();
+  time_requested=par.value("time_requested").as<double>();
+  log_interval=par.value("log_time_step").as<double>();
+  max_steps=par.value("max_steps").as<int>();
+
+  time_in_run=0.;
+}
+
+void CTSimEnvironment::init_local()
+{
+  SimEnvironment::init_local();
+  time_requested=par.value("time_requested").as<double>();
+  log_interval=par.value("log_time_step").as<double>();
+  max_steps=par.value("max_steps").as<int>();
+
+  time_completed=0.;
+  time_in_run=0.;
+  last_log_request=0.;
+}
+
+@ \paragraph{Step.}
+
+<<CTSimEnvironment declaration>>=
+inline void CTSimEnvironment::step_local()
+{
+  steps_completed++;
+  steps_in_run++;
+  steps_in_stage++;
+  log_requested = last_log_request + log_interval >= time_completed;
+  if (log_requested) last_log_request=time_completed;
+  run_completed = time_completed>=time_requested ||
+    (max_steps>0 && steps_in_run>=max_steps);
+}
+
