@@ -40,6 +40,8 @@
 #ifndef _CONFIGURATION_HH_
 #define _CONFIGURATION_HH_
 
+#include <string>
+
 namespace glsim {
 <<configuration declaration>>
 }
@@ -59,8 +61,10 @@ public:
   void load(const std::string& fname) {this->load(fname.c_str());}
   void save(const std::string& fname) {this->save(fname.c_str());}
 
-  virtual void init(const char* fname=0)=0;
+  void init() {init(0);}
+  virtual void init(const char* fname)=0;
   virtual void load(const char* fname)=0;
   virtual void save(const char* fname)=0;
+
 } ;
 
