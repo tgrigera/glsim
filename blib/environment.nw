@@ -167,8 +167,7 @@ protected:
   // typedef boost::archive::text_oarchive oarchive_t;
   // typedef boost::archive::text_iarchive iarchive_t;
 
-  virtual void pre_step_local() {}
-  virtual void post_step_local() {}
+  virtual void step_local()=0;
   virtual void init_local();
   virtual void warm_init_local();
 
@@ -306,7 +305,14 @@ void Environment::final_filename(std::string& name,
 This class is the base for simulation environments, i.e.\ environments
 that can do loading, saving and initialization at the scope level.  We
 thus store here the filenames for reading and writing, and implement
-the scope-wide methods.
+the scope-wide methods.  This class also stores information about the
+number of steps completed so far ([[steps_completed]],
+[[steps_in_run]], [[steps_in_stage]]) and the booleans to communicate
+with [[Simulation::run()]]: [[run_completed]] and [[log_requested]].
+These two however are not updated here, but in one of the specialized
+environments below.  The local step method ([[step_local]]) just
+counts the steps, the scope-wide [[step()]] calls [[step_local()]] for
+all members of the scope.
 
 <<BaseEnvironment declaration>>=
 class BaseEnv_par : public Parameters {
@@ -322,18 +328,20 @@ public:
   void init_base();
   void init();
   void warm_init();
-  void pre_step();
-  void post_step();
+  void step();
   void load();
   void save();
 
-  bool        run_completed;
   std::string configuration_file_ini,configuration_file_fin;
   std::string environment_file_ini,environment_file_fin;
+  std::string title;
+  long        steps_completed,steps_in_run,steps_in_stage;
+  bool        run_completed,log_requested;
 
 protected:
   void init_local();
   void warm_init_local();
+  void step_local();
 
 private:
   std::string configuration_file_prefix,environment_file_prefix;
@@ -360,11 +368,13 @@ constructor, which declares the parameters to Boost::program\_options.
 <<BaseEnvironment declaration>>=
 inline BaseEnvironment::BaseEnvironment(const char* scope) :
   Environment(scope),
-  run_completed(false),
   configuration_file_ini("[AUTO]"),
   configuration_file_fin("[AUTO]"),
   environment_file_ini("[AUTO]"),
   environment_file_fin("[AUTO]"),
+  title("[untitled]"),
+  steps_completed(0), steps_in_run(0),steps_in_stage(0),
+  run_completed(false), log_requested(false),
   configuration_file_prefix("conf"),
   environment_file_prefix("env"),
   par(scope)
@@ -388,6 +398,7 @@ BaseEnv_par::BaseEnv_par(const char* scope) :
      "prefix to generate initial and final configuration filenames")
     ("environment_file_prefix",po::value<std::string>()->default_value("env"),
      "prefix to generate initial and final environment filenames")
+    ("title",po::value<std::string>()->default_value("[untitled]"),"simulation title")
     ;
 }
 
@@ -412,6 +423,7 @@ void BaseEnvironment::init_local()
 {
   Environment::init_local();
   init_local_common();
+  steps_completed=0;
 }
 
 void BaseEnvironment::init_local_common()
@@ -423,11 +435,25 @@ void BaseEnvironment::init_local_common()
   environment_file_fin=par.value("final_environment_file").as<std::string>();
   configuration_file_prefix=par.value("configuration_file_prefix").as<std::string>();
   environment_file_prefix=par.value("environment_file_prefix").as<std::string>();
+  title=par.value("title").as<std::string>();
 
   initial_filename(configuration_file_ini,configuration_file_prefix);
   final_filename(configuration_file_fin,configuration_file_prefix);
   initial_filename(environment_file_ini,environment_file_prefix);
   final_filename(environment_file_fin,environment_file_prefix);
+
+  steps_in_stage=0;
+  steps_in_run=0;
+  run_completed=false;
+  log_requested=false;
+}
+
+<<BaseEnvironment declaration>>=
+inline void BaseEnvironment::step_local()
+{
+  steps_completed++;
+  steps_in_run++;
+  steps_in_stage++;
 }
 
 @ \subsection{Serialization}
@@ -437,10 +463,12 @@ template <typename Archive>
 inline void BaseEnvironment::serialize(Archive &ar,const unsigned int version)
 {
   ar & boost::serialization::base_object<Environment>(*this);
-  ar & run_completed;
   ar & configuration_file_ini & configuration_file_fin;
   ar & environment_file_ini & environment_file_fin;
   ar & configuration_file_prefix & environment_file_prefix;
+  ar & title;
+  ar & steps_completed & steps_in_run & steps_in_stage;
+  ar & run_completed & log_requested;
 }
 
 @ \subsection{Scope-level functions}
@@ -469,18 +497,11 @@ void BaseEnvironment::parse(const char* file)
   par.parse(file);
 }
 
-void BaseEnvironment::pre_step()
+void BaseEnvironment::step()
 {
   scope_t& scope=scopes[scope_name];
 
-  for (Environment* e : scope) e->pre_step_local();
-}
-
-void BaseEnvironment::post_step()
-{
-  scope_t& scope=scopes[scope_name];
-
-  for (Environment* e : scope) e->post_step_local();
+  for (Environment* e : scope) e->step_local();
 }
 
 @ Loading and saving call the serialization methods after opening a
@@ -535,13 +556,13 @@ public:
 
 @ \section{SimEnvironment}
 
-This is the environment that will be needed by the base Simulation
-object.  We shall store here a title, the number of steps completed
-([[total_steps]]) and [[log_step]] (every how many steps to call the
-logging function).
+This is the environment that will used by step-based simulations
+(i.e.\ those where the step is a meaningful time unit, and individual
+runs are controlled by specifying the number of wanted steps).  We
+store here the number of steps requested for this run
+([[steps_requested]]), and the desired log interval [[log_interval]].
+The [[step()]] method checks
 
-We also provide [[step()]] (a noop function here) so that the class
-can be instantiated.
 
 % enviromnet corresponding to the base sim will store
 %  - steps and time completed
@@ -558,19 +579,10 @@ class SimEnvironment : public BaseEnvironment {
 public:
   SimEnvironment(const char* scope=Parameters::default_scope);
   
-  std::string title;
-  long        steps_requested,log_step;
-  long        step_number,steps_in_run;
-  bool        log_request;
+  long        steps_requested,log_interval;
 
 protected:
-  virtual void pre_step_local() {}
-  virtual void post_step_local()
-   {
-     log_request = steps_in_run % log_step==0;
-     run_completed = steps_in_run>=steps_requested;
-   }
-
+  void step_local();
   void init_local();
   void warm_init_local();
 
@@ -592,18 +604,13 @@ template <typename Archive>
 inline void SimEnvironment::serialize(Archive &ar,const unsigned int version)
 {
   ar & boost::serialization::base_object<BaseEnvironment>(*this);
-  ar & title & steps_requested & log_step;
-  ar & step_number & steps_in_run & log_request;
+  ar & steps_requested & log_interval;
 }
 
 inline SimEnvironment::SimEnvironment(const char* scope) :
   BaseEnvironment(scope),
-  title("[not given]"),
   steps_requested(0),
-  log_step(0),
-  step_number(0),
-  steps_in_run(0),
-  log_request(false),
+  log_interval(0),
   par(scope)
 {}
 

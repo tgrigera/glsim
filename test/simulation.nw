@@ -117,7 +117,7 @@ int main(int argc,char *argv[])
     std::cerr << "Exception: " << e.what() << '\n';
     rcode=other_exception;
   }
-  return 0;
+  return rcode;
 }
 
 <<simtest.ini>>=

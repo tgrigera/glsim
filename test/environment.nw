@@ -64,7 +64,7 @@ void print_environment(glsim::SimEnvironment &env)
     << "   env file ini/fin    = " << env.environment_file_ini << '/'
     << env.environment_file_fin << '\n'
     << "   title               = " << env.title << '\n'
-    << "   log_step            = " << env.log_step << '\n'
+    << "   log_interval        = " << env.log_interval << '\n'
     ;
 }
 
@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 
 <<envtest.ini>>=
 title="TEST title"
-log_step=100
+log_interval=100
 
 
 @ \subsection{Reading and writing a full scope}
@@ -167,7 +167,8 @@ public:
   double alpha,beta;
 
 protected:
-  virtual void init_local(),warm_init_local();
+  void init_local(),warm_init_local();
+  void step_local() {}
 
 private:
   floating_pars par;
@@ -216,7 +217,7 @@ void print_environment(glsim::SimEnvironment &env,floating_environment &fl)
     << "   env file ini/fin    = " << env.environment_file_ini << '/'
     << env.environment_file_fin << '\n'
     << "   title               = " << env.title << '\n'
-    << "   log_step            = " << env.log_step << '\n'
+    << "   log_interval        = " << env.log_interval << '\n'
     << "   [float]\n"
     << "   alpha               = " << fl.alpha << '\n'
     << "   beta                = " << fl.beta << '\n'
@@ -239,7 +240,7 @@ int main(int argc, char *argv[])
   print_environment(main_env,fl);
 
   main_env.save();
-  main_env.log_step=10000;
+  main_env.log_interval=10000;
   fl.alpha=0;
   fl.beta=0;
 
@@ -277,7 +278,7 @@ int main(int argc, char *argv[])
 
 <<envscope_test.ini>>=
 title="TEST title"
-log_step=100
+log_interval=100
 
 [float]
 alpha=121.2

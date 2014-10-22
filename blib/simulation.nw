@@ -116,25 +116,22 @@ Simulation::Simulation(glsim::SimEnvironment& e,glsim::Configuration& c) :
 <<Simulation methods>>=
 long Simulation::run()
 {
-  long actual_steps=0;
-
   set_up_signals();
   log_start_run();
   while (!env.run_completed && termination_requested==0) {
-    env.step_number++;
-    env.pre_step();
     step();
-    env.steps_in_run++;
-    env.post_step();
-    if (env.log_request) {log(); env.log_request=false;}
-    actual_steps++;
+    env.step();
+    if (env.log_requested) {
+      log();
+      env.log_requested=false;
+    }
   }
   if (termination_requested>0)
-    std::cout << "\nWARNING: Terminating on signal " << signal_received <<
-      "\nCompleted " << env.steps_in_run << " (" << actual_steps << 
-      " in this invocation)\n\n";
+    logs(warn) << "\nWARNING: Terminating on signal " << signal_received <<
+      "\nCompleted " << env.steps_in_run << " in this run (" << env.steps_in_stage << 
+      " in this stage)\n\n";
   log_stop_run();
-  return actual_steps;
+  return env.steps_in_stage;
 }
 
 @ \paragraph{Signals.}  We install a new handler for SIGTERM and
