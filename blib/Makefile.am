@@ -58,8 +58,8 @@ $(parameters_hdr) : parameters.nw
 	ln -s -f $(PWD)/$@ $(top_builddir)/include/glsim
 
 EXTRA_DIST += environment.nw
-environment_hdr = environment.hh
-environment_src = environment.cc
+environment_hdr = environment.hh ctenvironment.hh
+environment_src = environment.cc ctenvironment.cc
 BUILT_SOURCES += $(environment_hdr) $(environment_src)
 $(environment_src) : environment.nw
 	@TANGLE@ -L -R$@ $? | @CPIF@ $@
@@ -87,6 +87,16 @@ $(simulation_hdr) : simulation.nw
 	@TANGLE@ -L -R$@ $? | @CPIF@ $@
 	ln -s -f $(PWD)/$@ $(top_builddir)/include/glsim
 
+EXTRA_DIST += stochastic.nw
+stochastic_hdr = stochastic.hh
+stochastic_src = stochastic.cc
+BUILT_SOURCES += $(stochastic_hdr) $(stochastic_src)
+$(stochastic_src) : stochastic.nw
+	@TANGLE@ -L -R$@ $? | @CPIF@ $@
+$(stochastic_hdr) : stochastic.nw
+	@TANGLE@ -L -R$@ $? | @CPIF@ $@
+	ln -s -f $(PWD)/$@ $(top_builddir)/include/glsim
+
 #
 # General compiler and linker options
 #
@@ -100,8 +110,10 @@ AM_CXXFLAGS=--std=c++11
 
 EXTRA_DIST += $(BUILT_SOURCES)
 
-pkginclude_HEADERS = $(errors_hdr) $(logging_hdr) $(random_hdr) $(parameters_hdr) \
-		     $(environment_hdr) $(configuration_hdr) $(simulation_hdr)
+pkginclude_HEADERS = $(errors_hdr) $(logging_hdr) $(random_hdr)	\
+		     $(parameters_hdr) $(environment_hdr)	\
+		     $(configuration_hdr) $(simulation_hdr)	\
+		     $(stochastic_hdr)
 
 #
 # binaries
@@ -116,5 +128,5 @@ bin_SCRIPTS = readbt.sh
 lib_LTLIBRARIES = libglsim.la
 libglsim_la_LDFLAGS = -version-info @LIBGLSIM_VERSION@
 libglsim_la_SOURCES = scontext.cc cerrors.c log.cc random.cc		\
-                      parameters.cc environment.cc configuration.cc	\
-                      simulation.cc
+                      parameters.cc environment.cc ctenvironment.cc	\
+                      configuration.cc simulation.cc stochastic.cc

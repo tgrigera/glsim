@@ -68,6 +68,15 @@ $(simulation_src) : simulation.nw
 $(simulation_hdr) : simulation.nw
 	@TANGLE@ -L -R$@ $? | @CPIF@ $@
 
+EXTRA_DIST += stochastic.nw
+stochastic_hdr = 
+stochastic_src = stochtest.cc stochtest.ini
+BUILT_SOURCES += $(stochastic_hdr) $(stochastic_src)
+$(stochastic_src) : stochastic.nw
+	@TANGLE@ -L -R$@ $? | @CPIF@ $@
+$(stochastic_hdr) : stochastic.nw
+	@TANGLE@ -L -R$@ $? | @CPIF@ $@
+
 #
 # Compiler and linker options
 #
@@ -87,7 +96,7 @@ EXTRA_DIST += $(BUILT_SOURCES)
 #
 
 check_PROGRAMS = context cerrors-test logtest partest envtest	\
-	         envscope_test rantest simtest
+	         envscope_test rantest simtest stochtest
 
 context_SOURCES = context.cc
 cerrors_test_SOURCES = cerrors-test.c 
@@ -97,4 +106,6 @@ envtest_SOURCES = envtest.cc
 envscope_test_SOURCES = envscope_test.cc
 rantest_SOURCES = rantest.cc
 simtest_SOURCES = simtest.cc
+stochtest_SOURCES = stochtest.cc
+
 

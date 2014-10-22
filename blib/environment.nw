@@ -167,7 +167,7 @@ protected:
   // typedef boost::archive::text_oarchive oarchive_t;
   // typedef boost::archive::text_iarchive iarchive_t;
 
-  virtual void step_local()=0;
+  virtual void step_local() {}
   virtual void init_local();
   virtual void warm_init_local();
 
