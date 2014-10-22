@@ -65,11 +65,13 @@ texfiles = glsim.tex $(blib_texfiles)
 
 deffiles = glsim.def $(blib_deffiles)
 
-blib_texfiles = blib.tex errors.tex logging.tex random.tex	\
-                parameters.tex environment.tex
+blib_texfiles = blib.tex errors.tex logging.tex random.tex		\
+                parameters.tex environment.tex configuration.tex	\
+                simulation.tex
 
-blib_deffiles = blib.def errors.def logging.def random.def	\
-                parameters.def environment.def
+blib_deffiles = blib.def errors.def logging.def random.def		\
+                parameters.def environment.def configuration.def	\
+                simulation.def
 
 $(texfiles): all.def
 
