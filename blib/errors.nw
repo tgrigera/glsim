@@ -271,6 +271,14 @@ public:
   {}
 } ;
 
+class Open_file_error : public Runtime_error {
+public:
+  explicit Open_file_error(const std::string& file,
+			   const Source_context &c=Source_context()) :
+    Runtime_error("Cannot open "+file+": "+strerror(errno) )
+  {}
+} ;
+
 class Clib_error : public Runtime_error {
 public:
   explicit Clib_error(const Source_context &c=Source_context()) :
