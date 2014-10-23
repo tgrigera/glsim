@@ -124,6 +124,6 @@ int main(int argc,char *argv[])
 title="Test simulation"
 configuration_file_prefix=conf
 environment_file_prefix=env
-steps=200
-log_step=100
+steps_requested=200
+log_interval=100
 

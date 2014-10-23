@@ -178,13 +178,14 @@ void prepare(int argc,char *argv[],BaseEnvironment &env,Configuration &conf);
 
 <<prepare definition>>=  
 enum existing_file_status {none, partial, exist};
-static existing_file_status check_existing_files(const char *envfile,
-						 const char *conffile,
-						 bool ignore_partial,
-						 const std::string& tempscope);
+
+static existing_file_status check_existing_files(BaseEnvironment &env,
+						 bool ignore_partial);
 
 void prepare(int argc,char *argv[],BaseEnvironment &env,Configuration &conf)
 {
+  // Read command line
+
   StandardCL CL(env.scope());
   try {
     CL.parse_command_line(argc,argv);
@@ -193,54 +194,59 @@ void prepare(int argc,char *argv[],BaseEnvironment &env,Configuration &conf)
     throw;
   }
 
-  env.init_base();
-  std::string tempscope=std::string(env.scope())+"tt";
-  existing_file_status old_files=
-    check_existing_files(env.environment_file_fin.c_str(),
-			 env.configuration_file_fin.c_str(),
-			 CL.value("ignore-partial-run").as<bool>(),
-			 tempscope);
+  // Check for existing files and partial run
 
+  env.init_base();
+  existing_file_status old_files=
+    check_existing_files(env,CL.value("ignore-partial-run").as<bool>());
+
+  // Partial exist; load and resume
   if (old_files==partial) {
     logs(info) << "\nResuming previous run\n";
-    env.environment_file_ini=env.environment_file_fin;
-    env.load();
-    conf.load(env.configuration_file_fin);
+    conf.load(env.configuration_file_fin);  // env is already loaded
     return;
   }
 
+  // Warn overwrite
   if (old_files==exist && CL.value("force-overwrite").as<bool>()==false)
     throw glsim::Runtime_error("Existing files would be overwritten, use -f to force");
 
+  // Almost ready to go
   if (CL.value("initial_infix").as<std::string>()=="+++") {
+    // This run starts from scratch; init everything
     env.init();
     CL.count("configuration-init")>0 ? 
       conf.init(CL.value("configuration-init").as<std::string>()) :
       conf.init();
   } else {
+    // This is a continuation run; read and warm_init env, read conf
     env.load();
-    conf.load(env.configuration_file_ini);
     env.warm_init();
+    conf.load(env.configuration_file_ini);
   }
 }
 
-static existing_file_status check_existing_files(const char *envfile,
-						 const char *conffile,
-						 bool ignore_partial,
-						 const std::string& tempscope)
+static existing_file_status check_existing_files(BaseEnvironment &env,
+						 bool ignore_partial)
+// static existing_file_status check_existing_files(const char *envfile,
+// 						 const char *conffile,
+// 						 bool ignore_partial,
+// 						 const std::string& tempscope)
 {
   struct stat s;
   bool env_exist,conf_exist,partial_run;
 
   logs(info) << "Checking for existing files...";
-  if (stat(envfile,&s)!=0) {
+  // if (stat(envfile,&s)!=0) {
+  if (stat(env.environment_file_fin.c_str(),&s)!=0) {
     logs(info) << " environment not found...";
     env_exist=false;
   } else {
     logs(info) << " environment found...";
     env_exist=true;
   }
-  if (stat(conffile,&s)!=0) {
+  //  if (stat(conffile,&s)!=0) {
+  if (stat(env.configuration_file_fin.c_str(),&s)!=0) {
     logs(info) << " configuration not found.\n";
     conf_exist=false;
   } else {
@@ -248,18 +254,22 @@ static existing_file_status check_existing_files(const char *envfile,
     conf_exist=true;
   }
 
-  if (!conf_exist && !env_exist) return none;
-  if (conf_exist && !env_exist) return exist;
+  if (!conf_exist && !env_exist) return none;   // Both missing
+  if (!conf_exist || !env_exist) return exist;  // One of them missing, cannot continue
 
   if (ignore_partial) {
     logs(info) << "\n--ignore-partial-run given, not checking for partially completed run\n";
     return exist;
   }
 
-  SimEnvironment newenv(tempscope.c_str());
-  newenv.environment_file_ini=envfile;
-  newenv.load();
-  if (newenv.run_completed) return exist;
+  // SimEnvironment newenv(tempscope.c_str());
+  // newenv.environment_file_ini=envfile;
+  // newenv.load();
+  std::string fname=env.environment_file_ini;
+  env.environment_file_ini=env.environment_file_fin;
+  env.load();
+  env.environment_file_ini=fname;
+  if (env.run_completed) return exist;
   else {
     logs(info) << "Incomplete simulation found.\n";
     return partial;
