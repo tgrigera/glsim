@@ -141,6 +141,7 @@ void StochasticEnvironment::init_local()
 
   seed=par.value("stochastic.seed").as<unsigned long>();
   
+  delete RNG;
   std::string rng_name=par.value("stochastic.random_number_generator").as<std::string>();
   if (rng_name=="gsl_rng_mt19937")
     RNG=new random_number_generator(gsl_rng_mt19937,seed,scope_name.c_str());
@@ -162,6 +163,6 @@ template <typename Archive>
 inline void StochasticEnvironment::load(Archive &ar,const unsigned int version)
 {
   ar >> ::boost::serialization::base_object<Environment>(*this);
-  if (RNG!=0) delete RNG;
+  delete RNG;
   ar >> seed >> RNG;
 }
