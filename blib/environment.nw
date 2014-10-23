@@ -91,6 +91,7 @@ the saving and restoring of environments can be controlled.
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 
+#include <glsim/log.hh>
 #include <glsim/parameters.hh>
 
 namespace glsim {
@@ -213,6 +214,10 @@ Environment::Environment(const char* scope) :
   extension(".dat"),
   par(scope)
 {
+#ifdef DEBUG
+  logs(debug) << "(DD) (Environment) Pushing to scope " << scope << " ("
+	      << this << ")\n";
+#endif
   scopes[scope_name].push_back(this);
 }
 
@@ -517,6 +522,8 @@ and do the serialization through pointers yourself.
 void BaseEnvironment::save()
 {
   std::ofstream os(environment_file_fin,std::ios::binary);
+  if (!os.is_open())
+    throw Open_file_error(environment_file_fin);
   oarchive_t oa(os);
 
   scope_t& scope=scopes[scope_name];
@@ -529,6 +536,8 @@ void BaseEnvironment::save()
 void BaseEnvironment::load()
 {
   std::ifstream is(environment_file_ini,std::ios::binary);
+  if (!is.is_open())
+    throw Open_file_error(environment_file_ini);
   iarchive_t iar(is);
 
   scope_t& scope=scopes[scope_name];
