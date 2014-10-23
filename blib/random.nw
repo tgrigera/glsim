@@ -416,7 +416,7 @@ integer ([[unsigned long]]) numbers from 0 to a given integer.
 <<uniform_integer declaration>>=
 class uniform_integer : public rdbase_ulong {
 public:
-  uniform_integer(unsigned long default_m,const char* scope=
+  uniform_integer(unsigned long default_m=10,const char* scope=
 		  random_number_generator::default_scope);
   unsigned long operator()();
   unsigned long operator()(unsigned long m);
