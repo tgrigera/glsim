@@ -40,7 +40,7 @@
 \subsection{Simple serialization}
 
 This code tests and demonstrates simple serialization of a
-[[SimEnvironment]] object.  This writes/reads only one object
+[[SBSimEnvironment]] object.  This writes/reads only one object
 (explicitly mentioned in the [[operator<<]]), but will fail to write
 environments created independently and consolidated under the same
 scope.  See the next example for that case.
@@ -56,7 +56,7 @@ scope.  See the next example for that case.
 #include <glsim/log.hh>
 #include <glsim/environment.hh>
 
-void print_environment(glsim::SimEnvironment &env)
+void print_environment(glsim::SBSimEnvironment &env)
 {
   std::cout
     << "   config file ini/fin = " << env.configuration_file_ini << '/'
@@ -64,7 +64,6 @@ void print_environment(glsim::SimEnvironment &env)
     << "   env file ini/fin    = " << env.environment_file_ini << '/'
     << env.environment_file_fin << '\n'
     << "   title               = " << env.title << '\n'
-    << "   log_interval        = " << env.log_interval << '\n'
     ;
 }
 
@@ -76,7 +75,7 @@ int main(int argc, char *argv[])
 
   try {
 
-    glsim::SimEnvironment env;
+    glsim::SBSimEnvironment env;
     CL.parse_command_line(argc,argv);
 
     std::cout << "Default environment:\n";
@@ -96,7 +95,7 @@ int main(int argc, char *argv[])
     std::cout << "wrote archive\n";
 
     std::cout <<"\nNow reading archive into new environment\n";
-    glsim::SimEnvironment env2;
+    glsim::SBSimEnvironment env2;
     {
       std::ifstream is("env.dat",std::ios::binary);
       //boost::archive::binary_iarchive ia(is);
@@ -209,7 +208,7 @@ void floating_environment::warm_init_local()
 }
 
 
-void print_environment(glsim::SimEnvironment &env,floating_environment &fl)
+void print_environment(glsim::SBSimEnvironment &env,floating_environment &fl)
 {
   std::cout
     << "   config file ini/fin = " << env.configuration_file_ini << '/'
@@ -229,7 +228,7 @@ int main(int argc, char *argv[])
   int rcode=1;
 
   StandardCL CL("Myscope");
-  SimEnvironment main_env("Myscope");
+  SBSimEnvironment main_env("Myscope");
   floating_environment fl("Myscope");
 
   try {
@@ -253,7 +252,7 @@ int main(int argc, char *argv[])
   print_environment(main_env,fl);
 
   std::cout << "\nNew envs:\n";
-  SimEnvironment newSE;
+  SBSimEnvironment newSE;
   newSE.environment_file_ini=main_env.environment_file_fin;
   floating_environment newfl;
   newSE.load();

@@ -63,10 +63,10 @@ public:
 <<simulation>>=
 #include <glsim/simulation.hh>
 
-class Simtest : public glsim::Simulation {
+class Simtest : public glsim::SBSimulation {
 public:
-  Simtest(glsim::SimEnvironment &e,glsim::Configuration &c) :
-    Simulation(e,c) {}
+  Simtest(glsim::SBSimEnvironment &e,glsim::Configuration &c) :
+    SBSimulation(e,c) {}
   const char *name() const {return "Simulation test";}
   void step() {}
 } ;
@@ -89,7 +89,7 @@ int main(int argc,char *argv[])
 
   try {
 
-    glsim::SimEnvironment env;
+    glsim::SBSimEnvironment env;
     MyConf  conf;
 
     glsim::prepare(argc,argv,env,conf);

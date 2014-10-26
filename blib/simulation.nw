@@ -55,6 +55,7 @@ in this initialization we provide a [[prepare]] function below.
 namespace glsim {
 <<Simulation declaration>>
 <<prepare declaration>>
+<<SBSimulation declaration>>
 }
 
 #endif /* _SIMULATION_HH_ */
@@ -69,6 +70,7 @@ namespace glsim {
 <<static data>>
 <<Simulation methods>>
 <<prepare definition>>
+<<SBSimulation methods>>
 }
 
 @ \section{The simulation class}
@@ -76,25 +78,27 @@ namespace glsim {
 <<Simulation declaration>>=
 class Simulation {
 public:
-  Simulation(glsim::SimEnvironment&,glsim::Configuration&);
+  Simulation(glsim::BaseEnvironment&,glsim::Configuration&);
   virtual const char *name() const=0;
-  virtual long run();
+  virtual long run()=0;
 
   virtual void step()=0;
-  virtual void log() {}
   virtual void log_start_run() {}
+  virtual void log() {}
   virtual void log_stop_run() {}
+  virtual void obs() {}
   virtual ~Simulation() {}
 
 protected:
-  SimEnvironment &env;
+  void   set_up_signals();
+
+  BaseEnvironment &env;
   Configuration  &conf;
+  static volatile sig_atomic_t termination_requested,signal_received;
 
 private:
   static void sigterm_handler(int);
-  void   set_up_signals();
 
-  static volatile sig_atomic_t termination_requested,signal_received;
   static struct sigaction postpone_term;
 } ;
 
@@ -105,34 +109,11 @@ volatile sig_atomic_t Simulation::termination_requested,
                              Simulation::signal_received;
 struct sigaction Simulation::postpone_term;
 
-<<Simulation methods>>=
-Simulation::Simulation(glsim::SimEnvironment& e,glsim::Configuration& c) :
+<<Simulation declaration>>=
+inline Simulation::Simulation(glsim::BaseEnvironment& e,glsim::Configuration& c) :
   env(e),conf(c)
 {}
 
-
-@ \subsection{The run method}
-
-<<Simulation methods>>=
-long Simulation::run()
-{
-  set_up_signals();
-  log_start_run();
-  while (!env.run_completed && termination_requested==0) {
-    step();
-    env.step();
-    if (env.log_requested) {
-      log();
-      env.log_requested=false;
-    }
-  }
-  if (termination_requested>0)
-    logs(warn) << "\nWARNING: Terminating on signal " << signal_received <<
-      "\nCompleted " << env.steps_in_run << " in this run (" << env.steps_in_stage << 
-      " in this stage)\n\n";
-  log_stop_run();
-  return env.steps_in_stage;
-}
 
 @ \paragraph{Signals.}  We install a new handler for SIGTERM and
 SIGINT so that the sim can terminate gracefully at the end of the
@@ -228,10 +209,6 @@ void prepare(int argc,char *argv[],BaseEnvironment &env,Configuration &conf)
 
 static existing_file_status check_existing_files(BaseEnvironment &env,
 						 bool ignore_partial)
-// static existing_file_status check_existing_files(const char *envfile,
-// 						 const char *conffile,
-// 						 bool ignore_partial,
-// 						 const std::string& tempscope)
 {
   struct stat s;
   bool env_exist,conf_exist,partial_run;
@@ -262,9 +239,6 @@ static existing_file_status check_existing_files(BaseEnvironment &env,
     return exist;
   }
 
-  // SimEnvironment newenv(tempscope.c_str());
-  // newenv.environment_file_ini=envfile;
-  // newenv.load();
   std::string fname=env.environment_file_ini;
   env.environment_file_ini=env.environment_file_fin;
   env.load();
@@ -274,4 +248,49 @@ static existing_file_status check_existing_files(BaseEnvironment &env,
     logs(info) << "Incomplete simulation found.\n";
     return partial;
   }
+}
+
+@ \section{Step based simulation}
+
+This class implements the [[run()]] method for simulations where a
+step is a meaningful control and/or analysis unit.
+
+<<SBSimulation declaration>>=
+class SBSimulation : public Simulation
+{
+public:
+  SBSimulation(SBSimEnvironment& e,Configuration& c);
+  long run();
+
+private:
+  SBSimEnvironment& env;
+};
+
+inline SBSimulation::SBSimulation(SBSimEnvironment& e,Configuration& c) :
+  Simulation(e,c),
+  env(e)
+{}
+
+<<SBSimulation methods>>=
+long SBSimulation::run()
+{
+  set_up_signals();
+  log_start_run();
+  while (!env.run_completed && termination_requested==0) {
+    step();
+    env.steps_completed++;
+    env.steps_in_run++;
+    env.steps_in_stage++;
+    env.step();
+    if (env.steps_completed % env.log_interval==0) log();
+    if (env.obs_interval>0 &&
+	env.steps_completed % env.obs_interval==0) obs();
+    env.run_completed = env.steps_in_run>=env.steps_requested;
+  }
+  if (termination_requested>0)
+    logs(warn) << "\nWARNING: Terminating on signal " << signal_received <<
+      "\nCompleted " << env.steps_in_run << " in this run (" << env.steps_in_stage << 
+      " in this stage)\n\n";
+  log_stop_run();
+  return env.steps_in_stage;
 }

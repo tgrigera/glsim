@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
   try {
 
     { glsim::StochasticEnvironment senv;
-      glsim::SimEnvironment env;
+      glsim::SBSimEnvironment env;
 
       CL.parse_command_line(argc,argv);
 
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 
     std::cout <<"\nNow reading archive into new environment\n";
     glsim::StochasticEnvironment senv;
-    glsim::SimEnvironment env2;
+    glsim::SBSimEnvironment env2;
     env2.init();
     env2.environment_file_ini=env2.environment_file_fin;
     env2.load();

@@ -97,7 +97,7 @@ the saving and restoring of environments can be controlled.
 namespace glsim {
 <<Environment declaration>>
 <<BaseEnvironment declaration>>
-<<SimEnvironment declaration>>
+<<SBSimEnvironment declaration>>
 <<Exceptions>>
 }
 <<out-of-namespace declarations>>
@@ -112,7 +112,7 @@ namespace glsim {
 namespace glsim {
 <<Environment methods>>
 <<BaseEnvironment methods>>
-<<SimEnvironment methods>>
+<<SBSimEnvironment methods>>
 }
 
 @ \section{Environment}
@@ -144,15 +144,15 @@ generator, while it \emph{would} initialize the requested number of
 steps.
 
 The user of the library will derive at least one class from
-[[SimEnvironment]] below: that class has the full interface for
+[[BaseEnvironment]] below: that class has the full interface for
 loading and saving complete scopes, and will be typically manged from
 the simulation class or from the main program.  In principle, only one
 object of this class per scope will be created.  Additionally and
 optionally, one or more classes can be derived directly from
-[[Environment]] below: these will be the ``floating'' environments,
-which will belong to the scope of one [[SimEnvironment]] descendant,
-and saving, loading and initialization will be managed from there.
-For this reason the initialization methods are kept protected at this
+[[Environment]]: these will be the ``floating'' environments, which
+will belong to the scope of one [[BaseEnvironment]] descendant, and
+saving, loading and initialization will be managed from there.  For
+this reason the initialization methods are kept protected at this
 level.
 
 <<Environment declaration>>=
@@ -341,7 +341,7 @@ public:
   std::string environment_file_ini,environment_file_fin;
   std::string title;
   long        steps_completed,steps_in_run,steps_in_stage;
-  bool        run_completed,log_requested;
+  bool        run_completed;
 
 protected:
   void init_local();
@@ -379,7 +379,7 @@ inline BaseEnvironment::BaseEnvironment(const char* scope) :
   environment_file_fin("[AUTO]"),
   title("[untitled]"),
   steps_completed(0), steps_in_run(0),steps_in_stage(0),
-  run_completed(false), log_requested(false),
+  run_completed(false),
   configuration_file_prefix("conf"),
   environment_file_prefix("env"),
   par(scope)
@@ -450,8 +450,18 @@ void BaseEnvironment::init_local_common()
   steps_in_stage=0;
   steps_in_run=0;
   run_completed=false;
-  log_requested=false;
 }
+
+@ \subsection{The step}
+
+The local step function keeps count of the number of steps.  This
+function is typically overridden.  Although it can be called from the
+child's [[step_local()]], it is better to replicate it to avoid
+another function call.  Some environments included in \glsim\ override
+this as a no-op and instead rely on the simulation itself (through the
+[[run()]] method) to keep the step count.  This can be more efficient,
+because [[BaseEnvironment::step()]] can be told not call no-ops at all
+(TODO).
 
 <<BaseEnvironment declaration>>=
 inline void BaseEnvironment::step_local()
@@ -473,7 +483,7 @@ inline void BaseEnvironment::serialize(Archive &ar,const unsigned int version)
   ar & configuration_file_prefix & environment_file_prefix;
   ar & title;
   ar & steps_completed & steps_in_run & steps_in_stage;
-  ar & run_completed & log_requested;
+  ar & run_completed;
 }
 
 @ \subsection{Scope-level functions}
@@ -563,40 +573,40 @@ public:
 } ;
 
 
-@ \section{SimEnvironment}
+@ \section{SBSimEnvironment}
 
 This is the environment that will used by step-based simulations
 (i.e.\ those where the step is a meaningful time unit, and individual
 runs are controlled by specifying the number of wanted steps).  We
 store here the number of steps requested for this run
-([[steps_requested]]), and the desired log interval [[log_interval]].
-The [[step()]] method checks
+([[steps_requested]]), and the desired log and observation interval
+([[log_interval]], [[obs_interval]]).
 
+Note that [[step_local()]] is a noop.  This is because it is simple
+enough that it is more efficiently carried out in
+[[SBSimulation::run()]].  NOTE SOMEWHERE that run_completed MUST be
+maintainted by someone.
 
-% enviromnet corresponding to the base sim will store
-%  - steps and time completed
-%  - observables and obs_step (????)
-
-
-<<SimEnvironment declaration>>=
-class SimEnvironment_par : public Parameters {
+<<SBSimEnvironment declaration>>=
+class SBSimEnvironment_par : public Parameters {
 public:
-  SimEnvironment_par(const char* scope=Parameters::default_scope);
+  SBSimEnvironment_par(const char* scope=Parameters::default_scope);
 } ;
 
-class SimEnvironment : public BaseEnvironment {
+class SBSimEnvironment : public BaseEnvironment {
 public:
-  SimEnvironment(const char* scope=Parameters::default_scope);
+  SBSimEnvironment(const char* scope=Parameters::default_scope);
   
-  long        steps_requested,log_interval;
+  long  steps_requested;
+  int   log_interval,obs_interval;
 
 protected:
-  void step_local();
+  void step_local() {}
   void init_local();
   void warm_init_local();
 
 private:
-  SimEnvironment_par par;
+  SBSimEnvironment_par par;
 
   friend class boost::serialization::access;
   template <typename Archive>
@@ -606,57 +616,52 @@ private:
 } ;
 
 <<out-of-namespace declarations>>=
-BOOST_CLASS_VERSION(glsim::SimEnvironment,0);
+BOOST_CLASS_VERSION(glsim::SBSimEnvironment,0);
 
-<<SimEnvironment declaration>>=
-template <typename Archive>
-inline void SimEnvironment::serialize(Archive &ar,const unsigned int version)
-{
-  ar & boost::serialization::base_object<BaseEnvironment>(*this);
-  ar & steps_requested & log_interval;
-}
-
-inline SimEnvironment::SimEnvironment(const char* scope) :
-  BaseEnvironment(scope),
-  steps_requested(0),
-  log_interval(0),
-  par(scope)
-{}
-
-<<SimEnvironment methods>>=
-SimEnvironment_par::SimEnvironment_par(const char* scope) :
+<<SBSimEnvironment methods>>=
+SBSimEnvironment_par::SBSimEnvironment_par(const char* scope) :
   Parameters(scope)
 {
   parm_file_options().add_options()
     ("steps_requested",po::value<long>()->default_value(10),"requested steps")
     ("log_interval",po::value<int>()->default_value(0),
-     "interval (in steps) to write logs")
+     "interval (in steps) to write logs (0=no logging)")
+    ("obs_interval",po::value<int>()->default_value(0),
+     "interval (in steps) to write observation (0=no observation)")
     ;
 }
 
-void SimEnvironment::warm_init_local()
+<<SBSimEnvironment declaration>>=
+inline SBSimEnvironment::SBSimEnvironment(const char* scope) :
+  BaseEnvironment(scope),
+  steps_requested(0),
+  log_interval(0),
+  obs_interval(0),
+  par(scope)
+{}
+
+template <typename Archive>
+inline void SBSimEnvironment::serialize(Archive &ar,const unsigned int version)
+{
+  ar & boost::serialization::base_object<BaseEnvironment>(*this);
+  ar & steps_requested & log_interval & obs_interval;
+}
+
+<<SBSimEnvironment methods>>=
+void SBSimEnvironment::warm_init_local()
 {
   BaseEnvironment::warm_init_local();
   steps_requested=par.value("steps_requested").as<long>();
   log_interval=par.value("log_interval").as<int>();
+  obs_interval=par.value("obs_interval").as<int>();
 }
 
-void SimEnvironment::init_local()
+void SBSimEnvironment::init_local()
 {
   BaseEnvironment::init_local();
   steps_requested=par.value("steps_requested").as<long>();
   log_interval=par.value("log_interval").as<int>();
-}
-
-
-<<SimEnvironment declaration>>=
-inline void SimEnvironment::step_local()
-{
-  steps_completed++;
-  steps_in_run++;
-  steps_in_stage++;
-  log_requested = steps_in_run % log_interval==0;
-  run_completed = steps_in_run>=steps_requested;
+  obs_interval=par.value("obs_interval").as<int>();
 }
 
 
@@ -680,31 +685,35 @@ parameter for the span of the run).
 
 #include <glsim/environment.hh>
 
-namespace glsim {
-<<CTSimEnvironment declaration>>
-}
-<<out-of-namespace ct-declarations>>
+// namespace glsim {
+// <<CTSBSimEnvironment declaration>>
+// }
+// <<out-of-namespace ct-declarations>>
 
 #endif /* _CTENVIRONMENT_HH_ */
 
 <<ctenvironment.cc>>=
+#ifdef ufa
+  
 #include <glsim/ctenvironment.hh>
 
 namespace glsim {
-<<CTSimEnvironment methods>>
+<<CTSBSimEnvironment methods>>
 }
+
+#endif /* ufa */
 
 @ \paragraph{Declaration.}
 
-<<CTSimEnvironment declaration>>=
-class CTSimEnvironment_par : public Parameters {
+<<CTSBSimEnvironment declaration>>=
+class CTSBSimEnvironment_par : public Parameters {
 public:
-  CTSimEnvironment_par(const char* scope=Parameters::default_scope);
+  CTSBSimEnvironment_par(const char* scope=Parameters::default_scope);
 } ;
 
-class CTSimEnvironment : public SimEnvironment {
+class CTSBSimEnvironment : public BaseEnvironment {
 public:
-  CTSimEnvironment(const char* scope=Parameters::default_scope);
+  CTSBSimEnvironment(const char* scope=Parameters::default_scope);
   
   double  time_completed,time_in_run,time_requested;
   double  log_interval;
@@ -716,7 +725,7 @@ protected:
   void warm_init_local();
 
 private:
-  CTSimEnvironment_par par;
+  CTSBSimEnvironment_par par;
   double               last_log_request;
 
   friend class boost::serialization::access;
@@ -727,13 +736,13 @@ private:
 } ;
 
 <<out-of-namespace ct-declarations>>=
-BOOST_CLASS_VERSION(glsim::CTSimEnvironment,0);
+BOOST_CLASS_VERSION(glsim::CTSBSimEnvironment,0);
 
 @ \paragraph{Construction and serialization.}
 
-<<CTSimEnvironment declaration>>=
-inline CTSimEnvironment::CTSimEnvironment(const char* scope) :
-  SimEnvironment(scope),
+<<CTSBSimEnvironment declaration>>=
+inline CTSBSimEnvironment::CTSBSimEnvironment(const char* scope) :
+  BaseEnvironment(scope),
   time_completed(0.), time_in_run(0.),
   time_requested(0.),
   log_interval(0.),
@@ -743,18 +752,18 @@ inline CTSimEnvironment::CTSimEnvironment(const char* scope) :
 {}
 
 template <typename Archive>
-inline void CTSimEnvironment::serialize(Archive &ar,const unsigned int version)
+inline void CTSBSimEnvironment::serialize(Archive &ar,const unsigned int version)
 {
-  ar & boost::serialization::base_object<SimEnvironment>(*this);
+  ar & boost::serialization::base_object<SBSimEnvironment>(*this);
   ar & time_completed & time_in_run;
   ar & time_requested & log_interval;
   ar & max_steps & last_log_request;
 }
 
-@ \pargraph{Parameter definition and environment initialization.}
+@ \paragraph{Parameter definition and environment initialization.}
 
-<<CTSimEnvironment methods>>=
-CTSimEnvironment_par::CTSimEnvironment_par(const char* scope) :
+<<CTSBSimEnvironment methods>>=
+CTSBSimEnvironment_par::CTSBSimEnvironment_par(const char* scope) :
   Parameters(scope)
 {
   parm_file_options().add_options()
@@ -765,9 +774,9 @@ CTSimEnvironment_par::CTSimEnvironment_par(const char* scope) :
     ;
 }
 
-void CTSimEnvironment::warm_init_local()
+void CTSBSimEnvironment::warm_init_local()
 {
-  SimEnvironment::warm_init_local();
+  SBSimEnvironment::warm_init_local();
   time_requested=par.value("time_requested").as<double>();
   log_interval=par.value("log_time_step").as<double>();
   max_steps=par.value("max_steps").as<int>();
@@ -775,9 +784,9 @@ void CTSimEnvironment::warm_init_local()
   time_in_run=0.;
 }
 
-void CTSimEnvironment::init_local()
+void CTSBSimEnvironment::init_local()
 {
-  SimEnvironment::init_local();
+  SBSimEnvironment::init_local();
   time_requested=par.value("time_requested").as<double>();
   log_interval=par.value("log_time_step").as<double>();
   max_steps=par.value("max_steps").as<int>();
@@ -789,8 +798,8 @@ void CTSimEnvironment::init_local()
 
 @ \paragraph{Step.}
 
-<<CTSimEnvironment declaration>>=
-inline void CTSimEnvironment::step_local()
+<<CTSBSimEnvironment declaration>>=
+inline void CTSBSimEnvironment::step_local()
 {
   steps_completed++;
   steps_in_run++;
