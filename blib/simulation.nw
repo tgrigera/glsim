@@ -57,6 +57,7 @@ namespace glsim {
 <<prepare declaration>>
 <<SBSimulation declaration>>
 }
+<<out-of-namespace declarations>>
 
 #endif /* _SIMULATION_HH_ */
 
@@ -101,6 +102,10 @@ private:
 
   static struct sigaction postpone_term;
 } ;
+
+<<out-of-namespace declarations>>=
+BOOST_CLASS_VERSION(glsim::Simulation,0);
+
 
 @ \subsection{Construction and static data}
 
