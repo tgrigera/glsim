@@ -143,3 +143,43 @@ int main(int argc,char *argv[])
 
 Environment vars to control steps etc:
 
+\section{Observables}
+
+Observables is abstract, the idea is to derive from SBObservable or
+CTObservale, these now how to handle [[obs_interval]].
+
+You need to provide the following methods, apart from the constructor:
+
+void interval_and_file(): must fill the variables obs_interval and
+obs_file_prefix, most likely reading from parameters.
+
+Observable knows how to initialize itself in the different
+circumstances with the aid of the previous function, so that you don't
+write init_local or warm_init_local unless you want special stuff.
+
+Then you write the functions that write, presently you must write to
+FILE *of:
+
+void write_header(),observe();
+
+These will be called from SBObservable::step() when appropriate.
+
+Finally, the serialize funcions, as you do with environments
+(observable is an environment).
+
+You first create config, environ.  Then observables, with environ as
+argument (and possibly config).  The things you want to observe,
+either you compute from config or get from environ, where the
+simulation must put them.
+
+Then you call prepare().
+
+Then you create the simulation.  You can call
+observable::observe_first to observe configuration 0 (prior to start
+run).
+
+Then you call sim::run.
+
+When you save the environment, the obs will be saved (it is a part of
+the environment).
+

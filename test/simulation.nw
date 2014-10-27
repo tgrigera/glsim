@@ -71,6 +71,44 @@ public:
   void step() {}
 } ;
 
+@ An observable
+
+<<observable>>=
+#include <glsim/observable.hh>
+
+class myObs : public glsim::SBObservable {
+public:
+  myObs(glsim::SBSimEnvironment&);
+
+protected:
+  void interval_and_file(),write_header(),observe();
+
+private:
+  glsim::SBSimEnvironment &env;
+} ;
+
+myObs::myObs(glsim::SBSimEnvironment &e) :
+  SBObservable(e),
+  env(e)
+{}
+
+void myObs::interval_and_file()
+{
+  obs_interval=10;     /* Better from param */
+  obs_file_prefix="obs"; /* Better from param */
+}
+
+void myObs::write_header()
+{
+  fprintf(of,"# Nice title\n");
+  fprintf(of,"# steps\n");
+}
+
+void myObs::observe()
+{
+  fprintf(of,"%ld\n",env.steps_completed);
+}
+
 @ Finally putting it all together.
 
 <<simtest.cc>>=
@@ -78,6 +116,7 @@ public:
 
 <<configuration>>
 <<simulation>>
+<<observable>>
 
 enum return_codes
     {no_error=0,early_stop=1,usage_error=2,runtime_error=10,
@@ -91,12 +130,14 @@ int main(int argc,char *argv[])
 
     glsim::SBSimEnvironment env;
     MyConf  conf;
-
+    myObs   obs(env);
+    
     glsim::prepare(argc,argv,env,conf);
 
     // if there are other scopes, must init them separately
 
     Simtest sim(env,conf);
+    obs.observe_first();
     sim.run();
     env.save();
     conf.save((const std::string&) env.configuration_file_fin);

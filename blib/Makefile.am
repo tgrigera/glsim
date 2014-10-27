@@ -97,6 +97,16 @@ $(stochastic_hdr) : stochastic.nw
 	@TANGLE@ -L -R$@ $? | @CPIF@ $@
 	ln -s -f $(PWD)/$@ $(top_builddir)/include/glsim
 
+EXTRA_DIST += observable.nw
+observable_hdr = observable.hh
+observable_src = observable.cc
+BUILT_SOURCES += $(observable_hdr) $(observable_src)
+$(observable_src) : observable.nw
+	@TANGLE@ -L -R$@ $? | @CPIF@ $@
+$(observable_hdr) : observable.nw
+	@TANGLE@ -L -R$@ $? | @CPIF@ $@
+	ln -s -f $(PWD)/$@ $(top_builddir)/include/glsim
+
 #
 # General compiler and linker options
 #
@@ -113,7 +123,7 @@ EXTRA_DIST += $(BUILT_SOURCES)
 pkginclude_HEADERS = $(errors_hdr) $(logging_hdr) $(random_hdr)	\
 		     $(parameters_hdr) $(environment_hdr)	\
 		     $(configuration_hdr) $(simulation_hdr)	\
-		     $(stochastic_hdr)
+		     $(stochastic_hdr) $(observable_hdr)
 
 #
 # binaries
@@ -129,4 +139,5 @@ lib_LTLIBRARIES = libglsim.la
 libglsim_la_LDFLAGS = -version-info @LIBGLSIM_VERSION@
 libglsim_la_SOURCES = scontext.cc cerrors.c log.cc random.cc		\
                       parameters.cc environment.cc ctenvironment.cc	\
-                      configuration.cc simulation.cc stochastic.cc
+                      configuration.cc simulation.cc stochastic.cc	\
+                      observable.cc
