@@ -96,7 +96,7 @@ step_local() missing at this point.
 template <typename ITYP>
 class Observable : public Environment {
 public:
-  Observable(BaseEnvironment &);
+  Observable(SimEnvironment &);
   virtual ~Observable();
   void observe_first();
 
@@ -113,7 +113,7 @@ protected:
   ITYP        obs_interval;  
 
 private:
-  BaseEnvironment  &benv;
+  SimEnvironment   &senv;
   bool             first_observed;
 
   friend class boost::serialization::access;
@@ -125,13 +125,13 @@ private:
 
 <<Observable declaration>>=
 template <typename ITYP>
-Observable<ITYP>::Observable(BaseEnvironment &e) :
+Observable<ITYP>::Observable(SimEnvironment &e) :
   Environment(e.scope()),
   of(0),
   obs_file_prefix("obs"),
   obs_fname("[AUTO]"),
   obs_interval(0),
-  benv(e),
+  senv(e),
   first_observed(false)
 {}
 
@@ -192,11 +192,13 @@ void Observable<ITYP>::observe_first()
 <<SBObservable declaration>>=
 class SBObservable : public Observable<int> {
 public:
-  SBObservable(BaseEnvironment& benv_) : Observable(benv_), benv(benv_) {}
+  SBObservable(SimEnvironment& senv_) : Observable(senv_),
+					senv(senv_) {}
 protected:
   void step_local();
+
 private:
-  BaseEnvironment &benv;
+  SimEnvironment &senv;
 } ;
 
 <<out-of-namespace declarations>>=
@@ -209,6 +211,6 @@ void SBObservable::step_local()
     of=fopen(obs_fname.c_str(),"a");
     if (!of) throw Open_file_error(obs_fname);
   }
-  if (obs_interval!=0 && benv.steps_completed % obs_interval==0) observe();
+  if (obs_interval!=0 && senv.steps_completed % obs_interval==0) observe();
 }
 

@@ -38,6 +38,10 @@
 
 - sim::run() executes the abstract simulation algorithm
 
+Define step-based and target-based simulations; explain how both can
+be dealt with here.  env.run_completed must be set by child sim or
+specific environment.
+
 Before the simulation is created, Env and configuration must be ready
 to run.   Simulation wil \emph{not} initialize config or env.  To aid
 in this initialization we provide a [[prepare]] function below.
@@ -56,6 +60,7 @@ namespace glsim {
 <<Simulation declaration>>
 <<prepare declaration>>
 <<SBSimulation declaration>>
+<<TBSimulation declaration>> 
 }
 <<out-of-namespace declarations>>
 
@@ -71,30 +76,33 @@ namespace glsim {
 <<static data>>
 <<Simulation methods>>
 <<prepare definition>>
-<<SBSimulation methods>>
 }
 
 @ \section{The simulation class}
 
 <<Simulation declaration>>=
+
+#define GLSIM_TERM_ON_SIGNAL    1
+#define GLSIM_TERM_ON_MAX_STEPS 2
+
 class Simulation {
 public:
-  Simulation(glsim::BaseEnvironment&,glsim::Configuration&);
+  Simulation(glsim::SimEnvironment&,glsim::Configuration&);
   virtual const char *name() const=0;
-  virtual long run()=0;
+  virtual long run();
 
   virtual void step()=0;
-  virtual void log_start_run() {}
+  virtual void log_start_sim() {}
   virtual void log() {}
-  virtual void log_stop_run() {}
-  virtual void obs() {}
+  virtual void log_stop_sim() {}
   virtual ~Simulation() {}
 
 protected:
   void   set_up_signals();
 
-  BaseEnvironment &env;
+  SimEnvironment &env;
   Configuration  &conf;
+
   static volatile sig_atomic_t termination_requested,signal_received;
 
 private:
@@ -111,11 +119,11 @@ BOOST_CLASS_VERSION(glsim::Simulation,0);
 
 <<static data>>=
 volatile sig_atomic_t Simulation::termination_requested,
-                             Simulation::signal_received;
+                      Simulation::signal_received;
 struct sigaction Simulation::postpone_term;
 
 <<Simulation declaration>>=
-inline Simulation::Simulation(glsim::BaseEnvironment& e,glsim::Configuration& c) :
+inline Simulation::Simulation(glsim::SimEnvironment& e,glsim::Configuration& c) :
   env(e),conf(c)
 {}
 
@@ -144,8 +152,44 @@ void Simulation::set_up_signals()
 void Simulation::sigterm_handler(int signal)
 {
   sigprocmask(SIG_BLOCK,&postpone_term.sa_mask,0);
-  termination_requested=1;
+  termination_requested=GLSIM_TERM_ON_SIGNAL;
   signal_received=signal;
+}
+
+@ \paragraph{Run method.}
+
+<<Simulation methods>>=
+long Simulation::run()
+{
+  set_up_signals();
+  log_start_sim();
+  while (!env.run_completed && termination_requested==0) {
+    step();
+    env.steps_completed++;
+    env.steps_in_run++;
+    env.steps_in_stage++;
+    env.step();
+    if (env.steps_completed % env.log_interval==0) log();
+    if (env.max_steps>0 && env.steps_in_stage>env.max_steps)
+      termination_requested=GLSIM_TERM_ON_MAX_STEPS;
+  }
+
+  switch (termination_requested) {
+  case 0:
+    break;
+  case GLSIM_TERM_ON_SIGNAL:
+    logs(warn) << "\nWARNING: Terminating on signal " << signal_received <<
+      "\nCompleted " << env.steps_in_run << " in this run (" << env.steps_in_stage << 
+      " in this stage)\n\n";
+    break;
+  case GLSIM_TERM_ON_MAX_STEPS:
+      logs(warn) << "\nWARNING: Reached max_steps. " <<
+	"\nCompleted " << env.steps_in_run << " in this run (" << env.steps_in_stage << 
+	" in this stage)\n\n";
+      break;
+  }
+  log_stop_sim();
+  return env.steps_in_stage;
 }
 
 @ \section{Preparing configuration and environment}
@@ -160,15 +204,15 @@ have been constructed in their default state, or the call will fail
 (perhaps silently and miserably).
 
 <<prepare declaration>>=
-void prepare(int argc,char *argv[],BaseEnvironment &env,Configuration &conf);
+void prepare(int argc,char *argv[],SimEnvironment &env,Configuration &conf);
 
 <<prepare definition>>=  
 enum existing_file_status {none, partial, exist};
 
-static existing_file_status check_existing_files(BaseEnvironment &env,
+static existing_file_status check_existing_files(SimEnvironment &env,
 						 bool ignore_partial);
 
-void prepare(int argc,char *argv[],BaseEnvironment &env,Configuration &conf)
+void prepare(int argc,char *argv[],SimEnvironment &env,Configuration &conf)
 {
   // Read command line
 
@@ -212,7 +256,7 @@ void prepare(int argc,char *argv[],BaseEnvironment &env,Configuration &conf)
   }
 }
 
-static existing_file_status check_existing_files(BaseEnvironment &env,
+static existing_file_status check_existing_files(SimEnvironment &env,
 						 bool ignore_partial)
 {
   struct stat s;
@@ -253,49 +297,4 @@ static existing_file_status check_existing_files(BaseEnvironment &env,
     logs(info) << "Incomplete simulation found.\n";
     return partial;
   }
-}
-
-@ \section{Step based simulation}
-
-This class implements the [[run()]] method for simulations where a
-step is a meaningful control and/or analysis unit.
-
-<<SBSimulation declaration>>=
-class SBSimulation : public Simulation
-{
-public:
-  SBSimulation(SBSimEnvironment& e,Configuration& c);
-  long run();
-
-private:
-  SBSimEnvironment& env;
-};
-
-inline SBSimulation::SBSimulation(SBSimEnvironment& e,Configuration& c) :
-  Simulation(e,c),
-  env(e)
-{}
-
-<<SBSimulation methods>>=
-long SBSimulation::run()
-{
-  set_up_signals();
-  log_start_run();
-  while (!env.run_completed && termination_requested==0) {
-    step();
-    env.steps_completed++;
-    env.steps_in_run++;
-    env.steps_in_stage++;
-    env.step();
-    if (env.steps_completed % env.log_interval==0) log();
-    if (env.obs_interval>0 &&
-	env.steps_completed % env.obs_interval==0) obs();
-    env.run_completed = env.steps_in_run>=env.steps_requested;
-  }
-  if (termination_requested>0)
-    logs(warn) << "\nWARNING: Terminating on signal " << signal_received <<
-      "\nCompleted " << env.steps_in_run << " in this run (" << env.steps_in_stage << 
-      " in this stage)\n\n";
-  log_stop_run();
-  return env.steps_in_stage;
 }

@@ -56,7 +56,7 @@ scope.  See the next example for that case.
 #include <glsim/log.hh>
 #include <glsim/environment.hh>
 
-void print_environment(glsim::SBSimEnvironment &env)
+void print_environment(glsim::SimEnvironment &env)
 {
   std::cout
     << "   config file ini/fin = " << env.configuration_file_ini << '/'
@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
 
   try {
 
-    glsim::SBSimEnvironment env;
+    glsim::SimEnvironment env;
     CL.parse_command_line(argc,argv);
 
     std::cout << "Default environment:\n";
@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
     std::cout << "wrote archive\n";
 
     std::cout <<"\nNow reading archive into new environment\n";
-    glsim::SBSimEnvironment env2;
+    glsim::SimEnvironment env2;
     {
       std::ifstream is("env.dat",std::ios::binary);
       //boost::archive::binary_iarchive ia(is);
@@ -208,7 +208,7 @@ void floating_environment::warm_init_local()
 }
 
 
-void print_environment(glsim::SBSimEnvironment &env,floating_environment &fl)
+void print_environment(glsim::SimEnvironment &env,floating_environment &fl)
 {
   std::cout
     << "   config file ini/fin = " << env.configuration_file_ini << '/'
@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
   int rcode=1;
 
   StandardCL CL("Myscope");
-  SBSimEnvironment main_env("Myscope");
+  SimEnvironment main_env("Myscope");
   floating_environment fl("Myscope");
 
   try {
@@ -252,7 +252,7 @@ int main(int argc, char *argv[])
   print_environment(main_env,fl);
 
   std::cout << "\nNew envs:\n";
-  SBSimEnvironment newSE;
+  SimEnvironment newSE;
   newSE.environment_file_ini=main_env.environment_file_fin;
   floating_environment newfl;
   newSE.load();

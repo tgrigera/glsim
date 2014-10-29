@@ -63,12 +63,12 @@ public:
 <<simulation>>=
 #include <glsim/simulation.hh>
 
-class Simtest : public glsim::SBSimulation {
+class Simtest : public glsim::Simulation {
 public:
-  Simtest(glsim::SBSimEnvironment &e,glsim::Configuration &c) :
-    SBSimulation(e,c) {}
+  Simtest(glsim::SimEnvironment &e,glsim::Configuration &c) :
+    Simulation(e,c) {}
   const char *name() const {return "Simulation test";}
-  void step() {}
+  void step() {env.run_completed=env.steps_completed>=100;}
 } ;
 
 @ An observable
@@ -78,23 +78,23 @@ public:
 
 class myObs : public glsim::SBObservable {
 public:
-  myObs(glsim::SBSimEnvironment&);
+  myObs(glsim::SimEnvironment&);
 
 protected:
   void interval_and_file(),write_header(),observe();
 
 private:
-  glsim::SBSimEnvironment &env;
+  glsim::SimEnvironment &env;
 } ;
 
-myObs::myObs(glsim::SBSimEnvironment &e) :
+myObs::myObs(glsim::SimEnvironment &e) :
   SBObservable(e),
   env(e)
 {}
 
 void myObs::interval_and_file()
 {
-  obs_interval=10;     /* Better from param */
+  obs_interval=10;       /* Better from param */
   obs_file_prefix="obs"; /* Better from param */
 }
 
@@ -128,7 +128,7 @@ int main(int argc,char *argv[])
 
   try {
 
-    glsim::SBSimEnvironment env;
+    glsim::SimEnvironment env;
     MyConf  conf;
     myObs   obs(env);
     
@@ -165,6 +165,4 @@ int main(int argc,char *argv[])
 title="Test simulation"
 configuration_file_prefix=conf
 environment_file_prefix=env
-steps_requested=200
 log_interval=100
-

@@ -97,7 +97,7 @@ the saving and restoring of environments can be controlled.
 namespace glsim {
 <<Environment declaration>>
 <<BaseEnvironment declaration>>
-<<SBSimEnvironment declaration>>
+<<SimEnvironment declaration>>
 <<Exceptions>>
 }
 <<out-of-namespace declarations>>
@@ -112,7 +112,7 @@ namespace glsim {
 namespace glsim {
 <<Environment methods>>
 <<BaseEnvironment methods>>
-<<SBSimEnvironment methods>>
+<<SimEnvironment methods>>
 }
 
 @ \section{Environment}
@@ -310,14 +310,9 @@ void Environment::final_filename(std::string& name,
 This class is the base for simulation environments, i.e.\ environments
 that can do loading, saving and initialization at the scope level.  We
 thus store here the filenames for reading and writing, and implement
-the scope-wide methods.  This class also stores information about the
-number of steps completed so far ([[steps_completed]],
-[[steps_in_run]], [[steps_in_stage]]) and the booleans to communicate
-with [[Simulation::run()]]: [[run_completed]] and [[log_requested]].
-These two however are not updated here, but in one of the specialized
-environments below.  The local step method ([[step_local]]) just
-counts the steps, the scope-wide [[step()]] calls [[step_local()]] for
-all members of the scope.
+the scope-wide methods.  The local step method is empty, the
+scope-wide [[step()]] calls [[step_local()]] for all members of the
+scope.
 
 <<BaseEnvironment declaration>>=
 class BaseEnv_par : public Parameters {
@@ -339,14 +334,10 @@ public:
 
   std::string configuration_file_ini,configuration_file_fin;
   std::string environment_file_ini,environment_file_fin;
-  std::string title;
-  long        steps_completed,steps_in_run,steps_in_stage;
-  bool        run_completed;
 
 protected:
   void init_local();
   void warm_init_local();
-  void step_local();
 
 private:
   std::string configuration_file_prefix,environment_file_prefix;
@@ -377,9 +368,6 @@ inline BaseEnvironment::BaseEnvironment(const char* scope) :
   configuration_file_fin("[AUTO]"),
   environment_file_ini("[AUTO]"),
   environment_file_fin("[AUTO]"),
-  title("[untitled]"),
-  steps_completed(0), steps_in_run(0),steps_in_stage(0),
-  run_completed(false),
   configuration_file_prefix("conf"),
   environment_file_prefix("env"),
   par(scope)
@@ -403,7 +391,6 @@ BaseEnv_par::BaseEnv_par(const char* scope) :
      "prefix to generate initial and final configuration filenames")
     ("environment_file_prefix",po::value<std::string>()->default_value("env"),
      "prefix to generate initial and final environment filenames")
-    ("title",po::value<std::string>()->default_value("[untitled]"),"simulation title")
     ;
 }
 
@@ -428,48 +415,23 @@ void BaseEnvironment::init_local()
 {
   Environment::init_local();
   init_local_common();
-  steps_completed=0;
 }
 
 void BaseEnvironment::init_local_common()
 {
-  run_completed=false;
   configuration_file_ini=par.value("initial_configuration_file").as<std::string>();
   configuration_file_fin=par.value("final_configuration_file").as<std::string>();
   environment_file_ini=par.value("initial_environment_file").as<std::string>();
   environment_file_fin=par.value("final_environment_file").as<std::string>();
   configuration_file_prefix=par.value("configuration_file_prefix").as<std::string>();
   environment_file_prefix=par.value("environment_file_prefix").as<std::string>();
-  title=par.value("title").as<std::string>();
 
   initial_filename(configuration_file_ini,configuration_file_prefix);
   final_filename(configuration_file_fin,configuration_file_prefix);
   initial_filename(environment_file_ini,environment_file_prefix);
   final_filename(environment_file_fin,environment_file_prefix);
-
-  steps_in_stage=0;
-  steps_in_run=0;
-  run_completed=false;
 }
 
-@ \subsection{The step}
-
-The local step function keeps count of the number of steps.  This
-function is typically overridden.  Although it can be called from the
-child's [[step_local()]], it is better to replicate it to avoid
-another function call.  Some environments included in \glsim\ override
-this as a no-op and instead rely on the simulation itself (through the
-[[run()]] method) to keep the step count.  This can be more efficient,
-because [[BaseEnvironment::step()]] can be told not call no-ops at all
-(TODO).
-
-<<BaseEnvironment declaration>>=
-inline void BaseEnvironment::step_local()
-{
-  steps_completed++;
-  steps_in_run++;
-  steps_in_stage++;
-}
 
 @ \subsection{Serialization}
 
@@ -481,9 +443,6 @@ inline void BaseEnvironment::serialize(Archive &ar,const unsigned int version)
   ar & configuration_file_ini & configuration_file_fin;
   ar & environment_file_ini & environment_file_fin;
   ar & configuration_file_prefix & environment_file_prefix;
-  ar & title;
-  ar & steps_completed & steps_in_run & steps_in_stage;
-  ar & run_completed;
 }
 
 @ \subsection{Scope-level functions}
@@ -573,40 +532,43 @@ public:
 } ;
 
 
-@ \section{SBSimEnvironment}
+@ \section{SimEnvironment}
 
-This is the environment that will used by step-based simulations
-(i.e.\ those where the step is a meaningful time unit, and individual
-runs are controlled by specifying the number of wanted steps).  We
-store here the number of steps requested for this run
-([[steps_requested]]), and the desired log and observation interval
-([[log_interval]], [[obs_interval]]).
+This is the environment that needed by [[Simulation]].  We store here
+variables to keep track of the number of steps performed (total, in
+the run, in the stage), and the desired log interval
+([[log_interval]]).  There is also the boolean [[run_completed]] to
+communicate with [[Simulation::run()]], which is however not updated
+here, but in one of the specialized environments or in the
+[[Simulation::step()]].
 
-Note that [[step_local()]] is a noop.  This is because it is simple
-enough that it is more efficiently carried out in
-[[SBSimulation::run()]].  NOTE SOMEWHERE that run_completed MUST be
-maintainted by someone.
+The local step function is a no-op., since count of the number of
+steps is kept in [[Simulation::run()]].  This can be more efficient,
+because [[BaseEnvironment::step()]] can be told not call no-ops at all
+(TODO). This function is typically overridden anyway.
 
-<<SBSimEnvironment declaration>>=
-class SBSimEnvironment_par : public Parameters {
+<<SimEnvironment declaration>>=
+class SimEnvironment_par : public Parameters {
 public:
-  SBSimEnvironment_par(const char* scope=Parameters::default_scope);
+  SimEnvironment_par(const char* scope=Parameters::default_scope);
 } ;
 
-class SBSimEnvironment : public BaseEnvironment {
+class SimEnvironment : public BaseEnvironment {
 public:
-  SBSimEnvironment(const char* scope=Parameters::default_scope);
-  
-  long  steps_requested;
-  int   log_interval,obs_interval;
+  SimEnvironment(const char* scope=Parameters::default_scope);
+
+  std::string title;
+  long        steps_completed,steps_in_run,steps_in_stage;
+  long        max_steps;
+  int         log_interval;
+  bool        run_completed;
 
 protected:
-  void step_local() {}
   void init_local();
   void warm_init_local();
 
 private:
-  SBSimEnvironment_par par;
+  SimEnvironment_par par;
 
   friend class boost::serialization::access;
   template <typename Archive>
@@ -616,197 +578,63 @@ private:
 } ;
 
 <<out-of-namespace declarations>>=
-BOOST_CLASS_VERSION(glsim::SBSimEnvironment,0);
+BOOST_CLASS_VERSION(glsim::SimEnvironment,0);
 
-<<SBSimEnvironment methods>>=
-SBSimEnvironment_par::SBSimEnvironment_par(const char* scope) :
+<<SimEnvironment methods>>=
+SimEnvironment_par::SimEnvironment_par(const char* scope) :
   Parameters(scope)
 {
   parm_file_options().add_options()
-    ("steps_requested",po::value<long>()->default_value(10),"requested steps")
+    ("title",po::value<std::string>()->default_value("[untitled]"),"simulation title")
+    ("max_steps",po::value<long>()->default_value(0),
+     "maximum number of allowed steps in stage (0=unlimited)")
     ("log_interval",po::value<int>()->default_value(0),
      "interval (in steps) to write logs (0=no logging)")
-    ("obs_interval",po::value<int>()->default_value(0),
-     "interval (in steps) to write observation (0=no observation)")
     ;
 }
 
-<<SBSimEnvironment declaration>>=
-inline SBSimEnvironment::SBSimEnvironment(const char* scope) :
+<<SimEnvironment declaration>>=
+inline SimEnvironment::SimEnvironment(const char* scope) :
   BaseEnvironment(scope),
-  steps_requested(0),
+  title("[untitled]"),
+  steps_completed(0), steps_in_run(0),steps_in_stage(0),
+  max_steps(0),
   log_interval(0),
-  obs_interval(0),
+  run_completed(false),
   par(scope)
 {}
 
 template <typename Archive>
-inline void SBSimEnvironment::serialize(Archive &ar,const unsigned int version)
+inline void SimEnvironment::serialize(Archive &ar,const unsigned int version)
 {
   ar & boost::serialization::base_object<BaseEnvironment>(*this);
-  ar & steps_requested & log_interval & obs_interval;
+  ar & title;
+  ar & steps_completed & steps_in_run & steps_in_stage;
+  ar & max_steps & log_interval;
+  ar & run_completed;
 }
 
-<<SBSimEnvironment methods>>=
-void SBSimEnvironment::warm_init_local()
+<<SimEnvironment methods>>=
+void SimEnvironment::warm_init_local()
 {
   BaseEnvironment::warm_init_local();
-  steps_requested=par.value("steps_requested").as<long>();
+  title=par.value("title").as<std::string>();
+  steps_completed=0;
+  steps_in_run=0;
+  steps_in_stage=0;
+  max_steps=par.value("max_steps").as<long>();
   log_interval=par.value("log_interval").as<int>();
-  obs_interval=par.value("obs_interval").as<int>();
+  run_completed=false;
 }
 
-void SBSimEnvironment::init_local()
+void SimEnvironment::init_local()
 {
   BaseEnvironment::init_local();
-  steps_requested=par.value("steps_requested").as<long>();
+  steps_in_run=0;
+  steps_in_stage=0;
+  max_steps=par.value("max_steps").as<long>();
   log_interval=par.value("log_interval").as<int>();
-  obs_interval=par.value("obs_interval").as<int>();
+  run_completed=false;
 }
 
-
-@ \section{Continuous time environment}
-
-Environment for continuous time simulations (i.e. where the ``real''
-time, rather than the number of steps is the meaningful control
-parameter for the span of the run).
-
-<<ctenvironment.hh>>=
-#ifndef _CTENVIRONMENT_HH_
-#define _CTENVIRONMENT_HH_
-
-#include <string>
-#include <boost/serialization/base_object.hpp>
-#include <boost/serialization/version.hpp>
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
-
-#include <glsim/environment.hh>
-
-// namespace glsim {
-// <<CTSBSimEnvironment declaration>>
-// }
-// <<out-of-namespace ct-declarations>>
-
-#endif /* _CTENVIRONMENT_HH_ */
-
-<<ctenvironment.cc>>=
-#ifdef ufa
-  
-#include <glsim/ctenvironment.hh>
-
-namespace glsim {
-<<CTSBSimEnvironment methods>>
-}
-
-#endif /* ufa */
-
-@ \paragraph{Declaration.}
-
-<<CTSBSimEnvironment declaration>>=
-class CTSBSimEnvironment_par : public Parameters {
-public:
-  CTSBSimEnvironment_par(const char* scope=Parameters::default_scope);
-} ;
-
-class CTSBSimEnvironment : public BaseEnvironment {
-public:
-  CTSBSimEnvironment(const char* scope=Parameters::default_scope);
-  
-  double  time_completed,time_in_run,time_requested;
-  double  log_interval;
-  int     max_steps;
-
-protected:
-  void step_local();
-  void init_local();
-  void warm_init_local();
-
-private:
-  CTSBSimEnvironment_par par;
-  double               last_log_request;
-
-  friend class boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar,const unsigned int version);
-  virtual void vserial(iarchive_t &ar) {ar >> *this;}
-  virtual void vserial(oarchive_t &ar) {ar << *this;}
-} ;
-
-<<out-of-namespace ct-declarations>>=
-BOOST_CLASS_VERSION(glsim::CTSBSimEnvironment,0);
-
-@ \paragraph{Construction and serialization.}
-
-<<CTSBSimEnvironment declaration>>=
-inline CTSBSimEnvironment::CTSBSimEnvironment(const char* scope) :
-  BaseEnvironment(scope),
-  time_completed(0.), time_in_run(0.),
-  time_requested(0.),
-  log_interval(0.),
-  max_steps(0),
-  par(scope),
-  last_log_request(0.)
-{}
-
-template <typename Archive>
-inline void CTSBSimEnvironment::serialize(Archive &ar,const unsigned int version)
-{
-  ar & boost::serialization::base_object<SBSimEnvironment>(*this);
-  ar & time_completed & time_in_run;
-  ar & time_requested & log_interval;
-  ar & max_steps & last_log_request;
-}
-
-@ \paragraph{Parameter definition and environment initialization.}
-
-<<CTSBSimEnvironment methods>>=
-CTSBSimEnvironment_par::CTSBSimEnvironment_par(const char* scope) :
-  Parameters(scope)
-{
-  parm_file_options().add_options()
-    ("time_requested",po::value<double>(),"time to reach in this run")
-    ("max_steps",po::value<int>()->default_value(0),"if >0, maximum number of allowed simulation steps")
-    ("log_interval",po::value<double>()->default_value(0.),
-     "interval to log progress")
-    ;
-}
-
-void CTSBSimEnvironment::warm_init_local()
-{
-  SBSimEnvironment::warm_init_local();
-  time_requested=par.value("time_requested").as<double>();
-  log_interval=par.value("log_time_step").as<double>();
-  max_steps=par.value("max_steps").as<int>();
-
-  time_in_run=0.;
-}
-
-void CTSBSimEnvironment::init_local()
-{
-  SBSimEnvironment::init_local();
-  time_requested=par.value("time_requested").as<double>();
-  log_interval=par.value("log_time_step").as<double>();
-  max_steps=par.value("max_steps").as<int>();
-
-  time_completed=0.;
-  time_in_run=0.;
-  last_log_request=0.;
-}
-
-@ \paragraph{Step.}
-
-<<CTSBSimEnvironment declaration>>=
-inline void CTSBSimEnvironment::step_local()
-{
-  steps_completed++;
-  steps_in_run++;
-  steps_in_stage++;
-  log_requested = last_log_request + log_interval >= time_completed;
-  if (log_requested) last_log_request=time_completed;
-  run_completed = time_completed>=time_requested ||
-    (max_steps>0 && steps_in_run>=max_steps);
-}
 
