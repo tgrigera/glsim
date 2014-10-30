@@ -95,11 +95,11 @@ the saving and restoring of environments can be controlled.
 #include <glsim/parameters.hh>
 
 namespace glsim {
+<<Exceptions>>
 <<Environment declaration>>
 <<BaseEnvironment declaration>>
 <<SimEnvironment declaration>>
 <<CTSimEnvironment declaration>>
-<<Exceptions>>
 }
 <<out-of-namespace declarations>>
 
@@ -193,10 +193,13 @@ private:
   friend class boost::serialization::access;
   template <typename Archive>
   void serialize(Archive &ar,const unsigned int version);
+
+public:
+  static const int class_version=1;
 } ;
 
 <<out-of-namespace declarations>>=
-BOOST_CLASS_VERSION(glsim::Environment,0);
+BOOST_CLASS_VERSION(glsim::Environment,glsim::Environment::class_version);
 
 @ %@<<
 
@@ -274,6 +277,8 @@ only the base part will be saved (see tutorial).
 template <typename Archive>
 inline void Environment::serialize(Archive &ar,const unsigned int version)
 {
+  if (version!=class_version)
+    throw Environment_wrong_version("CTSimEnvironment",version,class_version);
   ar & scope_name;
   ar & ini_infix;
   ar & fin_infix;
@@ -352,10 +357,13 @@ private:
   void serialize(Archive &ar,const unsigned int version);
   virtual void vserial(iarchive_t &ar) {ar >> *this;}
   virtual void vserial(oarchive_t &ar) {ar << *this;}
+
+public:
+  static const int class_version=1;
 } ;
 
 <<out-of-namespace declarations>>=
-BOOST_CLASS_VERSION(glsim::BaseEnvironment,0);
+BOOST_CLASS_VERSION(glsim::BaseEnvironment,glsim::BaseEnvironment::class_version);
 
 @ \subsection{Construction and initialization}
 
@@ -441,6 +449,8 @@ void BaseEnvironment::init_local_common()
 template <typename Archive>
 inline void BaseEnvironment::serialize(Archive &ar,const unsigned int version)
 {
+  if (version!=class_version)
+    throw Environment_wrong_version("CTSimEnvironment",version,class_version);
   ar & boost::serialization::base_object<Environment>(*this);
   ar & configuration_file_ini & configuration_file_fin;
   ar & environment_file_ini & environment_file_fin;
@@ -533,6 +543,18 @@ public:
   ~Environment_unreadable() throw() {}
 } ;
 
+class Environment_wrong_version : public glsim::Environment_unreadable {
+public:
+  explicit Environment_wrong_version(const std::string& classname,
+				  const int version_in_file,
+				  const int current_version,
+				  const Source_context &c=Source_context()) :
+      Environment_unreadable("incompatible version of class "+classname+
+			     " (in file "+::std::to_string(version_in_file)+
+			     " current "+::std::to_string(current_version)+")",c) {}
+  ~Environment_wrong_version() throw() {}
+} ;
+
 
 @ \section{SimEnvironment}
 
@@ -577,10 +599,13 @@ private:
   void serialize(Archive &ar,const unsigned int version);
   virtual void vserial(iarchive_t &ar) {ar >> *this;}
   virtual void vserial(oarchive_t &ar) {ar << *this;}
+
+public:
+  static const int class_version=1;
 } ;
 
 <<out-of-namespace declarations>>=
-BOOST_CLASS_VERSION(glsim::SimEnvironment,0);
+BOOST_CLASS_VERSION(glsim::SimEnvironment,glsim::SimEnvironment::class_version);
 
 <<SimEnvironment methods>>=
 SimEnvironment_par::SimEnvironment_par(const char* scope) :
@@ -609,6 +634,8 @@ inline SimEnvironment::SimEnvironment(const char* scope) :
 template <typename Archive>
 inline void SimEnvironment::serialize(Archive &ar,const unsigned int version)
 {
+  if (version!=class_version)
+    throw Environment_wrong_version("CTSimEnvironment",version,class_version);
   ar & boost::serialization::base_object<BaseEnvironment>(*this);
   ar & title;
   ar & steps_completed & steps_in_run & steps_in_stage;
@@ -659,10 +686,13 @@ private:
   void serialize(Archive &ar,const unsigned int version);
   virtual void vserial(iarchive_t &ar) {ar >> *this;}
   virtual void vserial(oarchive_t &ar) {ar << *this;}
+
+public:
+  static const int class_version=1;
 } ;
 
 <<out-of-namespace declarations>>=
-BOOST_CLASS_VERSION(glsim::CTSimEnvironment,0);
+BOOST_CLASS_VERSION(glsim::CTSimEnvironment,glsim::CTSimEnvironment::class_version);
 
 <<CTSimEnvironment methods>>=
 CTSimEnvironment::CTSimEnvironment(const char* scope) :
@@ -692,6 +722,8 @@ void CTSimEnvironment::warm_init_local()
 template <typename Archive>
 inline void CTSimEnvironment::serialize(Archive &ar,const unsigned int version)
 {
+  if (version!=class_version)
+    throw Environment_wrong_version("CTSimEnvironment",version,class_version);
   ar & boost::serialization::base_object<SimEnvironment>(*this);
   ar & time_completed & time_in_run & time_in_stage;
 }
