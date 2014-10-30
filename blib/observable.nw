@@ -76,6 +76,7 @@ For checkpointing I need
 namespace glsim {
 <<Observable declaration>>
 <<SBObservable declaration>>
+<<KMCObservable declaration>>
 }
 <<out-of-namespace declarations>>
 			    
@@ -86,6 +87,7 @@ namespace glsim {
 
 namespace glsim {
 <<SBObservable methods>>
+<<KMCObservable methods>>
 }
 
 @ \section{Observable}
@@ -207,10 +209,67 @@ BOOST_CLASS_VERSION(glsim::SBObservable,0);
 <<SBObservable methods>>=
 void SBObservable::step_local()
 {
+  if (obs_interval==0) return;
   if (of==0) {
     of=fopen(obs_fname.c_str(),"a");
     if (!of) throw Open_file_error(obs_fname);
   }
-  if (obs_interval!=0 && senv.steps_completed % obs_interval==0) observe();
+  if (senv.steps_completed % obs_interval==0) observe();
 }
 
+<<KMCObservable declaration>>=
+class KMCObservable : public Observable<double> {
+public:
+  KMCObservable(CTSimEnvironment& env_);
+
+protected:
+  void   step_local();
+  void   init_local();  
+  void   warm_init_local() {Observable<double>::warm_init_local();}
+
+  double obs_time;
+
+private:
+  CTSimEnvironment& env;
+
+  friend class boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &ar,const unsigned int version);
+  virtual void vserial(iarchive_t &ar) {ar >> *this;}
+  virtual void vserial(oarchive_t &ar) {ar << *this;}
+} ;
+
+KMCObservable::KMCObservable(CTSimEnvironment& env_) :
+  Observable(env_),
+  obs_time(0.),
+  env(env_)
+{}
+
+template <typename Archive>
+void KMCObservable::serialize(Archive &ar,const unsigned int version)
+{
+  ar & obs_time;
+}
+
+<<out-of-namespace declarations>>=
+BOOST_CLASS_VERSION(glsim::KMCObservable,0);
+
+<<KMCObservable methods>>=
+void KMCObservable::init_local()
+{
+  Observable<double>::init_local();
+  obs_time=0.;
+}
+
+void KMCObservable::step_local()
+{
+  if (obs_interval==0) return;
+  if (of==0) {
+    of=fopen(obs_fname.c_str(),"a");
+    if (!of) throw Open_file_error(obs_fname);
+  }
+  while (env.time_completed > obs_time) {
+    observe();
+    obs_time+=obs_interval;
+  }
+}

@@ -98,6 +98,7 @@ namespace glsim {
 <<Environment declaration>>
 <<BaseEnvironment declaration>>
 <<SimEnvironment declaration>>
+<<CTSimEnvironment declaration>>
 <<Exceptions>>
 }
 <<out-of-namespace declarations>>
@@ -113,6 +114,7 @@ namespace glsim {
 <<Environment methods>>
 <<BaseEnvironment methods>>
 <<SimEnvironment methods>>
+<<CTSimEnvironment methods>>
 }
 
 @ \section{Environment}
@@ -638,3 +640,58 @@ void SimEnvironment::init_local()
 }
 
 
+@ \section{Continuous time environment}
+
+<<CTSimEnvironment declaration>>=
+class CTSimEnvironment : public SimEnvironment {
+public:
+  CTSimEnvironment(const char* scope=Parameters::default_scope);
+
+  double       time_completed,time_in_run,time_in_stage;
+
+protected:
+  void init_local();
+  void warm_init_local();
+
+private:
+  friend class boost::serialization::access;
+  template <typename Archive>
+  void serialize(Archive &ar,const unsigned int version);
+  virtual void vserial(iarchive_t &ar) {ar >> *this;}
+  virtual void vserial(oarchive_t &ar) {ar << *this;}
+} ;
+
+<<out-of-namespace declarations>>=
+BOOST_CLASS_VERSION(glsim::CTSimEnvironment,0);
+
+<<CTSimEnvironment methods>>=
+CTSimEnvironment::CTSimEnvironment(const char* scope) :
+  SimEnvironment(scope),
+  time_completed(0.),
+  time_in_run(0.),
+  time_in_stage(0.)
+{
+}
+
+void CTSimEnvironment::init_local()
+{
+  SimEnvironment::init_local();
+  time_completed=0.;
+  time_in_run=0.;
+  time_in_stage=0;
+}
+
+void CTSimEnvironment::warm_init_local()
+{
+  SimEnvironment::warm_init_local();
+  time_in_run=0.;
+  time_in_stage=0;
+}
+
+<<CTSimEnvironment declaration>>=
+template <typename Archive>
+inline void CTSimEnvironment::serialize(Archive &ar,const unsigned int version)
+{
+  ar & boost::serialization::base_object<SimEnvironment>(*this);
+  ar & time_completed & time_in_run & time_in_stage;
+}
