@@ -163,6 +163,7 @@ long Simulation::run()
 {
   set_up_signals();
   log_start_sim();
+  env.steps_in_stage=0;
   while (!env.run_completed && termination_requested==0) {
     step();
     env.steps_completed++;

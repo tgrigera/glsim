@@ -648,7 +648,6 @@ void SimEnvironment::warm_init_local()
 {
   BaseEnvironment::warm_init_local();
   title=par.value("title").as<std::string>();
-  steps_completed=0;
   steps_in_run=0;
   steps_in_stage=0;
   max_steps=par.value("max_steps").as<long>();
@@ -659,6 +658,7 @@ void SimEnvironment::warm_init_local()
 void SimEnvironment::init_local()
 {
   BaseEnvironment::init_local();
+  steps_completed=0;
   steps_in_run=0;
   steps_in_stage=0;
   max_steps=par.value("max_steps").as<long>();
