@@ -16,3 +16,4 @@ stamp-h1
 ltmain.sh
 build
 m4
+config.h.in

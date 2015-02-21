@@ -5,7 +5,7 @@
 % This file is part of glsim, a numerical simulation class library and
 % helper programs.
 %
-% glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014
+% glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014, 2015
 % by Tomas S. Grigera.
 % 
 % glsim is free software; you can redistribute it and/or modify it under
@@ -51,6 +51,9 @@ in this initialization we provide a [[prepare]] function below.
 #define _SIMULATION_HH_
 
 #include <csignal>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/posix_time/posix_time_duration.hpp>
+#include <boost/timer/timer.hpp>
 
 #include <glsim/log.hh>
 #include <glsim/environment.hh>
@@ -59,14 +62,13 @@ in this initialization we provide a [[prepare]] function below.
 namespace glsim {
 <<Simulation declaration>>
 <<prepare declaration>>
-<<SBSimulation declaration>>
-<<TBSimulation declaration>> 
 }
 <<out-of-namespace declarations>>
 
 #endif /* _SIMULATION_HH_ */
 
 <<simulation.cc>>=
+#include <iomanip>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -92,9 +94,9 @@ public:
   virtual long run();
 
   virtual void step()=0;
-  virtual void log_start_sim() {}
+  virtual void log_start_sim();
   virtual void log() {}
-  virtual void log_stop_sim() {}
+  virtual void log_stop_sim();
   virtual ~Simulation() {}
 
 protected:
@@ -107,8 +109,9 @@ protected:
 
 private:
   static void sigterm_handler(int);
-
+  std::string boost_duration_to_string(boost::posix_time::time_duration);
   static struct sigaction postpone_term;
+  boost::timer::cpu_timer simulation_timer;
 } ;
 
 <<out-of-namespace declarations>>=
@@ -191,6 +194,67 @@ long Simulation::run()
   }
   log_stop_sim();
   return env.steps_in_stage;
+}
+
+@ \subsection{Start and stop logging}
+
+Keep track of elapsed time.
+
+<<Simulation methods>>=
+void Simulation::log_start_sim()
+{
+  boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
+  boost::gregorian::date  d=now.date();
+  logs(info) << "***** SIMULATION START ***** "
+	     << d.day_of_week() << ' '
+	     << d.day() << '-' << d.month() << '-' << d.year()
+	     << ' ' << now.time_of_day()
+	     << '\n';
+  simulation_timer.start();
+}
+
+void Simulation::log_stop_sim()
+{
+  using namespace boost::posix_time;
+  using namespace boost::gregorian;
+  using namespace boost::timer;
+
+  simulation_timer.stop();
+  ptime now = second_clock::local_time();
+  date  d=now.date();
+  logs(info) << "***** SIMULATION STOP ****** "
+	     << d.day_of_week() << ' '
+	     << d.day() << '-' << d.month() << '-' << d.year()
+	     << ' ' << now.time_of_day()
+	     << '\n';
+
+  cpu_times     simtimes=simulation_timer.elapsed();
+  time_duration total=millisec(simtimes.wall/1000000);
+  time_duration user=millisec(simtimes.user/1000000);
+  time_duration system=millisec(simtimes.system/1000000);
+
+  logs(info) << "\n      Elapsed time : "
+	     << boost_duration_to_string(total) << '\n';
+  logs(info) << "      CPU time     : "
+	     << boost_duration_to_string(user+system)
+	     << "  (" << boost_duration_to_string(user) << " user)\n";
+  if (total.total_milliseconds()>0)
+    logs(info) << "      Steps/second : "
+	       << 1000.0*env.steps_in_stage / total.total_milliseconds() << '\n';
+}
+
+std::string 
+Simulation::boost_duration_to_string(boost::posix_time::time_duration t)
+{
+  long days=t.hours()/24;
+  long hours=t.hours() % 24;
+  int  centisecs=100.0*t.fractional_seconds() /
+    boost::posix_time::time_duration::ticks_per_second();
+  std::stringstream ss;
+  ss << days << ' ' << std::setfill('0') << std::setw(2) << hours << ':';
+  ss << std::setw(2) << t.minutes() << ':' << std::setw(2) << t.seconds()
+     << '.' << std::setw(2) << centisecs;
+  return ss.str();
 }
 
 @ \section{Preparing configuration and environment}

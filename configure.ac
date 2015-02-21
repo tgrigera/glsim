@@ -39,6 +39,7 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS([stdlib.h unistd.h])
 AC_CHECK_HEADER([gsl/gsl_rng.h],,exit)
 AC_CHECK_HEADER([boost/program_options.hpp],,exit)
+AC_CHECK_HEADER([boost/timer/timer.hpp],,exit)
 
 #
 # Checks for libraries. NOTE that the c++ libs are not properly
@@ -52,6 +53,16 @@ AC_CHECK_HEADER([boost/program_options.hpp],,exit)
 AC_CHECK_LIB([gslcblas], [cblas_dsdot],,exit)
 AC_CHECK_LIB([gsl], [gsl_rng_alloc],,exit)
 
+# Boost::system
+AC_MSG_CHECKING([for working -lboost_system])
+SAVED_LIBS=$LIBS
+LIBS="-lboost_system $LIBS"
+AC_LINK_IFELSE(
+  [AC_LANG_PROGRAM([#include <boost/system/error_code.hpp>],
+  	           [boost::system::error_code e;])],
+  AC_MSG_RESULT(yes) ; AC_DEFINE([HAVE_LIBBOOST_SYSTEM],[1],[Define if Boost::system is available]),
+  AC_MSG_RESULT(no) ; [LIBS=$SAVED_LIBS] ; [AC_MSG_FAILURE([cannot build without boost::system])])
+
 # Boost::program_options
 AC_MSG_CHECKING([for working -lboost_program_options])
 SAVED_LIBS=$LIBS
@@ -61,6 +72,7 @@ AC_LINK_IFELSE(
     [boost::program_options::options_description opt])],
   AC_MSG_RESULT(yes) ; AC_DEFINE([HAVE_LIBBOOST_PROGRAM_OPTIONS],[1],[Define if Boost::program_options available]) ,
   AC_MSG_RESULT(no) ; [LIBS=$SAVED_LIBS] ; [AC_MSG_FAILURE([cannot build without boost::program_options])])
+
 # Boost::serialization
 AC_MSG_CHECKING([for working -lboost_serialization])
 SAVED_LIBS=$LIBS
@@ -72,6 +84,26 @@ AC_LINK_IFELSE(
       boost::archive::binary_oarchive oa(os);])],
   AC_MSG_RESULT(yes) ; AC_DEFINE([HAVE_LIBBOOST_SERIALIZATION],[1],[Define if Boost::serialization is available]),
   AC_MSG_RESULT(no) ; [LIBS=$SAVED_LIBS] ; [AC_MSG_FAILURE([cannot build without boost::serialization])])
+
+# Boost::date_time
+AC_MSG_CHECKING([for working -lboost_date_time])
+SAVED_LIBS=$LIBS
+LIBS="-lboost_date_time $LIBS"
+AC_LINK_IFELSE(
+  [AC_LANG_PROGRAM([#include <boost/date_time/posix_time/posix_time.hpp>],
+  	           [boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();])],
+  AC_MSG_RESULT(yes) ; AC_DEFINE([HAVE_LIBBOOST_DATE_TIME],[1],[Define if Boost::date_time is available]),
+  AC_MSG_RESULT(no) ; [LIBS=$SAVED_LIBS] ; [AC_MSG_FAILURE([cannot build without boost::date_time])])
+
+# Boost::timer
+AC_MSG_CHECKING([for working -lboost_timer])
+SAVED_LIBS=$LIBS
+LIBS="-lboost_timer $LIBS"
+AC_LINK_IFELSE(
+  [AC_LANG_PROGRAM([#include <boost/timer/timer.hpp>],
+  	           [boost::timer::auto_cpu_timer t;])],
+  AC_MSG_RESULT(yes) ; AC_DEFINE([HAVE_LIBBOOST_TIMER],[1],[Define if Boost::timer is available]),
+  AC_MSG_RESULT(no) ; [LIBS=$SAVED_LIBS] ; [AC_MSG_FAILURE([cannot build without boost::timer])])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
