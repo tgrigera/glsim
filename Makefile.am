@@ -29,7 +29,7 @@ $(idir):
 
 BUILT_SOURCES = $(idir)
 
-SUBDIRS = . blib test $(CONDITIONAL_SUBDIRS)
+SUBDIRS = . blib lattice test $(CONDITIONAL_SUBDIRS)
 
 MAINTAINERCLEANFILES = config.guess config.sub configure depcomp	\
 		       install-sh ltmain.sh Makefile.in missing aclocal.m4 m4/*

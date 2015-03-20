@@ -131,6 +131,18 @@ pkginclude_HEADERS = $(errors_hdr) $(logging_hdr) $(random_hdr)	\
 
 bin_SCRIPTS = readbt.sh
 
+bin_PROGRAMS = glweb
+
+glweb_SOURCES = glweb.c
+
+doc_DATA = glweb.pdf
+
+glweb.pdf : glweb.tex
+	pdflatex glweb
+
+glweb.tex : glweb glweb.c
+	./glweb -d glweb.tex -c $(srcdir)/glweb.c
+
 #
 # library
 #

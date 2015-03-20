@@ -248,14 +248,20 @@ public:
 } ;
 
 class Invalid_value : public Logic_error {
-private:
-  std::string msg;
 public:
   explicit Invalid_value(const std::string& value,const std::string& par,
 			 const Source_context &c=Source_context() ) :
     Logic_error("invalid value ("+value+") for parameter "+par,c)
   {}
   ~Invalid_value() throw () {}
+} ;
+
+
+class Out_of_range : public Logic_error {
+public:
+  explicit Out_of_range(const Source_context &c=Source_context() ) :
+    Logic_error("out of range",c) {}
+  ~Out_of_range() throw () {}
 } ;
 
 

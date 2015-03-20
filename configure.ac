@@ -123,6 +123,7 @@ AC_FUNC_STRFTIME
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile
 	         blib/Makefile
+                 lattice/Makefile
                  test/Makefile
 		 doc/Makefile
 		 doc/version.tex])

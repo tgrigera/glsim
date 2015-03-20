@@ -37,7 +37,7 @@
 
 SUFFIXES = .nw .def .tex
 
-VPATH += : $(top_srcdir)/blib
+VPATH += : $(top_srcdir)/blib : $(top_srcdir)/lattice
 
 .nw.def:
 	@DEF@ $< >$@
@@ -49,7 +49,8 @@ VPATH += : $(top_srcdir)/blib
 # Targets
 #
 
-BUILT_SOURCES = glsim.dvi
+BUILT_SOURCES = dsbweb newdoc.pdf
+# BUILT_SOURCES = glsim.dvi newdoc.pdf
 
 glsim.dvi: $(texfiles)
 	export TEXINPUTS=$(TEXINPUTS):$(top_srcdir)/doc: ; \
@@ -88,6 +89,14 @@ all.def: $(deffiles)
 
 EXTRA_DIST = glsim.nw glsim.bib gpl.tex version.tex.in $(texfiles) \
              all.def $(deffiles)
+
+newdoc.pdf: graph.hh
+	./dsbweb -p preamble.tex -d newdoc.tex -c $<
+	pdflatex newdoc.tex
+
+bin_PROGRAMS = dsbweb
+
+dsbweb_SOURCES = dsbweb.c
 
 #
 # Cleaning
