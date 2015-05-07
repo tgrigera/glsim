@@ -41,7 +41,7 @@
 
 namespace glsim {
 
-/** \ingroup Graph
+/** \ingroup lattice
  * \brief class for the Bethe lattice
  *
  * The Bethe lattice is a graph with fixed connectivity but no loops

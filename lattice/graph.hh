@@ -529,6 +529,9 @@ public:
   node_iterator(GraphBase<nodeT> &g,id_t ini_site=0) :
     graph(g), nn(g.nodes+ini_site) {}
 
+  node_iterator(GraphBase<nodeT> &g,nodeT *n_) :
+    graph(g), nn(n_) {}
+
   node_iterator(const GraphBase<nodeT>::node_iterator &i) :
     graph(i.graph), nn(i.nn) {}
 
@@ -566,9 +569,13 @@ public:
   ///@{
 
   node_iterator& to(int n) {nn=graph.nodes+nn; return *this;}
-  node_iterator& to_neighbour(int n) {nn=graph.node_neighbours(nn)+n; return *this;}
+  node_iterator& to(nodeT* n_) {nn=n_; return *this;}
 
-  int    neighbour_size() const {return graph.neighbour_size(graph.id(nn));}
+  int            neighbour_size() const
+  {return graph.neighbour_size(graph.id(nn));}
+  node_iterator& to_neighbour(int n)
+  {nn=graph.node_neighbours(nn)[n]; return *this;}
+
   nodeT& neighbour(int i) const {return *(graph.node_neighbours(nn)[i]);}
 
   operator nodeT*() const {return nn;}
