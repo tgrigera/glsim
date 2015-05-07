@@ -17,3 +17,9 @@ ltmain.sh
 build
 m4
 config.h.in
+compile
+test-driver
+GPATH
+GRTAGS
+GSYMS
+GTAGS

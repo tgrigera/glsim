@@ -4,7 +4,7 @@
 # This file is part of glsim, a numerical simulation class library and
 # helper programs.
 #
-# glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014
+# glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014, 2015
 #                        by Tomas S. Grigera.
 # 
 #
@@ -29,7 +29,8 @@ $(idir):
 
 BUILT_SOURCES = $(idir)
 
-SUBDIRS = . blib lattice test $(CONDITIONAL_SUBDIRS)
+#SUBDIRS = . blib lattice test $(CONDITIONAL_SUBDIRS)
+SUBDIRS = . lattice $(CONDITIONAL_SUBDIRS)
 
 MAINTAINERCLEANFILES = config.guess config.sub configure depcomp	\
 		       install-sh ltmain.sh Makefile.in missing aclocal.m4 m4/*

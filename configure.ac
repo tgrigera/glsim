@@ -1,12 +1,21 @@
-# configure.ac for glsim
 #
+# configure.ac -- autoconf script for glsim
 #
 # This file is part of glsim, a numerical simulation class library and
 # helper programs.
 #
+# glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014, 2015
+# by Tomas S. Grigera.
+# 
+#
+
+###############################################################################
+#
+# Initialization
+#
 AC_PREREQ([2.67])
 AC_INIT([glsim],[1.0.0],[tgrigera@users.sourceforge.net])
-AC_CONFIG_SRCDIR([blib/blib.nw])
+AC_CONFIG_SRCDIR([blib/blib.nw])  # Check just one file as safety check
 AC_CONFIG_MACRO_DIR([m4])
 AC_LANG(C++)
 AM_INIT_AUTOMAKE
@@ -17,36 +26,42 @@ LT_INIT
 # https://www.sourceware.org/autobook/autobook/autobook_91.html#SEC91
 AC_SUBST(LIBGLSIM_VERSION,[1:0:0])
 
-# Checks for programs.
+###############################################################################
+#
+# Checks for programs to needed to build
+#
 AC_PROG_MAKE_SET
 AC_PROG_CPP
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_LN_S
 AC_PROG_INSTALL
+
+#
+# Check for programs needed to build documentation.  Failure
+# will result only in warning and build will proceed w/o documentation
+
 AC_CHECK_PROG(LATEX,latex,latex,[not found])
 AC_CHECK_PROG(BIBTEX,bibtex,bibtex,[not found])
 AM_CONDITIONAL([HASLATEX],[test x"$LATEX" != x"not found" -a x"$BIBTEX" != x"not found"])
-AC_CHECK_PROG(TANGLE,notangle,notangle,[not found])
-AC_CHECK_PROG(WEAVE,noweave,noweave,[not found])
-AC_CHECK_PROG(DEF,nodefs,nodefs,[not found])
-AC_CHECK_PROG(INDEX,noindex,noindex,[not found])
-AC_CHECK_PROG(CPIF,cpif,cpif,[not found])
-AS_IF([test x"$TANGLE" = x"not found"],[AC_MSG_WARN([****** noweb not found, no source code editing, see README])])
+AC_CHECK_PROG(DOXYGEN,doxygen,doxygen,[not found])
+AS_IF([test x"$DOXYGEN" = x"not found"],[AC_MSG_WARN([Doxygen not found --- Reference manual will not be built])])
+AM_CONDITIONAL([HAS_DOXYGEN],[test x"$DOXYGEN" != x"not found"])
+AM_COND_IF([HAS_DOXYGEN],AC_CONFIG_FILES([doc/doxy.conf]))
 
+###############################################################################
+#
 # Checks for header files.
+#
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stdlib.h unistd.h])
 AC_CHECK_HEADER([gsl/gsl_rng.h],,exit)
 AC_CHECK_HEADER([boost/program_options.hpp],,exit)
 AC_CHECK_HEADER([boost/timer/timer.hpp],,exit)
 
+###############################################################################
 #
-# Checks for libraries. NOTE that the c++ libs are not properly
-# checked, only their existence is. Consider macro AX_CXX_CHECK_LIB from
-# sourceforge (guido draheim). For now I'm trying an approach learned from
-# http://nerdland.net/2009/07/detecting-c-libraries-with-autotools/
-# with boost
+# Checks for libraries
 #
 
 # GSL
