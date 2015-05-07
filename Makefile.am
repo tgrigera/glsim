@@ -13,12 +13,12 @@
 ACLOCAL_AMFLAGS=-I m4
 
 .PHONY:  doc
-if HASLATEX
+if HAS_DOXYGEN
 doc:
 	cd doc && make
 else
 doc:
-	echo "***** LaTeX not found *****"
+	echo "***** Doxygen not found *****"
 	echo "Cannot build documentation"
 endif
 

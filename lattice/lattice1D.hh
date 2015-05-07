@@ -80,6 +80,7 @@ public:
   ///\name Construction, copy and comparison
   //@{
   node_iterator(Periodic1DLattice<nodeT> &l,id_t i=0);
+  node_iterator(Periodic1DLattice<nodeT> &l,nodeT*);
 
   node_iterator(const node_iterator &i);
   
@@ -129,12 +130,15 @@ public:
 
   ///\name Extra methods (including neighbour access)
   ///@{
-  node_iterator& to(id_t n);
+  node_iterator& to(id_t i);
+  node_iterator& to(nodeT *n_) {to(lat.id(n_));}
+
+  int            neighbour_size() const {return 2;}
   node_iterator& to_neighbour(int n);
-  int    neighbour_size() const {return 2;}
-  nodeT& neighbour(int i) const {return *(ng[i]);}
-  nodeT& L() const {return *(ng[0]);}
-  nodeT& R() const {return *(ng[1]);}
+
+  nodeT&         neighbour(int i) const {return *(ng[i]);}
+  nodeT&         L() const {return *(ng[0]);}
+  nodeT&         R() const {return *(ng[1]);}
 
   operator nodeT*() const {return n;}
 
@@ -152,6 +156,14 @@ node_iterator(Periodic1DLattice<nodeT> &l,id_t i) :
   lat(l)
 {
   to(i);
+}
+
+template <typename nodeT> inline
+Periodic1DLattice<nodeT>::node_iterator::
+node_iterator(Periodic1DLattice<nodeT> &l,nodeT *n_) :
+  lat(l)
+{
+  to(n_);
 }
 
 template <typename nodeT> inline

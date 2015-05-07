@@ -43,8 +43,6 @@
 # Targets
 #
 
-if HAS_DOXYGEN
-
 man_directory = $(top_builddir)/doc/man/man3
 
 ### tal vez dist_man_etc
@@ -65,65 +63,6 @@ all-local: html
 
 clean-local:
 	rm -rf $(top_srcdir)/docs/man
-
-else
-CLEANFILES = 
-endif
-
-
-# BUILT_SOURCES = newdoc.pdf
-# # BUILT_SOURCES = glsim.dvi newdoc.pdf
-
-# glsim.dvi: $(texfiles)
-# 	export TEXINPUTS=$(TEXINPUTS):$(top_srcdir)/doc: ; \
-# 	export BIBINPUTS=$(top_srcdir)/doc ; \
-#         @LATEX@ glsim.tex ; \
-# 	@BIBTEX@ glsim ; \
-# 	@INDEX@ glsim.tex ; \
-# 	sed 's/_/\\_/g;' glsim.nwi >glsim.nwi.$$$$ ; mv glsim.nwi.$$$$ glsim.nwi ;\
-#         @LATEX@ glsim.tex ; \
-#         @LATEX@ glsim.tex
-
-# texfiles = glsim.tex $(blib_texfiles)
-
-# deffiles = glsim.def $(blib_deffiles)
-
-# blib_texfiles = blib.tex errors.tex logging.tex random.tex		\
-#                 parameters.tex environment.tex configuration.tex	\
-#                 simulation.tex
-
-# blib_deffiles = blib.def errors.def logging.def random.def		\
-#                 parameters.def environment.def configuration.def	\
-#                 simulation.def
-
-# $(texfiles): all.def
-
-# all.def: $(deffiles)
-# 	sort -u $^ >$@
-
-#
-# Installation
-#
-
-#
-# Distribution
-#
-
-# EXTRA_DIST = glsim.nw glsim.bib gpl.tex version.tex.in $(texfiles) \
-#              all.def $(deffiles)
-
-# %.tex : %.hh
-# 	$(top_builddir)/blib/glweb -c $< -o $@
-
-# graph.tex : graph.hh
-
-# graph_texfiles = graph.tex
-
-# BUILT_SOURCES += $(graph_texfiles)
-
-# newdoc.pdf: newdoc.tex $(graph_texfiles)
-# 	pdflatex $<
-
 
 #
 # Cleaning

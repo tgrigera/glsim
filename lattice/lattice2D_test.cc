@@ -71,12 +71,12 @@ void PeriodicSQLattice_test::test_iterator()
   Graph_test::test_iterator(lattice);
 
   // now we test the neighbour stuff
-  glsim::PeriodicSQLattice<double>::node_iterator ni(lattice,&lattice(3,3));
-  lattice(3,3)=0;
-  lattice(3,4)=1;  // N
-  lattice(4,3)=2;  // E
-  lattice(3,2)=3;  // S
-  lattice(2,3)=4;  // W
+  glsim::PeriodicSQLattice<double>::node_iterator ni(lattice,&lattice(0,0));
+  lattice(0,0)=0;
+  lattice(0,1)=1;  // N
+  lattice(1,0)=2;  // E
+  lattice(0,lattice.size_y()-1)=3;  // S
+  lattice(lattice.size_x()-1,0)=4;  // W
 
   struct ntest {
     void operator()(double &s)
@@ -90,7 +90,7 @@ void PeriodicSQLattice_test::test_iterator()
   check_result("node iterator neighbour access",
 	       for_each_neighbour(ni,ntest()).ok,true);
 
-  ni.to(2,3);
+  ni.to(lattice.size_x()-1,0);
   check_result("node iterator movement",*ni,4.);
   ni.to_neighbour(1);
   check_result("node iterator neighbour movement",*ni,0.);

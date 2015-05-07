@@ -15,13 +15,14 @@ AM_CXXFLAGS=--std=c++11
 
 pkginclude_HEADERS = graph.hh
 
-check_PROGRAMS = graph_ck lattice2D_test lattice3D_test
+check_PROGRAMS = graph_ck lattice1D_test lattice2D_test lattice3D_test
 
 graph_ck_SOURCES = graph_ck.cc
+lattice1D_test_SOURCES = graph_test.cc lattice1D_test.cc ../blib/scontext.cc
 lattice2D_test_SOURCES = graph_test.cc lattice2D_test.cc ../blib/scontext.cc
 lattice3D_test_SOURCES = graph_test.cc lattice3D_test.cc ../blib/scontext.cc
 
-TESTS = lattice2D_test lattice3D_test
+TESTS = lattice1D_test lattice2D_test lattice3D_test
 
 #doc_DATA = lattice.pdf
 

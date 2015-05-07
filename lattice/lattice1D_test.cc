@@ -1,5 +1,5 @@
 /*
- * lattice3D_test.hh -- testing for classes defined in lattice3D.hh
+ * lattice1D_test.hh -- testing for classes defined in lattice1D.hh
  *
  * This file is part of glsim, a numerical simulation class library and
  * helper programs.
@@ -34,55 +34,51 @@
  *
  */
 
-#include "lattice3D.hh"
+#include "lattice1D.hh"
 #include "test_exception.hh"
 
 #include "graph_test.hh"
 
-class PeriodicSCLattice_test : public Graph_test<glsim::PeriodicSCLattice<double>> {
+class Periodic1DLattice_test : public Graph_test<glsim::Periodic1DLattice<double>> {
  public:
-  PeriodicSCLattice_test(int L);
+  Periodic1DLattice_test(int L);
 
   void test();
   void test_access();
   void test_iterator();
 
  private:
-  int    Lx,Ly,Lz;
-  glsim::PeriodicSCLattice<double> lattice;
+  int    L;
+  glsim::Periodic1DLattice<double> lattice;
 } ;
 
-PeriodicSCLattice_test::PeriodicSCLattice_test(int L) :
-  Lx(L), Ly(L+3), Lz(L+1),
-  lattice(Lx,Ly,Lz)
+Periodic1DLattice_test::Periodic1DLattice_test(int L_) :
+  L(L_),
+  lattice(L)
 {}
 
-void PeriodicSCLattice_test::test_access()
+void Periodic1DLattice_test::test_access()
 {
-  for (int i=0; i<Lx*Ly*Lz; ++i)
+  for (int i=0; i<L; ++i)
     lattice.data()[i]=55.5;
 
-  check_result("test_access",lattice(Lx-1,Ly-1,Lz-1),55.5);
+  check_result("test_access",lattice[L-1],55.5);
 }
 
-void PeriodicSCLattice_test::test_iterator()
+void Periodic1DLattice_test::test_iterator()
 {
   // The bidirectional iterator operator are tested by the base class
   Graph_test::test_iterator(lattice);
 
   // now we test the neighbour stuff
-  glsim::PeriodicSCLattice<double>::node_iterator ni(lattice,&lattice(3,3,0));
-  lattice(3,3,0)=0;
-  lattice(3,4,0)=1;  // N
-  lattice(4,3,0)=2;  // E
-  lattice(3,2,0)=3;  // S
-  lattice(2,3,0)=4;  // W
-  lattice(3,3,1)=5;  // U
-  lattice(3,3,lattice.size_z()-1)=6;  // D
+  glsim::Periodic1DLattice<double>::node_iterator ni(lattice,&(lattice[3]));
+  lattice[3]=0;
+  lattice[2]=1; // L
+  lattice[4]=2; // R
 
   struct ntest {
     void operator()(double &s)
-    {ok = ok && s==n; n+=1.; }
+    {ok = ok && s==n; n+=1.;}
     bool ok;
     double n;
 
@@ -92,15 +88,15 @@ void PeriodicSCLattice_test::test_iterator()
   check_result("node iterator neighbour access",
 	       for_each_neighbour(ni,ntest()).ok,true);
 
-  ni.to(3,3,lattice.size_z()-1);
-  check_result("node iterator movement",*ni,6.);
-  ni.to_neighbour(4);
-  check_result("node iterator neighbour movement",*ni,0.);
+  // ni.to(2,3);
+  // check_result("node iterator movement",*ni,4.);
+  // ni.to_neighbour(1);
+  // check_result("node iterator neighbour movement",*ni,0.);
 }
 
-void PeriodicSCLattice_test::test()
+void Periodic1DLattice_test::test()
 {
-  test_info(lattice,Lx*Ly*Lz,6);
+  test_info(lattice,L,2);
   test_plain_access(lattice);
   test_access();
   test_iterator();
@@ -108,6 +104,6 @@ void PeriodicSCLattice_test::test()
 
 void run_tests()
 {
-  PeriodicSCLattice_test pt(20);
+  Periodic1DLattice_test pt(20);
   pt.test();
 }
