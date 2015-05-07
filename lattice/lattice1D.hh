@@ -39,56 +39,51 @@
 
 #include <graph.hh>
 
-/* @T
+namespace glsim {
 
-\section{Periodic 1-$d$ lattice}
+/** \ingroup lattice
 
-A trivial 1-$d$ Bravais lattice with periodic boundary conditions,
-mostly for pedagogical and testing purposes
+ \brief  A periodic lattice in one dimension.
+
+ A trivial 1-d Bravais lattice with periodic boundary conditions,
+ mostly for pedagogical and testing purposes.  Provides a
+ node_iterator that knows about left and right neighbours.
 
 */
-
 template <typename nodeT>
 class Periodic1DLattice : public GraphBase<nodeT> {
 public:
-  Periodic1DLattice(int n);
+  Periodic1DLattice(int N);
 
   class node_iterator;
-  class neighbour_iterator;
 
-  node_iterator      begin() {return node_iterator(*this);}
-  nodeT*             end() {return GraphBase<nodeT>::nodes+GraphBase<nodeT>::Nnodes;}
-  neighbour_iterator neighbour_begin(ptrdiff_t id)
-  {return neighbour_iterator(*this,id);}
-  neighbour_iterator neighbour_begin(nodeT* n)
-  {return neighbour_begin(this->id(n));}
-  int neighbour_end(ptrdiff_t id) {return 0;}
-  int neighbour_end(nodeT* n)  {return 0;}
-
+  node_iterator begin() {return node_iterator(*this);}
+  nodeT*        end() {return GraphBase<nodeT>::data()+GraphBase<nodeT>::size();}
 } ;
 
+/** \brief Create a periodic lattice with the specified number of nodes
+ */
 template <typename nodeT> inline
-Periodic1DLattice<nodeT>::Periodic1DLattice(int n) :
-  GraphBase<nodeT>(n,2,false)
+Periodic1DLattice<nodeT>::Periodic1DLattice(int N) :
+  GraphBase<nodeT>(N,2,false)
 {}
 
-// Node iterator
+/** \brief Bidirectional iterator for Periodic1DLattice
+ */
 template <typename nodeT>
 class Periodic1DLattice<nodeT>::node_iterator :
   public std::iterator<std::bidirectional_iterator_tag,nodeT>
 {
 public:
-  typedef Periodic1DLattice<nodeT> Graph_t;
+  typedef Periodic1DLattice<nodeT> Graph_t; ///< The type of the graph we belong to
 
-  node_iterator(Periodic1DLattice<nodeT> &l) :
-    lat(l), n(l.data()), LL(l.data()+l.size()-1), RR(l.data()+1) {}
+  ///\name Construction, copy and comparison
+  //@{
+  node_iterator(Periodic1DLattice<nodeT> &l,id_t i=0);
 
-  node_iterator(const node_iterator &i) :
-  lat(i.lat), n(i.n), LL(i.LL), RR(i.RR)
-  {}
+  node_iterator(const node_iterator &i);
   
-  node_iterator& operator=(const node_iterator &it)
-  {if (this==&it) return *this; lat=it.lat; n=it.n; RR=it.RR; LL=it.RR; return *this;}
+  node_iterator& operator=(const node_iterator &it);
   
   bool operator==(const node_iterator &i)
   {return n==i.n;}
@@ -102,16 +97,18 @@ public:
   bool operator!=(nodeT* p)
   {return n!=p;}
   
-  nodeT* L() const {return RR;}
-  nodeT* R() const {return LL;}
-  
+  //@}
+  ///\name Operators required by standard bidirectional iterators
+  ///@{
   nodeT& operator*() const {return *n;}
   nodeT* operator->() const {return n;}
   
   node_iterator& operator++()
   {
-    ++n; ++LL; ++RR;
-    RR-=lat.size() * (lat.id(RR) / lat.size());
+    ++n;
+    ++(ng[0]);
+    ++(ng[1]);
+    ng[1]-=lat.size() * (lat.id(ng[1]) / lat.size());
     return *this;
   }
   
@@ -120,89 +117,101 @@ public:
   node_iterator& operator--()
   {
     --n;
-    --LL;
-    --RR;
-    LL+=lat.size() * (lat.id(RR) / lat.size());
+    --(ng[0]);
+    --(ng[1]);
+    ng[0]+=lat.size() * (lat.id(ng[0]) / lat.size());
     return *this;
   }
 
   node_iterator operator--(int) {node_iterator c=*this; --(*this); return c;}
 
-  // Above methods are required by a standard iterator; we add the following
+  ///@}
 
-  // node_iterator& to(int n) {nn=graph.nodes+nn; return *this;}
-  // node_iterator& to_neighbour(int n) {nn=graph.node_neighbours(nn)+n; return *this;}
-  // nodeT* neighbour(int i) const {return graph.node_neighbours(nn)+i;}
+  ///\name Extra methods (including neighbour access)
+  ///@{
+  node_iterator& to(id_t n);
+  node_iterator& to_neighbour(int n);
+  int    neighbour_size() const {return 2;}
+  nodeT& neighbour(int i) const {return *(ng[i]);}
+  nodeT& L() const {return *(ng[0]);}
+  nodeT& R() const {return *(ng[1]);}
 
-  // protected:
-public:
-  Graph_t&  lat;
-  nodeT     *n,*LL,*RR;
+  operator nodeT*() const {return n;}
+
+  ///@}
+
+private:
+  Graph_t &lat;
+  nodeT   *n,*ng[2];
 } ;
 
 
+template <typename nodeT> inline
+Periodic1DLattice<nodeT>::node_iterator::
+node_iterator(Periodic1DLattice<nodeT> &l,id_t i) :
+  lat(l)
+{
+  to(i);
+}
+
+template <typename nodeT> inline
+Periodic1DLattice<nodeT>::node_iterator::
+node_iterator(const node_iterator &i) :
+  lat(i.lat),
+  n(i.n)
+{
+  ng[0]=i.ng[0];
+  ng[1]=i.ng[1];
+}
+
+template <typename nodeT> inline
+typename Periodic1DLattice<nodeT>::node_iterator&
+Periodic1DLattice<nodeT>::node_iterator::
+operator=(const node_iterator &it)
+{
+  if (this==&it) return *this;
+  lat=it.lat;
+  n=it.n;
+  ng[0]=it.ng[0];
+  ng[1]=it.ng[1];
+  return *this;
+}
+
+/*
+ * movement
+ *
+ */
+
+template <typename nodeT>
+typename Periodic1DLattice<nodeT>::node_iterator&
+Periodic1DLattice<nodeT>::node_iterator::to(id_t i)
+{
+  n=lat.data()+i;
+  ng[0]=n-1;
+  ng[0]+=lat.size() * (lat.id(ng[0]) / lat.size());
+  ng[1]=n+1;
+  ng[1]-=lat.size() * (lat.id(ng[1]) / lat.size());
+  return *this;
+}
+
+template <typename nodeT> inline
+typename Periodic1DLattice<nodeT>::node_iterator&
+Periodic1DLattice<nodeT>::node_iterator::to_neighbour(int i)
+{
+  id_t nid=GraphBase<nodeT>::id(ng[i]);
+  to(nid);
+}
+
 // template <typename nodeT,typename Function>
-// inline Function for_each_neighbour(PeriodicSQLattice<nodeT>& lat,
-// 				   typename PeriodicSQLattice<nodeT>::node_iterator& n,Function f)
+// inline Function for_each_neighbour(typename Periodic1DLattice<nodeT>::node_iterator& n,Function f)
 // {
-//   f(n.N());
-//   f(n.S());
-//   f(n.E());
-//   f(n.W());
+// std::cout << "This is meee\n"; exit(0);
+//   f(n.L());
+//   f(n.R());
 // }
 
 
-
-// Neighbour iterator
-
-template <typename nodeT>
-class Periodic1DLattice<nodeT>::neighbour_iterator :
-  public GraphBase<nodeT>::neighbour_iterator
-{
-  using GraphBase<nodeT>::neighbour_iterator::nn;
-
-public:
-  neighbour_iterator(const Periodic1DLattice<nodeT>& graph,ptrdiff_t inode) :
-  GraphBase<nodeT>::neighbour_iterator(nlist)
-  {
-    nlist[0]=inode==0 ? graph.nodes+graph.size()-1 : graph.nodes+inode-1;
-    nlist[1]=inode==graph.size()-1 ? graph.nodes : graph.nodes+inode+1;
-  }
-
-  neighbour_iterator(const neighbour_iterator &ni) :
-  GraphBase<nodeT>::neighbour_iterator(nlist)
-  {nlist[0]=ni.nlist[0]; nlist[1]=ni.nlist[1];
-    nn=nlist+(ni.nn-ni.nlist);}
-
-  neighbour_iterator& operator=(const neighbour_iterator& ni)
-  {nlist[0]=ni.nlist[0]; nlist[1]=ni.nlist[1];
-    nn=nlist+(ni.nn-ni.nlist);}
-
-  bool operator==(const typename GraphBase<nodeT>::neighbour_iterator &i)
-  {return nn==i.nn;}
-
-  bool operator!=(int p)
-  {return nn!=nlist+2;}
-
-  nodeT& operator*() const {return **nn;}
-  nodeT* operator->() const {return *nn;}
-
-  neighbour_iterator& operator++() {++nn; return *this;}
-  neighbour_iterator& operator++(int) {neighbour_iterator c=*this; ++nn; return *this;}
-  neighbour_iterator& operator--() {nn--; return *this;}
-  neighbour_iterator& operator--(int) {neighbour_iterator c=*this; --nn; return *this;}
-
-private:
-  nodeT *nlist[2];
-} ;
-
-template <typename nodeT,typename Function>
-inline Function for_each_neighbour(Periodic1DLattice<nodeT>::node_iterator& n,Function f)
-{
-  f(n.L());
-  f(n.R());
-}
-
+} /* namespace */
 
 #endif /* _LATTICE1D_HH_ */
 

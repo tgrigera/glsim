@@ -15,23 +15,15 @@ AM_CXXFLAGS=--std=c++11
 
 pkginclude_HEADERS = graph.hh
 
-check_PROGRAMS = graph_ck
+check_PROGRAMS = graph_ck lattice2D_test lattice3D_test
 
 graph_ck_SOURCES = graph_ck.cc
+lattice2D_test_SOURCES = graph_test.cc lattice2D_test.cc ../blib/scontext.cc
+lattice3D_test_SOURCES = graph_test.cc lattice3D_test.cc ../blib/scontext.cc
 
-doc_DATA = lattice.pdf
+TESTS = lattice2D_test lattice3D_test
 
-SUFFIXES = .tex .pdf
+#doc_DATA = lattice.pdf
 
-EXTRA_DIST = lattice.tex
-
-lattice.pdf: lattice.tex graph.tex
-
-.hh.tex:
-	../blib/glweb -o $@ -c $^
-
-.tex.pdf:
-	pdflatex $<
-
-CLEANFILES = graph.tex *.aux *.log *.pdf
+#CLEANFILES = graph.tex *.aux *.log *.pdf
 
