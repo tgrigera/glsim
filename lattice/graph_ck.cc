@@ -36,56 +36,66 @@
 
 #include <cmath>
 #include <iostream>
+#include <stdlib.h>
 #include <boost/timer/timer.hpp>
 
 #include <glsim/cerrors.h>
 
+#include <typeinfo>
+#include "bethe.hh"
 #include "lattice1D.hh"
 #include "lattice2D.hh"
+#include "lattice3D.hh"
+
 
 #define BIGSIZE 100000000
 #define RTBIGSIZE 10000
+#define QRTBIGSIZE 400
 // #define BIGSIZE 100
 // #define RTBIGSIZE 10
 
-void check_1d()
+/******************************************************************************/
+
+void check_bethe()
 {
+  using glsim::BetheLattice;
+  
   boost::timer::cpu_timer timer;
 
-  std::cout << "\n\n***** Testing Periodic1DLattice\n\n";
+  std::cout << "\n\n***** Testing BetheLattice\n\n";
 
-  std::cout << "-- Creating, filling and processing simple array of size "
-	    << BIGSIZE << "\n";
+  int z=4,L=14;
+  int N=1+z*(powf(z-1,L)-1)/(z-2);
+
+  double *l=new double[N];
+  std::cout << "-- Filling and processing simple array of size "
+	    << N << "\n";
   timer.start();
-  double *l=new double[BIGSIZE];
   *l=10;
-  for (double* d=l+1; d!=l+BIGSIZE; )
+  for (double* d=l+1; d!=l+N; )
     *d=*(d++-1)+1.1;
-
-  for (double* d=l; d!=l+BIGSIZE; d++)
-    *d+=sin(*d);
 
   timer.stop();
   std::cout << "  " << boost::timer::format(timer.elapsed());
 
-  std::cout << "-- Creating, filling and processing Periodic1DLattice through data() pointer\n";
+  std::cout << "-- Creating BetheLattice\n";
   timer.start();
-  Periodic1DLattice<double> lat(BIGSIZE);
+  BetheLattice<double> lat(z,L);
+  std::cout << "   Bethe size " << lat.size() << '\n';
+  timer.stop();
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+  std::cout << "-- Filling and processing BetheLattice through data() pointer\n";
+  timer.start();
   double *d=lat.data();
   *d=10;
   for (; d!=lat.data()+lat.size(); d++)
     *d=*(d-1)+1.1;
-
-  for (d=lat.data(); d!=lat.data()+lat.size(); d++)
-    (*d)+=sin(*d);
-
   timer.stop();
   std::cout << "  " << boost::timer::format(timer.elapsed());
 
-  std::cout << "-- Creating, filling and processing Periodic1DLattice through node iterator\n";
+  std::cout << "-- Filling and processing BetheLattice through node iterator\n";
   timer.start();
-  Periodic1DLattice<double> lat1(BIGSIZE);
-  Periodic1DLattice<double>::node_iterator nd=lat.begin();
+  BetheLattice<double>::node_iterator nd=lat.begin();
   *nd=10;
   double old=*nd;
   for (; nd!=lat.end(); ++nd) {
@@ -98,6 +108,101 @@ void check_1d()
 
   timer.stop();
   std::cout << "  " << boost::timer::format(timer.elapsed());
+
+  std::cout << "-- Writing and reading lattice\n";
+  timer.start();
+  std::ofstream f("graph1d.dat");
+  lat.write(f);
+  f.close();
+  BetheLattice<double> lat2(2,2);
+  std::ifstream ifs("graph1d.dat");
+  lat2.read(ifs);
+  timer.stop();
+  std::cout << "   Original: size " << lat.size() << " last: " <<
+    lat[lat.size()-1] << '\n';
+  std::cout << "   Read    : size " << lat2.size() << " last: " <<
+    lat2[lat2.size()-1] << " connectivity " << lat.coordination_number() << '\n';
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+
+  std::cout << "-- Walking and adding neighbours through iterator\n";
+  timer.start();
+  double sum=0;
+  for (nd=lat.begin(); nd!=lat.end(); ++nd) {
+    for (int i=0; i<nd.neighbour_size(); ++i)
+      sum+=nd.neighbour(i);
+  }
+  std::cout << "   sum = " << sum << '\n';
+  timer.stop();
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+
+  std::cout << "-- Walking and adding neighbours with for_each\n";
+  timer.start();
+  struct s {
+    double sum;
+    s() : sum(0){}
+    void operator()(double d) {sum+=d;}
+  } ;
+  double ss=0;
+  for (nd=lat.begin(); nd!=lat.end(); ++nd) {
+    ss+=for_each_neighbour(nd,s()).sum;
+  }
+  std::cout << "   sum = " << ss << '\n';
+  timer.stop();
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+}
+
+
+/******************************************************************************/
+
+
+void check_1d()
+{
+  using glsim::Periodic1DLattice;
+  
+  boost::timer::cpu_timer timer;
+
+  std::cout << "\n\n***** Testing Periodic1DLattice\n\n";
+
+  std::cout << "-- Filling and processing simple array of size "
+	    << BIGSIZE << "\n";
+  double *l=new double[BIGSIZE];
+  timer.start();
+  *l=10;
+  for (double* d=l+1; d!=l+BIGSIZE; ++d)
+    *d=*(d-1)+1.1;
+  timer.stop();
+  std::cout << "   First, second and last: " << l[0] << " " 
+	    << l[1] << " " << l[BIGSIZE-1] << '\n';
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+
+  std::cout << "-- Filling and processing Periodic1DLattice through data() pointer\n";
+  Periodic1DLattice<double> lat(BIGSIZE);
+  timer.start();
+  double *d=lat.data();
+  *d=10;
+  for (++d; d!=lat.data()+lat.size(); d++)
+    *d=*(d-1)+1.1;
+  timer.stop();
+  std::cout << "   First, second and last: " << lat[0] << " " 
+	    << lat[1] << " " << lat[BIGSIZE-1] << '\n';
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+
+  std::cout << "-- Filling and processing Periodic1DLattice through node iterator\n";
+  timer.start();
+  Periodic1DLattice<double>::node_iterator nd=lat.begin();
+  *nd=10;
+  double old=*nd;
+  for (++nd; nd!=lat.end(); ++nd) {
+    *nd=old+1.1;
+    old=*nd;
+  }
+  timer.stop();
+  std::cout << "   First, second and last: " << lat[0] << " " 
+	    << lat[1] << " " << lat[BIGSIZE-1] << '\n';
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+
+
+  Periodic1DLattice<double> lat1(BIGSIZE);
 
 
   std::cout << "-- Writing and reading lattice\n";
@@ -115,13 +220,25 @@ void check_1d()
     lat2[lat2.size()-1] << '\n';
   std::cout << "  " << boost::timer::format(timer.elapsed());
 
-  std::cout << "-- Walking and adding neighbours with neighbour_iterator\n";
+  std::cout << "-- Walking and adding neighbours with raw pointers\n";
   timer.start();
   double sum=0;
-  for (d=lat.data(); d!=lat.data()+lat.size(); ++d) {
-    Periodic1DLattice<double>::neighbour_iterator n=lat.neighbour_begin(d);
-    for (n=lat.neighbour_begin(d); n!=lat.neighbour_end(d); ++n)
-      sum+=*n;
+  d=lat.data();
+  sum+=*(d+1)+(*d+lat.size()-1);
+  for (; d!=lat.data()+lat.size()-1; ++d)
+    sum+=*(d-1)+*(d+1);
+  sum+=*(d-1)+*(lat.data());
+  std::cout << "   sum = " << sum << '\n';
+  timer.stop();
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+
+  std::cout << "-- Walking and adding neighbours with node_iterator\n";
+  timer.start();
+  sum=0;
+  for (nd=lat.begin(); nd!=lat.end(); ++nd) {
+  //   for (int i=0; i<nd.neighbour_size(); ++i)
+  //     sum+=nd.neighbour(i);
+    sum+=nd.L()+nd.R();
   }
   std::cout << "   sum = " << sum << '\n';
   timer.stop();
@@ -132,179 +249,269 @@ void check_1d()
   struct s {
     double sum;
     s() : sum(0){}
-    void operator()(double *d) {sum+=*d;}
+    void operator()(double &d) {sum+=d;}
   } summ;
   for (nd=lat.begin(); nd!=lat.end(); ++nd) {
-    for_each_neighbour(nd,summ);
+    // glsim::for_each_neighbour(nd,summ);
   }
   std::cout << "   sum = " << summ.sum << '\n';
   timer.stop();
-  std::cout << " " << boost::timer::format(timer.elapsed());
+  std::cout << "  " << boost::timer::format(timer.elapsed());
 }
 
-// void check_sq()
-// {
-//   boost::timer::cpu_timer timer;
+void check_sq()
+{
+  boost::timer::cpu_timer timer;
 
-//   std::cout << "Creating, filling and processing array\n";
-//   timer.start();
-//   double *l=new double[BIGSIZE];
-//   *l=10;
-//   for (double* d=l+1; d!=l+BIGSIZE; )
-//     *d=*(d++-1)+1.1;
+  std::cout << "\n\n***** Testing PeriodicSQLattice\n\n";
 
-//   for (double* d=l; d!=l+BIGSIZE; d++)
-//     *d+=sin(*d);
+  std::cout << "-- Filling and processing simple array of size "
+	    << BIGSIZE << "\n";
+  double *l=new double[BIGSIZE];
+  timer.start();
+  *l=10;
+  for (double* d=l+1; d!=l+BIGSIZE; ++d)
+    *d=*(d-1)+1.1;
+  std::cout << "   First, second and last: " << l[0] << " " 
+	    << l[1] << " " << l[BIGSIZE-1] << '\n';
 
-//   timer.stop();
+  timer.stop();
+  std::cout << "  " << boost::timer::format(timer.elapsed());
 
-//   std::cout << boost::timer::format(timer.elapsed());
+  std::cout << "-- Filling and processing PeriodicSQLattice through data() pointer\n";
+  glsim::PeriodicSQLattice<double> lat(RTBIGSIZE,RTBIGSIZE);
+  timer.start();
+  double *d=lat.data();
+  *d=10;
+  for (++d; d!=lat.end(); ++d)
+    *d=*(d-1)+1.1;
+  std::cout << "   First, second and last : " << *(lat.data()) << " " 
+	    << *(lat.data()+1) << " " << *(--d) << '\n';
 
-//   std::cout << "Creating, filling and processing SQ lattice through light iterator\n";
-//   timer.start();
-//   PeriodicSQLattice<double> lat(RTBIGSIZE,RTBIGSIZE);
-//   PeriodicSQLattice<double>::iterator d=lat.begin();
-//   *d=10;
-//   for (; d!=lat.end(); d++)
-//     *d=*(d-1)+1.1;
+  timer.stop();
+  std::cout << "  " << boost::timer::format(timer.elapsed());
 
-//   for (d=lat.begin(); d!=lat.end(); d++)
-//     (*d)+=sin(*d);
+  std::cout << "-- Filling and processing PeriodicSQLattice through node iterator\n";
+  glsim::PeriodicSQLattice<double> lat1(RTBIGSIZE,RTBIGSIZE);
+  timer.start();
+  glsim::PeriodicSQLattice<double>::node_iterator nd=lat1.begin();
+  *nd=10;
+  for (++nd; nd!=lat1.end(); ) {
+    double& last=*nd;
+    ++nd;
+    *nd=last +=1.1;
+  }
+  // for (nd=lat1.begin(); nd!=lat1.end(); ++nd)
+  //    (*nd)+=sin(*nd);
+  std::cout << "   First, second and last : " << *(lat1.data()) << " " 
+	    << *(lat1.data()+1) << " " << *(--nd) << '\n';
 
-//   timer.stop();
-//   std::cout << boost::timer::format(timer.elapsed());
+  timer.stop();
+  std::cout << "  " << boost::timer::format(timer.elapsed());
 
-//   std::cout << "Creating, filling and processing 2D lattice through node iterator\n";
-//   timer.start();
-//   PeriodicSQLattice<double> lat1(RTBIGSIZE,RTBIGSIZE);
-//   PeriodicSQLattice<double>::node_iterator nd=lat.node_begin();
-//   // *nd=10;
-//   // for (; nd!=lat.node_end(); )
-//   //   *(nd++)+=1.1;
+  {
+  std::cout << "-- Write and read\n";
+  timer.start();
+  std::ofstream f("graph1d.dat");
+  lat.write(f);
+  f.close();
+  std::ifstream ifs("graph1d.dat");
+  glsim::PeriodicSQLattice<double> lat2(1,1);
+  lat2.read(ifs);
+  timer.stop();
+  std::cout << "   Original: size " << lat.size() << " last: " <<
+    lat[lat.size()-1] << '\n';
+  std::cout << "   Read    : size " << lat2.size() << " last: " <<
+    lat1[lat1.size()-1] << '\n';
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+  }
 
-//   // for (nd=lat.node_begin(); nd!=lat.node_end(); ++nd)
-//   //    (*nd)+=sin(*nd);
+  std::cout << "-- Walking and adding neighbours using for + neighbour distance vector\n";
 
-//   timer.stop();
-//   std::cout << boost::timer::format(timer.elapsed());
+  int* Ndis=new int[lat.size_y()];
+  int* Sdis=new int[lat.size_y()];
+  int* Wdis=new int[lat.size_x()];
+  int* Edis=new int[lat.size_x()];
+  for (int i=0; i<lat.size_y(); i++) {
+    Ndis[i]=1;
+    Sdis[i]=-1;
+  }
+  Sdis[0]=lat.size_y()-1;
+  Ndis[lat.size_y()-1]=-Sdis[0];
+  for (int i=0; i<lat.size_x(); i++) {
+    Edis[i]=lat.size_y();
+    Wdis[i]=-lat.size_y();
+  }
+  Wdis[0]=lat.size_y()*(lat.size_x()-1);
+  Edis[lat.size_x()-1]=-Wdis[0];
 
-//   std::cout << "Write and read\n";
-//   timer.start();
-//   std::ofstream f("graph1d.dat");
-//   lat.write(f);
-//   f.close();
-//   PeriodicSQLattice<double> lat2(2,2);
-//   std::ifstream ifs("graph1d.dat");
-//   lat2.read(ifs);
-//   timer.stop();
-//   std::cout << "Original: size " << lat.size() << " last: " <<
-//     lat[lat.size()-1] << '\n';
-//   std::cout << "Read    : size " << lat2.size() << " last: " <<
-//     lat2[lat2.size()-1] << '\n';
-//   std::cout << boost::timer::format(timer.elapsed());
+  lat1=lat;
 
-//   std::cout << "** Walking through neighbours\n";
-//   std::cout << "   Using for + neighbour distance vector\n";
+  timer.start();
+  for (double* p=lat.data(); p!=&(lat[0])+lat.size_x()*lat.size_y(); ++p) {
+    glsim::id_t i,j;
+    glsim::id_t l=lat.id(p);
+    i=l/lat.size_y();
+    j=l-i*lat.size_y();
+    (*p)+=*(p+Wdis[i])+*(p+Edis[i])+*(p+Ndis[j])+*(p+Sdis[j]);
+  }
+  timer.stop();
+  std::cout << "   First, second and last : " << lat[0] << " " 
+	    << lat[1] << " " << lat[lat.size()-1] << '\n';
+  std::cout << "  " << boost::timer::format(timer.elapsed());
 
-//   int* Ndis=new int[lat.size_y()];
-//   int* Sdis=new int[lat.size_y()];
-//   int* Wdis=new int[lat.size_x()];
-//   int* Edis=new int[lat.size_x()];
+  std::cout << "-- Walking and adding neighbours using for_each\n";
+  timer.start();
+  struct fu {
+    fu() : sum(0) {}
+    void operator()(double& n) {sum+=n;}
+    double sum;
+  } fuu;
+  for (nd=lat1.begin(); nd!=lat1.end(); ++nd) {
+    *nd += for_each_neighbour(nd,fu()).sum;
+  }
+  timer.stop();
+  std::cout << "   First, second and last : " << lat1[0] << " " 
+	    << lat1[1] << " " << lat1[lat1.size()-1] << '\n';
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+}
 
-//   for (int i=0; i<lat.size_y(); i++) {
-//     Ndis[i]=1;
-//     Sdis[i]=-1;
-//   }
-//   Sdis[0]=lat.size_y()-1;
-//   Ndis[lat.size_y()-1]=-Sdis[0];
-//   for (int i=0; i<lat.size_x(); i++) {
-//     Edis[i]=lat.size_y();
-//     Wdis[i]=-lat.size_y();
-//   }
-//   Wdis[0]=lat.size_y()*(lat.size_x()-1);
-//   Edis[lat.size_x()-1]=-Wdis[0];
+///////////////////////////////////////////////////////////////////////////////
+//
+// Simple cubic
 
-//   timer.start();
-//   // for (int i=0; i<lat.size_x(); i++)
-//   //   for (int j=0; j<lat.size_y(); j++){
-//   //     // std::cout << "i , j "  << i <<','<<j <<
-//   //     // 	"  i+W, i+E " << i+Wdis[i]<<','<<i+Edis[i]<<
-//   //     // 	"  j+N,j+S " << j+Ndis[j]<<','<<j+Sdis[j] << '\n';
-//   //     ptrdiff_t p=lat.id(i,j);
-//   //     lat[p]+=lat[p+Wdis[i]]+lat[p+Edis[i]]+lat[p+Ndis[j]]+lat[p+Sdis[j]];
-//   //   }
-//   for (double* p=&(lat[0]); p!=&(lat[0])+lat.size_x()*lat.size_y(); ++p) {
-//     ptrdiff_t i,j;
-//     lat.posl(lat.id(p),i,j);
-//     (*p)+=*(p+Wdis[i])+*(p+Edis[i])+*(p+Ndis[j])+*(p+Sdis[j]);
-//   }
-//   timer.stop();
-//   std::cout << boost::timer::format(timer.elapsed());
-//   std::cout << "   Using neighbour iterator\n";
-//   timer.start();
-//   struct fu {
-//     fu(double *&s) :site(s){}
-//     double *&site;
-//     void operator()(double* n) {(*site)+=*n;}
-//   } ff(d);
-//   // for (d=lat.begin(); d!=lat.end(); ++d) {
-//   for (PeriodicSQLattice<double>::node_iterator n=lat.node_begin();
-//        n!=lat.node_end(); ++n) {
-//     for_each_neighbour(lat,n,ff);
-//     // for (PeriodicSQLattice<double>::neighbour_iterator n=lat.neighbour_begin(d);
-//     //  	 n!=lat.neighbour_end(d); ++n) {
-//     //    (*d)+=(*n);
-//     // }
-//     // Unrolling
-//     // PeriodicSQLattice<double>::neighbour_iterator n=lat.neighbour_begin(d);
-//     // (*d)+=(*n);
-//     // ++n;
-//     // (*d)+=(*n);
-//     // ++n;
-//     // (*d)+=(*n);
-//     // ++n;
-//     // (*d)+=(*n);
-//     // }
-//   }
-//   timer.stop();
-//   std::cout << boost::timer::format(timer.elapsed());
+void check_sc()
+{
+  boost::timer::cpu_timer timer;
 
-//   std::cout << "** Walking through second-neighbours\n";
-//   std::cout << "   Using for + neighbour distance vector\n";
-//   timer.start();
-//   for (int i=1; i<lat.size_x()-1; i++)
-//     for (int j=1; j<lat.size_y()-1; j++) {
-//       // std::cout << " i,j= " <<i<<','<<j<< " Wdis[i] "<< Wdis[i] << '\n';
-//       // lat(i,j)+=
-//       // 	lat(i+Wdis[i]+Wdis[i+Wdis[i]],j)+lat(i+Wdis[i],j+Ndis[j])+lat(i+Wdis[i],j
-// 								      // +Sdis[j]);
-// 	// lat(i+Wdis[i]+Wdis[i+Wdis[i]],j)+lat(i+Wdis[i],j+Ndis[j])+lat(i+Wdis[i],j+Sdis[j])+
-// 	// lat(i+Edis[i]+Edis[i+Edis[i]],j)+lat(i+Edis[i],j+Ndis[j])+lat(i+Edis[i],j+Sdis[j])+
-// 	// lat(i,j+Ndis[j]+Ndis[j+Ndis[j]])+lat(i+Edis[i],j+Ndis[j])+lat(i+Wdis[i],j+Ndis[j])+
-// 	// lat(i,j+Sdis[j]+Sdis[j+Sdis[j]])+lat(i+Edis[i],j+Sdis[j])+lat(i+Wdis[i],j+Sdis[j]);
-//     }
-//   timer.stop();
-//   std::cout << boost::timer::format(timer.elapsed());
-//   std::cout << "   Using neighbour iterator\n";
-//   timer.start();
-//   for (d=lat.begin(); d!=lat.end(); ++d) {
-//     for (PeriodicSQLattice<double>::neighbour_iterator n=lat.neighbour_begin(d);
-//      	 n!=lat.neighbour_end(d); ++n) {
-//       for (PeriodicSQLattice<double>::neighbour_iterator nn=lat.neighbour_begin(n);
-// 	   nn!=lat.neighbour_end(n); ++nn) {
-//        (*d)+=(*n);
-//       }
-//     }
-//   }
-//   timer.stop();
-//   std::cout << boost::timer::format(timer.elapsed());
-// }
+  std::cout << "\n\n***** Testing PeriodicSQLattice\n\n";
+
+  int NN=QRTBIGSIZE*QRTBIGSIZE*QRTBIGSIZE;
+  std::cout << "-- Filling and processing simple array of size "
+	    << NN << "\n";
+  double *l=new double[NN];
+  timer.start();
+  *l=10;
+  for (double* d=l+1; d!=l+NN; ++d)
+    *d=*(d-1)+1.1;
+  std::cout << "   First, second and last: " << l[0] << " " 
+	    << l[1] << " " << l[NN-1] << '\n';
+
+  timer.stop();
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+
+  std::cout << "-- Filling and processing PeriodicSCLattice through data() pointer\n";
+  glsim::PeriodicSCLattice<double> lat(QRTBIGSIZE,QRTBIGSIZE,QRTBIGSIZE);
+  timer.start();
+  double *d=lat.data();
+  *d=10;
+  for (++d; d!=lat.end(); ++d)
+    *d=*(d-1)+1.1;
+  std::cout << "   First, second and last : " << *(lat.data()) << " " 
+	    << *(lat.data()+1) << " " << *(--d) << '\n';
+
+  timer.stop();
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+
+  std::cout << "-- Filling and processing PeriodicSCLattice through node iterator\n";
+  glsim::PeriodicSCLattice<double> lat1(QRTBIGSIZE,QRTBIGSIZE,QRTBIGSIZE);
+  timer.start();
+  glsim::PeriodicSCLattice<double>::node_iterator nd=lat1.begin();
+  *nd=10;
+  for (++nd; nd!=lat1.end(); ) {
+    double& last=*nd;
+    ++nd;
+    *nd=last +=1.1;
+  }
+  std::cout << "   First, second and last : " << *(lat1.data()) << " " 
+	    << *(lat1.data()+1) << " " << *(--nd) << '\n';
+
+  timer.stop();
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+
+  {
+  std::cout << "-- Write and read\n";
+  timer.start();
+  std::ofstream f("graph1d.dat");
+  lat.write(f);
+  f.close();
+  std::ifstream ifs("graph1d.dat");
+  glsim::PeriodicSCLattice<double> lat2(1,1,1);
+  lat2.read(ifs);
+  timer.stop();
+  std::cout << "   Original: size " << lat.size() << " last: " <<
+    lat[lat.size()-1] << '\n';
+  std::cout << "   Read    : size " << lat2.size() << " last: " <<
+    lat1[lat1.size()-1] << '\n';
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+  }
+
+  std::cout << "-- Walking and adding neighbours using for + neighbour distance vector\n";
+
+  int* Ndis=new int[lat.size_y()];
+  int* Sdis=new int[lat.size_y()];
+  int* Wdis=new int[lat.size_x()];
+  int* Edis=new int[lat.size_x()];
+  int* Udis=new int[lat.size_z()];
+  int* Ddis=new int[lat.size_z()];
+  for (int i=0; i<lat.size_z(); i++) {
+    Udis[i]=1;
+    Ddis[i]=-1;
+  }
+  Ddis[0]=lat.size_z()-1;
+  Udis[lat.size_z()-1]=-Ddis[0];
+  for (int i=0; i<lat.size_y(); i++) {
+    Ndis[i]=lat.size_z();
+    Sdis[i]=-lat.size_z();
+  }
+  Sdis[0]=lat.size_z()*(lat.size_y()-1);
+  Ndis[lat.size_y()-1]=-Sdis[0];
+  for (int i=0; i<lat.size_x(); i++) {
+    Edis[i]=lat.size_y()*lat.size_z();
+    Wdis[i]=-lat.size_y()*lat.size_z();
+  }
+  Wdis[0]=lat.size_z()*lat.size_y()*(lat.size_x()-1);
+  Edis[lat.size_x()-1]=-Wdis[0];
+
+  lat1=lat;
+
+  timer.start();
+  for (double* p=lat.data(); p!=&(lat[0])+lat.size_x()*lat.size_y()*lat.size_z(); ++p) {
+    int i,j,k;
+    glsim::id_t l=lat.id(p);
+    i=l/(lat.size_y()*lat.size_z());
+    j=(l-i*lat.size_y()*lat.size_z())/lat.size_z();
+    k=l-i*lat.size_y()*lat.size_z()-j*lat.size_z();
+    (*p)+=*(p+Wdis[i])+*(p+Edis[i])+*(p+Ndis[j])+*(p+Sdis[j])+*(p+Udis[k])+
+      *(p+Ddis[k]);
+  }
+  timer.stop();
+  std::cout << "   First, second and last : " << lat[0] << " " 
+	    << lat[1] << " " << lat[lat.size()-1] << '\n';
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+
+  std::cout << "-- Walking and adding neighbours using for_each\n";
+  timer.start();
+  struct fu {
+    fu() : sum(0) {}
+    void operator()(double& n) {sum+=n;}
+    double sum;
+  } fuu;
+  for (nd=lat1.begin(); nd!=lat1.end(); ++nd) {
+    *nd += for_each_neighbour(nd,fu()).sum;
+  }
+  timer.stop();
+  std::cout << "   First, second and last : " << lat1[0] << " " 
+	    << lat1[1] << " " << lat1[lat1.size()-1] << '\n';
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+}
+
+#define TEST_SQ 2
 
 int main(int argc, char *argv[])
 {
-  //  glsim::random_number_generator(glsim::gsl_rng_mt19937);
-
+  check_bethe();
   check_1d();
-  // check_sq();
-  return 0;
+  check_sq();
+  check_sc();
 }

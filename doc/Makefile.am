@@ -35,49 +35,71 @@
 # Suffix rules
 #
 
-SUFFIXES = .nw .def .tex
+# SUFFIXES = .nw .def .tex
 
-VPATH += : $(top_srcdir)/blib : $(top_srcdir)/lattice
-
-.nw.def:
-	@DEF@ $< >$@
-
-.nw.tex:
-	@WEAVE@ -delay -indexfrom all.def -filter 'sed "/^@use / s/_/\\\\_/g; /^@defn / s/_/\\\\_/g;"' $< >$@
+# VPATH += : $(top_srcdir)/blib : $(top_srcdir)/lattice
 
 #
 # Targets
 #
 
-BUILT_SOURCES = dsbweb newdoc.pdf
-# BUILT_SOURCES = glsim.dvi newdoc.pdf
+if HAS_DOXYGEN
 
-glsim.dvi: $(texfiles)
-	export TEXINPUTS=$(TEXINPUTS):$(top_srcdir)/doc: ; \
-	export BIBINPUTS=$(top_srcdir)/doc ; \
-        @LATEX@ glsim.tex ; \
-	@BIBTEX@ glsim ; \
-	@INDEX@ glsim.tex ; \
-	sed 's/_/\\_/g;' glsim.nwi >glsim.nwi.$$$$ ; mv glsim.nwi.$$$$ glsim.nwi ;\
-        @LATEX@ glsim.tex ; \
-        @LATEX@ glsim.tex
+man_directory = $(top_builddir)/doc/man/man3
 
-texfiles = glsim.tex $(blib_texfiles)
+### tal vez dist_man_etc
+##man_MANS = $(man_directory)/man_page_1.3 $(man_directory)/man_page_2.3
 
-deffiles = glsim.def $(blib_deffiles)
+##$(directory)/man_page_1.3: doxyfile.stamp
+##$(directory)/man_page_2.3: doxyfile.stamp
 
-blib_texfiles = blib.tex errors.tex logging.tex random.tex		\
-                parameters.tex environment.tex configuration.tex	\
-                simulation.tex
+doxyfile.stamp: $(top_srcdir)/lattice
+	$(DOXYGEN) doxy.conf
+	echo Timestamp > doxyfile.stamp
 
-blib_deffiles = blib.def errors.def logging.def random.def		\
-                parameters.def environment.def configuration.def	\
-                simulation.def
+CLEANFILES = doxyfile.stamp
 
-$(texfiles): all.def
+all-local: doxyfile.stamp
 
-all.def: $(deffiles)
-	sort -u $^ >$@
+all-local: html
+
+clean-local:
+	rm -rf $(top_srcdir)/docs/man
+
+else
+CLEANFILES = 
+endif
+
+
+# BUILT_SOURCES = newdoc.pdf
+# # BUILT_SOURCES = glsim.dvi newdoc.pdf
+
+# glsim.dvi: $(texfiles)
+# 	export TEXINPUTS=$(TEXINPUTS):$(top_srcdir)/doc: ; \
+# 	export BIBINPUTS=$(top_srcdir)/doc ; \
+#         @LATEX@ glsim.tex ; \
+# 	@BIBTEX@ glsim ; \
+# 	@INDEX@ glsim.tex ; \
+# 	sed 's/_/\\_/g;' glsim.nwi >glsim.nwi.$$$$ ; mv glsim.nwi.$$$$ glsim.nwi ;\
+#         @LATEX@ glsim.tex ; \
+#         @LATEX@ glsim.tex
+
+# texfiles = glsim.tex $(blib_texfiles)
+
+# deffiles = glsim.def $(blib_deffiles)
+
+# blib_texfiles = blib.tex errors.tex logging.tex random.tex		\
+#                 parameters.tex environment.tex configuration.tex	\
+#                 simulation.tex
+
+# blib_deffiles = blib.def errors.def logging.def random.def		\
+#                 parameters.def environment.def configuration.def	\
+#                 simulation.def
+
+# $(texfiles): all.def
+
+# all.def: $(deffiles)
+# 	sort -u $^ >$@
 
 #
 # Installation
@@ -87,21 +109,26 @@ all.def: $(deffiles)
 # Distribution
 #
 
-EXTRA_DIST = glsim.nw glsim.bib gpl.tex version.tex.in $(texfiles) \
-             all.def $(deffiles)
+# EXTRA_DIST = glsim.nw glsim.bib gpl.tex version.tex.in $(texfiles) \
+#              all.def $(deffiles)
 
-newdoc.pdf: graph.hh
-	./dsbweb -p preamble.tex -d newdoc.tex -c $<
-	pdflatex newdoc.tex
+# %.tex : %.hh
+# 	$(top_builddir)/blib/glweb -c $< -o $@
 
-bin_PROGRAMS = dsbweb
+# graph.tex : graph.hh
 
-dsbweb_SOURCES = dsbweb.c
+# graph_texfiles = graph.tex
+
+# BUILT_SOURCES += $(graph_texfiles)
+
+# newdoc.pdf: newdoc.tex $(graph_texfiles)
+# 	pdflatex $<
+
 
 #
 # Cleaning
 #
 
-CLEANFILES = *.dvi *.aux *.log *.toc *.nwi *.bbl *.blg glsim.ps
+CLEANFILES += *.dvi *.aux *.log *.toc *.nwi *.bbl *.blg glsim.ps
 DISTCLEANFILES = version.tex
 MAINTAINERCLEANFILES = *.tex *.def
