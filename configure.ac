@@ -15,7 +15,7 @@
 #
 AC_PREREQ([2.67])
 AC_INIT([glsim],[1.0.0],[tgrigera@users.sourceforge.net])
-AC_CONFIG_SRCDIR([blib/blib.nw])  # Check just one file as safety check
+AC_CONFIG_SRCDIR([blib/blib.hh])  # Check just one file as safety check
 AC_CONFIG_MACRO_DIR([m4])
 AC_LANG(C++)
 AM_INIT_AUTOMAKE

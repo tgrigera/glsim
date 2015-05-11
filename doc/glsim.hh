@@ -34,16 +34,6 @@
  *
  */
 
-// \documentclass{book}
-
-// \usepackage[round]{natbib}
-
-// \usepackage{noweb}
-// \noweboptions{externalindex}
-// \noweboptions{longchunks}
-// \noweboptions{longxref}
-// \noweboptions{smallcode}
-
 // \def\e{\mathbf{e}}
 // \def\x{\mathbf{x}}
 // \def\cp{\mathbf{\gamma}}
@@ -316,51 +306,87 @@
 
 
 
-/** \mainpage  glsim Reference
+/******************************************************************************/
+/** \mainpage  glsim library reference
+
+# Introduction
+
+\subpage Overview
+
+\subpage Why
+
+\subpage Author
+
+
+# Library organization
+
+\subpage Concepts
+
+## Module overview
+
+Modules are
+
+ - Basic library
+ - Graph and lattice
+
+*/
+
+/******************************************************************************/
+/** \page Overview
+
+`glsim` includes a basic library, examples, tests, lattice, etc.
+
+
+ */
+
+
+
+/*****************************************************************************/
+/** \page Why Why a simulation library
 
 Very often scientific research work involves numerical computation or
 numerical processing of data, be it statistical analysis of
 experimental data, numerical solution of systems nonlinear integral or
 differential equations, or large scale simulations of many-particle
-systems (from electron gases to galaxies to social systems
-\citep{philo:hartmann96}). Although many packages and libraries
-(commercial and open-source) exist that can perform a wide range of
-more or less specialized tasks, the practising scientist often finds
-him or herself writing computer code: new problems are studied which
-require variations or combinations of known techniques, or new
-techniques or solutions are developed for old problems.
+systems (from electron gases to galaxies to social systems). Although
+many packages and libraries (commercial and open-source) exist that
+can perform a wide range of more or less specialized tasks, the
+practising scientist often finds him or herself writing computer code:
+new problems are studied which require variations or combinations of
+known techniques, or new techniques or solutions are developed for old
+problems.
 
 One of the problems the scientist/programmer faces is that to build a
 useful working program, one needs much more code than the lines
 required to express the main algorithm: user interaction, data
 input/output, preprocessing or format conversions make up for a large
 percentage of source code lines of the final program. We call this
-additional code ``clerical'', because it expresses relatively simple
+additional code "clerical", because it expresses relatively simple
 tasks and straightforward algorithms, and generally takes a small
-fraction of execution time. But writing, debugging and maintaining it
-take a fair amount of time. Ideally, the scientist needing to program
+fraction of execution time.  But writing, debugging and maintaining it
+take a fair amount of time.  Ideally, the scientist needing to program
 some new algorithm should be able concentrate in the code for the main
 algorithm (on which he/she is an expert), while resorting to some sort
 of library for the rest of the clerical tasks which are not part of
 the main algorithm, and likely not within the scientist's main
 expertise.
 
-\glsim\ is a class library that attempts to fulfil precisely that
+`glsim` is a class library that attempts to fulfil precisely that
 role, easing the development of a simulation program by providing
 simple ways to incorporate configuration file parsing, binary i/o from
 self-describing files and processing of Unix signals to handle early
 interruption, among other features.
 
-\glsim\ was born from the author's frustation when realizing how many
+`glsim` was born from the author's frustation when realizing how many
 times essentialy identical algorithms were being coded. It is the
 fourth attempt (though the first designed as a class library) at
 designing a modular numerical simulation program.
 
-\glsim\ is the result of the experience gained over many years writing
+`glsim` is the result of the experience gained over many years writing
 numerical simulation software in one-man or two-men teams, and of the
 efforts to organize the code in such a way that it would be useful
 beyond the immediate situation for which it was written. Of the many
-thousands of lines of simulation code the author has written, \glsim\
+thousands of lines of simulation code the author has written, `glsim`
 incorporates the part that is expected to be of more general
 usefulness to colleagues writing simulation software, and has achieved
 a reasonable level of maturity regarding interface and code
@@ -370,4 +396,17 @@ continuing. But it is expected that it can be useful at the present
 stage of its evolution, and that its development will benefit from
 feedback and contributions from users.
 
+*/
+
+/*****************************************************************************/
+/** \page Author Authors and maintainers
+
+`glsim` is written and maintained by T. S. Grigera (IFLYSIB).
+
+*/
+
+/*****************************************************************************/
+/** \page Concepts
+
+WIP
 */

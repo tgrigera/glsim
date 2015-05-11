@@ -36,15 +36,14 @@
 
 /**\defgroup Blib Basic library
  
-
-This chapter describes some classes that implement basic functionality
-and help.  The next chapters describe the classes that represent the
-main glsim abstractions.
-
+The basic library includes the objects that represent the main
+simulation abstractions plus auxiliray concepts.
 
 @{
 
-\defgroup Error Error handling and debugging aid
+#### Error handling
+
+\defgroup Error Error handling, logging and debugging aid
 
 \subsection{Source context and backtrace}
 
@@ -52,7 +51,6 @@ We first define classes to aid in reporting source context (position
 in a source file) and backtrace information.  This information is
  included in the exceptions defined below, and can be printed when
 catching the exception to aid debugging
-
 
 \defgroup Exceptions Exceptions for glsim (including source context)
 
@@ -121,7 +119,7 @@ beforehand.  This maybe counterintuitive and can perhaps be considered
 a bug; but at present I see no cheap solution.
 
 
-\defgroup Simulation Main simulation objects
+\defgroup Simulation Main simulation abstractions
 
 
 @ \chapter{Parameters}
@@ -190,13 +188,6 @@ properly initialized.
 
 */
 
-/*
-
-\include{environment}
-\include{configuration}
-\include{simulation}
-
-*/
 
 
 /*
