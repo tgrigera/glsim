@@ -37,7 +37,7 @@
 #ifndef BETHE_HH
 #define BETHE_HH
 
-#include <graph.hh>
+#include "graph.hh"
 
 namespace glsim {
 

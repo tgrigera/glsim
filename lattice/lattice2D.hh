@@ -39,7 +39,7 @@
 
 #include <math.h>
 
-#include <graph.hh>
+#include "graph.hh"
 
 namespace glsim {
 

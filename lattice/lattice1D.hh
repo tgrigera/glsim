@@ -37,7 +37,7 @@
 #ifndef _LATTICE1D_HH_
 #define _LATTICE1D_HH_
 
-#include <graph.hh>
+#include "graph.hh"
 
 namespace glsim {
 

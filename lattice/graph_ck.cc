@@ -1,5 +1,5 @@
 /*
- * graph_ck.cc -- Checks for the lattice classes
+ * graph_ck.cc -- Performance tests
  *
  * This file is part of glsim, a numerical simulation class library and
  * helper programs.
@@ -39,7 +39,7 @@
 #include <stdlib.h>
 #include <boost/timer/timer.hpp>
 
-#include <glsim/cerrors.h>
+#include "cerrors.h"
 
 #include <typeinfo>
 #include "bethe.hh"

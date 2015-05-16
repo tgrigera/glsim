@@ -39,8 +39,8 @@
 
 #include <fstream>
 
-#include <glsim/exception.hh>
-#include <glsim/random.hh>
+#include "exception.hh"
+#include "random.hh"
 
 namespace glsim {
 
