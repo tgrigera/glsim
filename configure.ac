@@ -139,11 +139,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile
 	         blib/Makefile
                  lattice/Makefile
-                 test/Makefile
 		 doc/Makefile
 		 doc/version.tex])
-#AC_CONFIG_FILES([Makefile
-#                 base/Makefile
-#                 doc/Makefile])
 #AC_CONFIG_FILES([doc/version.tex])
 AC_OUTPUT

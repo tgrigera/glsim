@@ -64,10 +64,16 @@ all-local: html
 clean-local:
 	rm -rf $(top_srcdir)/docs/man
 
+EXTRA_DIST = doxy.conf.in
+
 #
 # Cleaning
 #
 
-CLEANFILES += *.dvi *.aux *.log *.toc *.nwi *.bbl *.blg glsim.ps
+CLEANFILES += doxygen*.db
+#CLEANFILES += *.dvi *.aux *.log *.toc *.nwi *.bbl *.blg glsim.ps
 DISTCLEANFILES = version.tex
 MAINTAINERCLEANFILES = *.tex *.def
+
+clean-local:
+	rm -rf html man

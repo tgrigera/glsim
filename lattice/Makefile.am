@@ -10,21 +10,37 @@
 # See file LICENSE in base directory
 #
 
+#
+# General compiler and linker options
+#
+include $(top_srcdir)/Makefile-common
 AM_CPPFLAGS = -I$(top_srcdir)/blib
-AM_CXXFLAGS=--std=c++11
 LDADD=$(top_builddir)/blib/libglsim.la
 
-pkginclude_HEADERS = graph.hh bethe.hh lattice1D.hh lattice2D.hh	\
-                     lattice3D.hh
+#
+# Headers
+#
 
+pkginclude_HEADERS = graph.hh bethe.hh lattice1D.hh lattice2D.hh	\
+                     lattice3D.hh test_exception.hh graph_test.hh
+
+#
+# binaries
+#
 check_PROGRAMS = graph_ck bethe_test lattice1D_test lattice2D_test	\
                  lattice3D_test
+
+# Binary dependencies
 
 graph_ck_SOURCES = graph_ck.cc
 bethe_test_SOURCES = graph_test.cc bethe_test.cc
 lattice1D_test_SOURCES = graph_test.cc lattice1D_test.cc
 lattice2D_test_SOURCES = graph_test.cc lattice2D_test.cc
 lattice3D_test_SOURCES = graph_test.cc lattice3D_test.cc
+
+#
+# Tests
+#
 
 TESTS = bethe_test lattice1D_test lattice2D_test lattice3D_test
 

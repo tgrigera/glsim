@@ -1,0 +1,5 @@
+#
+# common options for Makefiles in subdirs
+#
+
+AM_CXXFLAGS=--std=c++11

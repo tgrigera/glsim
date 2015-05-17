@@ -14,6 +14,9 @@ ACLOCAL_AMFLAGS=-I m4
 
 .PHONY:  doc
 if HAS_DOXYGEN
+
+CONDITIONAL_SUBDIRS = doc
+
 doc:
 	cd doc && make
 else
@@ -22,14 +25,13 @@ doc:
 	echo "Cannot build documentation"
 endif
 
-idir = $(top_builddir)/include/glsim
+# idir = $(top_builddir)/include/glsim
 
-$(idir):
-	mkdir -p $@
+# $(idir):
+# 	mkdir -p $@
 
-BUILT_SOURCES = $(idir)
+# BUILT_SOURCES = $(idir)
 
-#SUBDIRS = . blib lattice test $(CONDITIONAL_SUBDIRS)
 SUBDIRS = . blib lattice $(CONDITIONAL_SUBDIRS)
 
 MAINTAINERCLEANFILES = config.guess config.sub configure depcomp	\

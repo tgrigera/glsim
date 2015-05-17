@@ -14,16 +14,22 @@
 # General compiler and linker options
 #
 
-## AM_CPPFLAGS = -I$(top_builddir)/include
-AM_CXXFLAGS=--std=c++11
+include $(top_srcdir)/Makefile-common
 
 #
 # Headers
 #
 
-pkginclude_HEADERS = cerrors.h exception.hh log.hh scontext.hh	\
-                     random.hh configuration.hh environment.hh	\
-                     simulation.hh observable.hh stochastic.hh
+pkginclude_HEADERS = cerrors.h exception.hh log.hh parameters.hh	\
+                     scontext.hh random.hh configuration.hh		\
+                     environment.hh simulation.hh observable.hh		\
+                     stochastic.hh
+
+#
+# Doc-only headers
+#
+
+EXTRA_DIST = blib.hh readbt.sh
 
 #
 # binaries
