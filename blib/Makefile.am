@@ -45,4 +45,17 @@ lib_LTLIBRARIES = libglsim.la
 libglsim_la_LDFLAGS = -version-info @LIBGLSIM_VERSION@
 libglsim_la_SOURCES = scontext.cc cerrors.c log.cc random.cc		\
                       parameters.cc environment.cc simulation.cc	\
-                      stochastic.cc observable.cc
+                      stochastic.cc observable.cc hdf_file.cc
+
+#
+# Test programs
+#
+
+LDADD=libglsim.la
+
+check_PROGRAMS = exception_test hdf_recfile_test
+
+exception_test_SOURCES = exception_test.cc
+
+hdf_recfile_test_SOURCES = hdf_recfile_test.cc
+
