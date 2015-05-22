@@ -37,53 +37,6 @@
 #ifndef ENVIRONMENT_HH
 #define ENVIRONMENT_HH
 
-
-// @ \chapter{Environment}
-
-// The concept of environment is one of the major abstractions of the
-// library, and in this chapter we give the classes that represent it.
-
-// By our definition, there should be an Environment class to match any
-// Simulation class.  The Environment class corresponding to a given
-// Simulation must hold \emph{all} the data needed to perform the
-// simulation.  The [[Parameters]] objects are meant to be used only to
-// initialize the environment, and not for storing data.  The environment
-// is endowed with method to allow saving to disk and restoring, while
-// the [[Parameters]] classes have no such capability.  This is
-// important, as the environment can evolve during the simulation (see
-// the method [[step()]] below.)
-
-// The parts of the environment essential for the simulation should be
-// represented by an object of a type derived from [[class]]
-// [[SimEnvironment]] below.  However, observables (which see), which
-// will require a part of the environment to store their internal data,
-// are designed to be used as ``plug-ins'', and thus it is inconvenient
-// to require that all the environment be in a single object.  Rather we
-// allow to define several objects, belonging to several hierarchies
-// (descending from [[Environment]]), which will consolidate with each
-// other through a mechanism similar to the singleton construction, so
-// that saving and restoring can be done through a single object, as
-// required by the simulation.  To allow for several independent
-// environments to coexist (as is useful for instance in parallel
-// simulations), environments will be consolidated only if they belong to
-// the same \emph{scope,} labeled with a string and defined at the time
-// the object is created.
-
-// The intended use of the hierarchy is as folows: for every simulation
-// to be created, there will be an object of a type derived from
-// [[SimEnvironment]].  Each of these would be in a different scope.
-// Plugin-like object such as observables will create private
-// environments (derived from Environment), in one of the scopes used
-// when creating the [[SimEnvironment]]s.  The simulation then will deal
-// with the [[SimEnvironment]]s only, and will call methods to
-// initialize, load, or save automatically all the consolidated
-// environments in the scope (in effect working conceptually as a single
-// environment).
-
-// We explain below how to correctly derive from [[Environment]] and how
-// the saving and restoring of environments can be controlled.
-
-
 #include <string>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/version.hpp>
@@ -97,46 +50,48 @@
 
 namespace glsim {
   
-// @ \section{Environment}
+/** \class Environment
+    \ingroup Simulation
 
-// All environment types must be derived from this class.  This
-// implements the consolidation by scope name, and provides two functions
-// to build filenames according to the \glsim\ convention.
-// [[Environment]] is an abstract class because [[step()]] is a pure
-// virtual.
+All environment types must be derived from this class.  This
+implements the consolidation by scope name, and provides two functions
+to build filenames according to the \glsim\ convention.
+[[Environment]] is an abstract class because [[step()]] is a pure
+virtual.
 
-// The environment constructor must accept a scope name (a string), but
-// must provide a default name to allow default construction.  The scope
-// name will be also passed to the accompanying [[Parameters]] object.
+The environment constructor must accept a scope name (a string), but
+must provide a default name to allow default construction.  The scope
+name will be also passed to the accompanying [[Parameters]] object.
 
-// The constructor must initialize the object in a suitable default, but
-// \emph{must not} attempt to read any value from [[Parameters]]:
-// parameter parsing will be done only after all environment objects are
-// created.  Thus initialization from parameters must be provided with
-// separate [[init()]] methods, discussed further below.  Initialization
-// comes in two flavors: full initialization ([[init()]]), which rebuilds
-// the environment state from scratch, reading from the parameters object
-// (and thus file), and warm initialization, which means that the
-// environment is already initialized (typically, has been read from an
-// earlier simulation) but needs partial initialization to be prepared to
-// start a new simulation.  What exactly this means will depend on a
-// simulation, but for instance, in a Monte Carlo simulation warm
-// initialization would \emph{not} initialize the random number
-// generator, while it \emph{would} initialize the requested number of
-// steps.
+The constructor must initialize the object in a suitable default, but
+\emph{must not} attempt to read any value from [[Parameters]]:
+parameter parsing will be done only after all environment objects are
+created.  Thus initialization from parameters must be provided with
+separate [[init()]] methods, discussed further below.  Initialization
+comes in two flavors: full initialization ([[init()]]), which rebuilds
+the environment state from scratch, reading from the parameters object
+(and thus file), and warm initialization, which means that the
+environment is already initialized (typically, has been read from an
+earlier simulation) but needs partial initialization to be prepared to
+start a new simulation.  What exactly this means will depend on a
+simulation, but for instance, in a Monte Carlo simulation warm
+initialization would \emph{not} initialize the random number
+generator, while it \emph{would} initialize the requested number of
+steps.
 
-// The user of the library will derive at least one class from
-// [[BaseEnvironment]] below: that class has the full interface for
-// loading and saving complete scopes, and will be typically manged from
-// the simulation class or from the main program.  In principle, only one
-// object of this class per scope will be created.  Additionally and
-// optionally, one or more classes can be derived directly from
-// [[Environment]]: these will be the ``floating'' environments, which
-// will belong to the scope of one [[BaseEnvironment]] descendant, and
-// saving, loading and initialization will be managed from there.  For
-// this reason the initialization methods are kept protected at this
-// level.
+The user of the library will derive at least one class from
+[[BaseEnvironment]] below: that class has the full interface for
+loading and saving complete scopes, and will be typically manged from
+the simulation class or from the main program.  In principle, only one
+object of this class per scope will be created.  Additionally and
+optionally, one or more classes can be derived directly from
+[[Environment]]: these will be the ``floating'' environments, which
+will belong to the scope of one [[BaseEnvironment]] descendant, and
+saving, loading and initialization will be managed from there.  For
+this reason the initialization methods are kept protected at this
+level.
 
+*/
 class Environment {
 public:
   Environment(const char* scope=Parameters::default_scope);
@@ -228,15 +183,16 @@ inline void Environment::vserial(oarchive_t &ar) {ar << *this;}
 inline void Environment::vserial(iarchive_t &ar) {ar >> *this;}
 
 
-// @ \section{BaseEnvironment}
+/** \class BaseEnvironment
+    \ingroup Simulation
 
-// This class is the base for simulation environments, i.e.\ environments
-// that can do loading, saving and initialization at the scope level.  We
-// thus store here the filenames for reading and writing, and implement
-// the scope-wide methods.  The local step method is empty, the
-// scope-wide [[step()]] calls [[step_local()]] for all members of the
-// scope.
-
+This class is the base for simulation environments, i.e.\ environments
+that can do loading, saving and initialization at the scope level.  We
+thus store here the filenames for reading and writing, and implement
+the scope-wide methods.  The local step method is empty, the
+scope-wide [[step()]] calls [[step_local()]] for all members of the
+scope.
+*/
 class BaseEnv_par : public Parameters {
 public:
   BaseEnv_par(const char *scope=Parameters::default_scope);

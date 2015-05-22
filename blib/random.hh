@@ -296,6 +296,8 @@ inline unsigned long Uniform_integer::operator()(unsigned long m)
 
 
 /** \class Uniform_real
+    \ingroup Random
+    \brief Uniformly distributed real numbers in arbitrary range
 
 Uniformly-distributed real numbers in the range $[a,b)$ ($b$
 excluded).

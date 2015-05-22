@@ -49,6 +49,33 @@ namespace glsim {
 
 namespace po=boost::program_options;
 
+/** \class Parameters
+    \ingroup Simulation
+
+To read parameters, the user declares a class inherited from
+[[Parameters]].  The constructor of the derived class must declare
+the parameters to be read by calling [[parm_file_options]], which is
+an object of type [[options_description]] from
+[[boost::program_options]].  See the example in [[test]] and the Boost
+documentation for the declaration syntax.  Optionally, a scope can be
+given when the object is created.  It is legal to define two objects
+of the same class with different scopes.
+
+To actually read the parameters from the file, one must call
+[[Parameters::parse(char*)]] passing it a file name.  The parsing
+should be done only once (in the simulation, from an [[Environent]]
+object, which see).  After that, [[Parameters::count]] and
+[[Parameters::value]] may be called to load parameters as desired.
+
+The backend for parameter reading is Boost::program\_options.  Though
+we allow that the parameter definition be scattered all over, the
+definitios are actually collected in a single static object.  All the
+parameters must be defined by the time the parser is called.  As a
+result, the library user \emph{must not declary any global
+  [[Parameter]] object,} or the static member objects may fail to be
+properly initialized.
+
+*/
 class Parameters {
 public:
   static const char* default_scope;
@@ -73,9 +100,7 @@ private:
   friend class ParametersCL;
 } ;
 
-// \paragraph{Exception.}  [[Parameters::value()]] will throw an
-// exception when an undefined parameter is requested.
-
+/// [[Parameters::value()]] will throw an/ exception when an undefined parameter is requested.
 class Undefined_parameter : public glsim::Runtime_error {
 public:
   explicit Undefined_parameter(const std::string& param,
@@ -92,9 +117,8 @@ public:
   ~Scope_not_parsed() throw() {}
 } ;
 
-// To define the options, call this from the child's constructor to get
-// an [[options_description]] object from Boost.
-
+/// To define the options, call this from the child's constructor to get
+/// an [[options_description]] object from Boost.
 inline po::options_description& Parameters::parm_file_options()
 {
   return description[scope];
@@ -108,15 +132,18 @@ inline int Parameters::count(const std::string& s) const
 }
 
 
-// [[ParametersCL]] inherits from [[Parameters]], adding functionality to
-// parse a command line, always relying on [[boost::program_options]]'
-// facilities.  Only one [[ParametersCL]] object should be declared, and
-// it must \emph{not} be global. %'
+/** \class ParametersCL
+    \ingroup Simulation
+[[ParametersCL]] inherits from [[Parameters]], adding functionality to
+parse a command line, always relying on [[boost::program_options]]'
+facilities.  Only one [[ParametersCL]] object should be declared, and
+it must \emph{not} be global. %'
 
-// This class is abstract because [[show_usage]] is a pure virtual.
-// Decent command-line parsing requires definition of ``positional
-// parameters'' (in Boost::program\_options jargon), and a good usage
-// message to match.  See the test section for an example.
+This class is abstract because [[show_usage]] is a pure virtual.
+Decent command-line parsing requires definition of ``positional
+parameters'' (in Boost::program\_options jargon), and a good usage
+message to match.  See the test section for an example.
+*/
 class ParametersCL : public Parameters {
 public:
   ParametersCL(const char* scope=Parameters::default_scope);
@@ -131,28 +158,28 @@ protected:
 } ;			      
 
 
-// \section{The standard command line}
+/** \class StandardCL
+    \ingroup Simulation
+    \brief The standard command line
 
-// The following class is used to define standard command line for the
-// simulations distributed with \glsim.  It also serves as an additional
-// example use of [[ParametersCL]].  It is meant to use together with an
-// object of the [[Enviroment]] family (i.e. the (unique) [[StandardCL]]
-// object must be created after the [[Environmnet]]) and before it is
-// initialized.  If you want a different syntax for the command line you
-// can define another class to replace this, just be sure to add the
-// parameters defined in the constructor, either as command-line or
-// parameter-file options.  The parameters corresponding to the options
-// [[-c]], [[-i]], and [[-f]] below are only used in the STANDARD INIT???.
-
+The following class is used to define standard command line for the
+simulations distributed with glsim.  It also serves as an additional
+example use of ParametersCL.  It is meant to use together with an
+object of the Enviroment family (i.e. the (unique) StandardCL
+object must be created after the Environmnet) and before it is
+initialized.  If you want a different syntax for the command line you
+can define another class to replace this, just be sure to add the
+parameters defined in the constructor, either as command-line or
+parameter-file options.  The parameters corresponding to the options
+`-c`, `-i`, and `-f` below are only used in the STANDARD INIT???.
+*/
 class StandardCL : public ParametersCL {
 public:
   StandardCL(const char *scope=Parameters::default_scope);
   void show_usage();
 } ;
 
-// \paragraph{Exceptions.}  In addition to [[Early_stop_required]],
-// [[ParametersCL]] can throw [[Usage_error]].  
-
+/// In addition to Early_stop_required, ParametersCL can throw Usage_error.
 class Usage_error : public glsim::Runtime_error {
 public:
   explicit Usage_error() :

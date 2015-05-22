@@ -47,24 +47,14 @@
 #include "configuration.hh"
 
 
-// @ \chapter{Simulation}
-
-// - sim::run() executes the abstract simulation algorithm
-
-// Define step-based and target-based simulations; explain how both can
-// be dealt with here.  env.run_completed must be set by child sim or
-// specific environment.
-
-// Before the simulation is created, Env and configuration must be ready
-// to run.   Simulation wil \emph{not} initialize config or env.  To aid
-// in this initialization we provide a [[prepare]] function below.
-
-
 namespace glsim {
 
 #define GLSIM_TERM_ON_SIGNAL    1
 #define GLSIM_TERM_ON_MAX_STEPS 2
 
+/** \class Simulation
+    \ingroup Simulation
+*/
 class Simulation {
 public:
   Simulation(glsim::SimEnvironment&,glsim::Configuration&);
@@ -96,16 +86,16 @@ inline Simulation::Simulation(glsim::SimEnvironment& e,glsim::Configuration& c) 
   env(e),conf(c)
 {}
 
-// @ \section{Preparing configuration and environment}
-
-// Configuration and environment must be ready to run before the
-// simulation is created.  The following function can be used to set them
-// up.  They rely on [[StandardCL]] to find the appropriate files from
-// the command line and through partial initialization of the
-// environment.  Before the [[prepare()]] call, all the environments
-// belonging to the scope of the environment passed to [[prepare()]] must
-// have been constructed in their default state, or the call will fail
-// (perhaps silently and miserably).
+/// Preparing configuration and environment
+///
+/// Configuration and environment must be ready to run before the
+/// simulation is created.  The following function can be used to set them
+/// up.  They rely on [[StandardCL]] to find the appropriate files from
+/// the command line and through partial initialization of the
+/// environment.  Before the [[prepare()]] call, all the environments
+/// belonging to the scope of the environment passed to [[prepare()]] must
+/// have been constructed in their default state, or the call will fail
+/// (perhaps silently and miserably).
 void prepare(int argc,char *argv[],SimEnvironment &env,Configuration &conf);
 
 

@@ -45,12 +45,13 @@ simulation abstractions plus auxiliray concepts.
 
 \defgroup Error Error handling, logging and debugging aid
 
-\subsection{Source context and backtrace}
+@{
+\defgroup Scontext Source context and backtrace
 
 We first define classes to aid in reporting source context (position
 in a source file) and backtrace information.  This information is
- included in the exceptions defined below, and can be printed when
-catching the exception to aid debugging
+included in the exceptions defined below, and can be printed when
+catching the exception to aid debugging.
 
 \defgroup Exceptions Exceptions for glsim (including source context)
 
@@ -81,6 +82,11 @@ output stream calling `glsim::logs.set_stream(stream,loglevel)`.
 verbosity level.  This will result in some messages being copied to
 both streams (depending on the levels).
 
+@}
+
+\defgroup Useful Auxiliary / useful objects
+
+@{
 
 \defgroup Random Random numbers
 
@@ -118,21 +124,36 @@ deserializing through pointers, where the scope cannot be provided
 beforehand.  This maybe counterintuitive and can perhaps be considered
 a bug; but at present I see no cheap solution.
 
+\defgroup HDF In/out through HDF5 files
+
+A set of classes that represents HDF5 library objects (files, groups,
+datatypes).
+
+@}
+
 
 \defgroup Simulation Main simulation abstractions
 
+Here are the base objects of our main simulation abstractions:
 
-@ \chapter{Parameters}
+ - Parameters
+ - Configuration
+ - Environment
+ - Simulation
 
-We provide here two classes, which correspond to our parameters
-abstraction.  The library user will derive from here to define
-parameters as needed as shown below.  The actual parsing is done
-through Boost::program\_options.  One or more [[Parameters]]
-descendants will be used to define the parameters to be read from a
-parameter ([[.ini]]) file.  Typically, parameters will be defined at
-several places, but parsing needs to be done only once all parameters
-are defined (it is far easier to use Boost this way).  One can do this
-by defining a single object from a type that is derived from
+
+
+# Parameters
+
+We provide two classes which correspond to our parameters abstraction.
+The library user will derive from here to define parameters as needed
+as shown below.  The actual parsing is done through
+Boost::program\_options.  One or more [[Parameters]] descendants will
+be used to define the parameters to be read from a parameter
+([[.ini]]) file.  Typically, parameters will be defined at several
+places, but parsing needs to be done only once all parameters are
+defined (it is far easier to use Boost this way).  One can do this by
+defining a single object from a type that is derived from
 [[Parameters]].  It turns out however that it is much more convenient
 to have different objects (descending from [[Parameters]] but of
 different type), defined in places scattered all over the code, but
@@ -157,30 +178,63 @@ consolidates all parameter definitions. As result, if a
 options in the command line, overriding the file values.
 
 
-@ \section{Parameters}
 
-To read parameters, the user declares a class inherited from
-[[Parameters]].  The constructor of the derived class must declare
-the parameters to be read by calling [[parm_file_options]], which is
-an object of type [[options_description]] from
-[[boost::program_options]].  See the example in [[test]] and the Boost
-documentation for the declaration syntax.  Optionally, a scope can be
-given when the object is created.  It is legal to define two objects
-of the same class with different scopes.
+# Environment
 
-To actually read the parameters from the file, one must call
-[[Parameters::parse(char*)]] passing it a file name.  The parsing
-should be done only once (in the simulation, from an [[Environent]]
-object, which see).  After that, [[Parameters::count]] and
-[[Parameters::value]] may be called to load parameters as desired.
+The concept of environment is one of the major abstractions of the
+library, and in this chapter we give the classes that represent it.
 
-The backend for parameter reading is Boost::program\_options.  Though
-we allow that the parameter definition be scattered all over, the
-definitios are actually collected in a single static object.  All the
-parameters must be defined by the time the parser is called.  As a
-result, the library user \emph{must not declary any global
-  [[Parameter]] object,} or the static member objects may fail to be
-properly initialized.
+By our definition, there should be an Environment class to match any
+Simulation class.  The Environment class corresponding to a given
+Simulation must hold \emph{all} the data needed to perform the
+simulation.  The [[Parameters]] objects are meant to be used only to
+initialize the environment, and not for storing data.  The environment
+is endowed with method to allow saving to disk and restoring, while
+the [[Parameters]] classes have no such capability.  This is
+important, as the environment can evolve during the simulation (see
+the method [[step()]] below.)
+
+The parts of the environment essential for the simulation should be
+represented by an object of a type derived from [[class]]
+[[SimEnvironment]] below.  However, observables (which see), which
+will require a part of the environment to store their internal data,
+are designed to be used as ``plug-ins'', and thus it is inconvenient
+to require that all the environment be in a single object.  Rather we
+allow to define several objects, belonging to several hierarchies
+(descending from [[Environment]]), which will consolidate with each
+other through a mechanism similar to the singleton construction, so
+that saving and restoring can be done through a single object, as
+required by the simulation.  To allow for several independent
+environments to coexist (as is useful for instance in parallel
+simulations), environments will be consolidated only if they belong to
+the same \emph{scope,} labeled with a string and defined at the time
+the object is created.
+
+The intended use of the hierarchy is as folows: for every simulation
+to be created, there will be an object of a type derived from
+[[SimEnvironment]].  Each of these would be in a different scope.
+Plugin-like object such as observables will create private
+environments (derived from Environment), in one of the scopes used
+when creating the [[SimEnvironment]]s.  The simulation then will deal
+with the [[SimEnvironment]]s only, and will call methods to
+initialize, load, or save automatically all the consolidated
+environments in the scope (in effect working conceptually as a single
+environment).
+
+We explain below how to correctly derive from [[Environment]] and how
+the saving and restoring of environments can be controlled.
+
+# Simulation
+
+- sim::run() executes the abstract simulation algorithm
+
+Define step-based and target-based simulations; explain how both can
+be dealt with here.  env.run_completed must be set by child sim or
+specific environment.
+
+Before the simulation is created, Env and configuration must be ready
+to run.   Simulation wil \emph{not} initialize config or env.  To aid
+in this initialization we provide a [[prepare]] function below.
 
 
 

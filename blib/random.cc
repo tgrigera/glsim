@@ -37,6 +37,7 @@
 #include <iostream>
 
 #include "random.hh"
+#include "cerrors.h"
 
 namespace glsim {
 
