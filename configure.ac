@@ -28,7 +28,7 @@ AC_SUBST(LIBGLSIM_VERSION,[1:0:0])
 
 ###############################################################################
 #
-# Checks for programs to needed to build
+# Checks for programs needed to build
 #
 AC_PROG_MAKE_SET
 AC_PROG_CPP
@@ -58,6 +58,7 @@ AC_CHECK_HEADERS([stdlib.h unistd.h])
 AC_CHECK_HEADER([gsl/gsl_rng.h],,exit)
 AC_CHECK_HEADER([boost/program_options.hpp],,exit)
 AC_CHECK_HEADER([boost/timer/timer.hpp],,exit)
+AC_CHECK_HEADER([hdf5.h],,exit)
 
 ###############################################################################
 #
@@ -120,6 +121,10 @@ AC_LINK_IFELSE(
   AC_MSG_RESULT(yes) ; AC_DEFINE([HAVE_LIBBOOST_TIMER],[1],[Define if Boost::timer is available]),
   AC_MSG_RESULT(no) ; [LIBS=$SAVED_LIBS] ; [AC_MSG_FAILURE([cannot build without boost::timer])])
 
+# HDF5
+AC_CHECK_LIB([hdf5], H5Fcreate,,exit)
+AC_CHECK_LIB([hdf5_hl], H5LTset_attribute_short,,exit)
+
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
 AC_C_CONST
@@ -139,6 +144,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile
 	         blib/Makefile
                  lattice/Makefile
+		 offlattice/Makefile
 		 doc/Makefile
 		 doc/version.tex])
 #AC_CONFIG_FILES([doc/version.tex])
