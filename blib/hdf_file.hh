@@ -86,7 +86,10 @@ private:
  */
 
 /** \class H5group
-    \ingroup HDF
+    \ingroup HDF An HDF5 group
+
+This class holds the handle (`hid`) to a group created or opened with
+create() or open() and closes it on destruction.
 */
 class H5group {
 public:
@@ -205,9 +208,7 @@ template <> inline hid_t H5type::H5native_datatype<bool>()
 This class allows easiy creation of simple types: builtin types, one
 and two-dimensional arrays of builtin types, and C++ strings.  Just
 provide the type and number of elements upon construction.  For
-two-dimensional arrays.
-
-For example:
+example:
 
 ~~~~~cc
     H5simple_type<double>  T1(N);  // Represents double[N]
@@ -311,9 +312,9 @@ public:
     \brief Main functionality for record-based files under HDF5
 
 This is an abstract class that makes it easy to use simple
-header/record files under HDF5.  Simply inherit and define the fields
-belonging to the header and record parts (see define_header_fields()
-and define_record_fields().  Then the read/write operations can be
+header/record files under HDF5.  Simply inherit and declare the fields
+belonging to the header and record parts (see declare_header_fields()
+and declare_record_fields().  Then the read/write operations can be
 used.
 
 Two approaches are possible:
@@ -356,16 +357,18 @@ public:
   /// \name File information (available while file is open)
   /// @{
   long    file_version() const {return disk_file_version;}
+  ///< Version of the opened file
   hsize_t size() const {return nrecords;}
+  ///< Size (number of records)
   
   /// @}
   /// \name Read and write
   /// @{
-  void write_header();
-  void write_record(hsize_t recnum);
-  void append_record() {write_record(nrecords);}
-  void read_header();
-  void read_record(hsize_t recnum);
+  void write_header();  ///< Write all header fields to disk
+  void write_record(hsize_t recnum); ///< Write to specified record number
+  void append_record() {write_record(nrecords);} ///< Write new record at the end of the file
+  void read_header(); ///< Read all header fields
+  void read_record(hsize_t recnum); ///< Read all record fields from record recnum
   /// @}
 
 
@@ -376,13 +379,14 @@ public:
 
 protected:
 
-  /// This must declare al header fields.  It is called when opening
-  /// the file.  The file opening mode is passed as argument so that
+  /// This function must declare al header fields by successive calls
+  /// of declare_field().  It is called when opening or creating the
+  /// file.  The file opening mode is passed as argument so that
   /// necessary initializations can be done properly when needed.  It
   /// is not mandatory that declaration of header and record fields be
   /// split in two functions; actually both can create any combination
   /// of fields and attributes.  The only difference is that in read
-  /// mode, init() calls read_header after calling
+  /// mode, init() calls read_header() after calling
   /// declare_header_fields() so that header information can be used
   /// to declare further fields.  If this information is not needed,
   /// then this function can declare both header and record fields.
@@ -393,6 +397,7 @@ protected:
   /// declare the record fields (e.g. to know the size of some array).
   virtual void declare_record_fields(mode fmode)=0;
 
+  /// Call this to declare the fields
   template <typename FTYPE>
   field_kind declare_field(field_kind kind,const char* name,FTYPE *field,
 			   hsize_t nelements=1);
@@ -464,14 +469,26 @@ public:
    dataset) depending on the file mode.  Returns the actual kind
    (header or record) of the field opened.
 
-   This supports builtin simple types or one dimensional arrays of
-   builtin types.  If FTYPE is char, then nelements must be the
-   maximum string length.  C++ strings are not currently supported.
+   It supports (through H5simple_type) builtin simple types or one- or
+   two- dimensional arrays of builtin types or C++ `std::string`s.  If
+   FTYPE is char, then nelements must be the maximum string length.
 
-   \param  kind   Either f_header or f_record
-   \param  name   The (unique) name of the field as will be passed to HDF5
-   \param  field  A pointer to the field (will be used in read and write operations)
-   \param  nelements The number of elements (for a simple array) or the maximum string length
+   \param[in] kind Whether the field is header (f_header) or record
+   (f_record).  This only applies when creating the file, when opening
+   an existing file the record kind is read from the file.
+
+   \param[in]  name   The (unique) name of the field as will be passed to HDF5
+
+   \param[in] field A pointer to the field (will be used in read and
+   write operations)
+
+   \param[in] nelements The number of elements (for a simple array)
+   or the maximum string length.  Defaults to 1, meaning a scalar
+   (which is different from an array with one element).
+
+   \return The actual kind (f_header or f_record) of the field in the
+   opened file (equal to the kind argument if the file is being
+   created).
 
  */
 template <typename FTYPE> HDF_record_file::field_kind

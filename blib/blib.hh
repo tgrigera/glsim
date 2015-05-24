@@ -1,5 +1,5 @@
 /*
- * blib.hh -- basic library description
+ * blib.hh -- Documentation of the basic library
  *
  * This file is part of glsim, a numerical simulation class library and
  * helper programs.
@@ -36,72 +36,97 @@
 
 /**\defgroup Blib Basic library
  
-The basic library includes the objects that represent the main
-simulation abstractions plus auxiliray concepts.
+The main library is `glsim` proper.  The utility programs and the
+lattice and off-lattice libraries depend on the modules included here.
+It includes class hierarchies to represent the main simulation
+abstractions (Parameters, Configuration, Environment and Simulation),
+as well as utilities for logging and error handling and interfaces for
+basic object such as random number generators and self-describing disk
+files.
+
+### Error handling and logging
+
+This includes a simple log stream, the exceptions thrown by the
+library and a class to allow printing of source context and stack
+backtrace when catching the exceptions.  Documented \link Error
+here\endlink.
+
+### Interfaces to other basic libraries
+
+Convenient objetc-orinted interfaces are provided for \link Random
+random numbers\endlink (from the GSL library) and for \link HDF HDF5
+files\endlink.
+
+### Main simulation abstractions
+
+This includes de base of the four main hierarchies of the library,
+representing \link Parameter parameters\endlink, the \link
+Configuration configuration\endlink, the \link Environment
+environent\endlink, and the \link Simulation simulation\endlink.
+
+
+
+@{ \defgroup Error Error handling, logging and debugging aid
 
 @{
 
-#### Error handling
-
-\defgroup Error Error handling, logging and debugging aid
-
-@{
 \defgroup Scontext Source context and backtrace
 
-We first define classes to aid in reporting source context (position
-in a source file) and backtrace information.  This information is
-included in the exceptions defined below, and can be printed when
-catching the exception to aid debugging.
+These classes aid in reporting source context (position in a source
+file) and backtrace information.  This information is included in the
+\link Exceptions exceptions\endlink thrown by `glsim`, and can be
+printed when catching the exception to aid debugging.
 
-\defgroup Exceptions Exceptions for glsim (including source context)
+\defgroup Exceptions Exceptions thrown by the library
 
 Here we define the base exceptions for glsim.  We create our own
 `Logic_error` and `Runtime_error` exceptions that inherit
 from the standard `logic_error` and `runtime_error` exceptions,
 adding a `Source_context` argument.  These classes add the source
-context description to the exception description argument (so that it
+context description to the exception description argument so that it
 can be displayed through the `what()` method, plus another method
 that gives access to the Backtrace object stored in
 Source_context.
 
 \defgroup Logging Logging
 
-This providesa simple log stream class.  The idea is that `main()` will
-initialize a global `glsim::logs` object (of type `glsim::logger`
-with the desired verbosity level.  Applicaiton code then writes to the
-log stream indicating the loglevel of the message as 
+We implement a simple log stream class.  The idea is that `main()`
+will initialize a global `glsim::logs` object (of type
+`glsim::logger`) with the desired verbosity level.  Code in other
+functions or classes can then write to the log stream indicating the
+loglevel of the message as
 
      logs(glsim::info) << "Information message\n";
 
-To initialize the log stream, the main module must (see
-example in chapter XXXXREF) set the verbosity level and actual
-output stream calling `glsim::logs.set_stream(stream,loglevel)`.
+To initialize the log stream, the main module must set the verbosity
+level and actual output stream calling
+`glsim::logs.set_stream(stream,loglevel)`.
 
-\textbf{NOT IMPLEMENTED} A second output stream can be set with
-[[set_additional_stream]] (same syntax), possibly with a different
+*NOT IMPLEMENTED:* A second output stream can be set with
+set_additional_stream (same syntax), possibly with a different
 verbosity level.  This will result in some messages being copied to
 both streams (depending on the levels).
 
 @}
 
-\defgroup Useful Auxiliary / useful objects
+\defgroup Interfaces Interfaces to other basic libraries
 
 @{
 
 \defgroup Random Random numbers
 
 Random numbers are not needed in all simulations, but they are so
-frequently used that we provide an interface integrated into \glsim's
-conventions.  \glsim\ uses the GSL's generators.  These classes are
-basically a C++ wrapper around the GSL interface, which is not hard since
-the GSL design is object-oriented.  We use a class to hold one of the
-available generators, and another set that represent random number
-distributions.  These provide the actual numbers to be used in the
-simulation, but rely on (pseudo)random numbers provided by
-[[random_number_generator]].
+frequently used that we provide an interface integrated into `glsim`'s
+conventions.  `glsim` uses the Gnu Scientific Library's generators.
+We provide a C++ wrapper around the GSL interface, which is not hard
+since the GSL design is object-oriented.  We use a class to hold one
+of the available generators, and another set that represent random
+number distributions.  These provide the actual numbers to be used in
+the simulation, but rely on (pseudo)random numbers provided by
+Random_number_generator.
 
 The design of the classes allows to define a random distribution
-object (descended from [[distribution_base]]) without providing a
+object (descended from Distribution_base) without providing a
 generator.  This is allows the programmer to write a class or function
 that uses random numbers without initializing its own private
 generator (which in general is not desired as, among other things it
@@ -124,15 +149,22 @@ deserializing through pointers, where the scope cannot be provided
 beforehand.  This maybe counterintuitive and can perhaps be considered
 a bug; but at present I see no cheap solution.
 
+
+
 \defgroup HDF In/out through HDF5 files
 
 A set of classes that represents HDF5 library objects (files, groups,
-datatypes).
+and datatypes) so that they may be more easily created and
+manipulated.  There is also a class (HDF_record_file) that makes it
+easy to create and read a file with a simple record structure (a
+header plus a table-like structure).
 
 @}
 
 
-\defgroup Simulation Main simulation abstractions
+\defgroup Abstractions Main simulation abstractions
+
+@{
 
 Here are the base objects of our main simulation abstractions:
 
@@ -142,29 +174,38 @@ Here are the base objects of our main simulation abstractions:
  - Simulation
 
 
+\defgroup Parameters Parameters
 
-# Parameters
+Parameters are represented by one or more objects of a type derived
+from \link glsim::Parameters\endlink.  The base class is able to parse
+a file with a `parameter=value` structure (a `.ini` file) through the
+`program_options` component of the `Boost` library.  The library user
+will derive from glsim::Parameters, defining the actual parameters in
+the derived constructor by calling
+Parameters::parameter_file_options().  Once all parameters are
+defined, the parameter file is parsed by calling
+Parameters::parse().
 
-We provide two classes which correspond to our parameters abstraction.
-The library user will derive from here to define parameters as needed
-as shown below.  The actual parsing is done through
-Boost::program\_options.  One or more [[Parameters]] descendants will
-be used to define the parameters to be read from a parameter
-([[.ini]]) file.  Typically, parameters will be defined at several
-places, but parsing needs to be done only once all parameters are
-defined (it is far easier to use Boost this way).  One can do this by
-defining a single object from a type that is derived from
-[[Parameters]].  It turns out however that it is much more convenient
-to have different objects (descending from [[Parameters]] but of
-different type), defined in places scattered all over the code, but
-which share the [[.ini]] file.  Our solution is to define each
-[[Parameters]] object with a \emph{scope} (designated by a string).
-All [[Parameters]] objects defined within a scope will consolidate the
-parameters information in one [[boost::program_options]] object, and
-the parsing function will read all of them from a single file.
-Different scopes should correspond to different files, if this
+Since parameters are tied to particular simulation components (e.g. an
+observable might use a parameter to set the observation frequency), to
+preserve modularity it is convenient to scatter the definition of the
+parameters across several source locations.  However, parsing needs to
+be done only once all parameters are defined (it is far easier to use
+Boost this way).  One can do this by defining a single object from a
+type that is derived from Parameters, but it turns out that it is much
+more convenient to have different objects (descending from Parameters
+but of different type), defined in places scattered all over the code,
+but which share the `.ini` file.  Our solution is to specify a \link
+Scopes scope\endlink name (a string) when defining each Parameters
+object.  All Parameters objects defined within a scope will
+consolidate the parameter information in one `boost::program_options`
+object, and the parsing function will read all of them from a single
+file.  Different scopes should correspond to different files.  If this
 complexity is not needed, scoping can be ignored and a default scope
 will be used.
+
+
+### The command line
 
 To parse the command line, one can create an object derived from
 [[ParametersCL]].  Only one such object should exist (but it can share
@@ -179,7 +220,8 @@ options in the command line, overriding the file values.
 
 
 
-# Environment
+
+\defgroup Environment Environment
 
 The concept of environment is one of the major abstractions of the
 library, and in this chapter we give the classes that represent it.
@@ -224,7 +266,8 @@ environment).
 We explain below how to correctly derive from [[Environment]] and how
 the saving and restoring of environments can be controlled.
 
-# Simulation
+
+\defgroup Simulation Simulation
 
 - sim::run() executes the abstract simulation algorithm
 
@@ -236,7 +279,7 @@ Before the simulation is created, Env and configuration must be ready
 to run.   Simulation wil \emph{not} initialize config or env.  To aid
 in this initialization we provide a [[prepare]] function below.
 
-
+@}
 
 @}
 

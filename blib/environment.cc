@@ -117,7 +117,7 @@ void Environment::final_filename(std::string& name,
 BaseEnv_par::BaseEnv_par(const char* scope) :
   Parameters(scope)
 {
-  parm_file_options().add_options()
+  parameter_file_options().add_options()
     ("initial_configuration_file",po::value<std::string>()->default_value("[AUTO]"),
      "file to read inital configuration, if [AUTO], generated from prefix and infix")
     ("final_configuration_file",po::value<std::string>()->default_value("[AUTO]"),
@@ -266,7 +266,7 @@ void SimEnvironment::init_local()
 SimEnvironment_par::SimEnvironment_par(const char* scope) :
   Parameters(scope)
 {
-  parm_file_options().add_options()
+  parameter_file_options().add_options()
     ("title",po::value<std::string>()->default_value("[untitled]"),"simulation title")
     ("max_steps",po::value<long>()->default_value(0),
      "maximum number of allowed steps in stage (0=unlimited)")

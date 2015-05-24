@@ -48,34 +48,32 @@ namespace glsim {
 
 
 /** \class Backtrace
-    \ingroup Error
+    \ingroup Scontext
+    \brief Store a stack trace
 
 This class stores a backtrace, which can later be printed to a stream
-with the overloaded insertion operator we provide.  See below for a
-script to translate backtrace to function names and source line
-numbers.  Note that compiling with debugging options and requesting
-more detailed symbol tables in the executable (e.g.\ with `-g` and
-`-rsymbol` in `gcc`) and will usually give richer backtrace
-information (but in any case try processing with addr2line with the
-aid of the script below).
+using the overloaded insertion operator.  Note that compiling with
+debugging options and requesting more detailed symbol tables in the
+executable (e.g. with `-g` and `-rsymbol` in `gcc`) and will usually
+give richer backtrace information (but in any case try processing with
+addr2line with the aid of the script below).
 
-# Interpreting the backtrace.
+## Interpreting the backtrace.
 
-The script `readbt.sh` exctracts the backtrace produced by a program
-like [[context]] above, and processes it with `addr2line` to
-translate the return addresses to source lines and function names.  It
-can be run like this:
+The script `readbt.sh` extracts the backtrace produced by operator<< 
+and processes it with `addr2line` to translate the return addresses to
+source lines and function names.  It can be run like this:
 
      ./progname 2>&1 | readbt.sh ./progname
 
 (note that you must give `progname` again as an argument to
-`readbt.sh`.  Alternatively you can copy the programs output to a
+`readbt.sh`).  Alternatively you can copy the programs output to a
 file and redirect input to `readbt.sh` from that file.
 
 */
 class Backtrace {
 public:
-  Backtrace();  ///<On construction a backtrace is stored
+  Backtrace();  ///<Stores a backtrace on construction
 
   friend std::ostream& operator<<(std::ostream&,const Backtrace&);
 
@@ -90,11 +88,12 @@ inline Backtrace::Backtrace()
   nptrs = backtrace(cbuffer,cbuffer_len);
 }
   
-/// \ingroup Error
+/// \ingroup Scontext
 #define HERE glsim::Source_context(__FILE__,__LINE__,__func__)
 
 /** \class Source_context
-    \ingroup Error
+    \ingroup Scontext
+    \brief Store source filename, line number and function name
 
 This class holds source filename, line and function information stored
 as a string.  It is intended mainly to be used with the `HERE` macro

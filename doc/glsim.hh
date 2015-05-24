@@ -326,8 +326,14 @@
 
 Modules are
 
- - Basic library
- - Graph and lattice
+ - Main library, providing:
+   - Error handling
+   - Interfaces to utility libraries
+     - Random numbers from the Gnu Scientific Library
+     - Disk i/o throuhg the Hierarchical Data File library (HDF5)
+   - Main simulation abstractions
+ - Graph and lattice library
+ - Offlattice library
 
 */
 
@@ -408,5 +414,29 @@ feedback and contributions from users.
 /*****************************************************************************/
 /** \page Concepts
 
-WIP
+\subpage simabs "Main abstractions"
+
+\subpage Scopes "Scoping"
+
 */
+
+/*****************************************************************************/
+/** \page simabs
+
+WIP
+
+*/
+
+/*****************************************************************************/
+/** \page Scopes
+
+# Scopes
+
+It is legal to define two objects of the same class with different
+scopes.
+
+
+
+*/
+
+

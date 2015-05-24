@@ -50,44 +50,45 @@ namespace glsim {
 namespace po=boost::program_options;
 
 /** \class Parameters
-    \ingroup Simulation
+    \ingroup Parameters
 
-To read parameters, the user declares a class inherited from
-[[Parameters]].  The constructor of the derived class must declare
-the parameters to be read by calling [[parm_file_options]], which is
-an object of type [[options_description]] from
-[[boost::program_options]].  See the example in [[test]] and the Boost
-documentation for the declaration syntax.  Optionally, a scope can be
-given when the object is created.  It is legal to define two objects
-of the same class with different scopes.
+To read parameters, one defines a class inherited from Parameters, in
+which constructor all needed parameters are declared by calling
+parameter_file_options().
 
-To actually read the parameters from the file, one must call
-[[Parameters::parse(char*)]] passing it a file name.  The parsing
-should be done only once (in the simulation, from an [[Environent]]
-object, which see).  After that, [[Parameters::count]] and
-[[Parameters::value]] may be called to load parameters as desired.
+To actually read the parameters from the file,
+Parameters::parse(char*) must be called, giving it a file name.  The
+parsing should be done only once (in the simulation, this is done from
+an Environment object).  After parsing, count() and value() may be
+called to read parameters as desired.
 
-The backend for parameter reading is Boost::program\_options.  Though
+The backend for parameter reading is Boost::program_options.  Though
 we allow that the parameter definition be scattered all over, the
 definitios are actually collected in a single static object.  All the
 parameters must be defined by the time the parser is called.  As a
-result, the library user \emph{must not declary any global
-  [[Parameter]] object,} or the static member objects may fail to be
-properly initialized.
+result, the library user __must not declare any global Parameters
+object,__ or the static member objects may fail to be properly
+initialized.
 
 */
 class Parameters {
 public:
   static const char* default_scope;
 
+  /// Create the object in the specified scope.
   Parameters(const char* scope_=default_scope) : scope(scope_) {}
+  /// Parse `parfile` through `Boost::program_options`
   void parse(const char *parfile);
+  /// Return the number of values given for the parameter
   int  count(const std::string& s) const;
+  /// Get parameter value
   const po::variable_value& value(const std::string& s) const;
+  /// Describe all known parameters in the scope
   virtual void show_parameters(std::ostream&) const;
   
 protected:
-  po::options_description& parm_file_options();
+  /// Get an `options_description` object to define parameters
+  po::options_description& parameter_file_options();
 
 private:
   typedef std::map<std::string,po::options_description> descmap_t;
@@ -100,7 +101,10 @@ private:
   friend class ParametersCL;
 } ;
 
-/// [[Parameters::value()]] will throw an/ exception when an undefined parameter is requested.
+/** \class Undefined_parameter
+    \ingroup Exception
+    \brief Exception thron by Parameters::value() when requested  an undefined parameter
+*/
 class Undefined_parameter : public glsim::Runtime_error {
 public:
   explicit Undefined_parameter(const std::string& param,
@@ -109,6 +113,10 @@ public:
   ~Undefined_parameter() throw() {}
 } ;
 
+/** \class Scope_not_parsed
+    \ingroup Exception
+    \brief Exception thrown by Parameters when a parameter value is requested before calling parse()
+*/
 class Scope_not_parsed : public glsim::Runtime_error {
 public:
   explicit Scope_not_parsed(const std::string& scope,
@@ -117,13 +125,23 @@ public:
   ~Scope_not_parsed() throw() {}
 } ;
 
-/// To define the options, call this from the child's constructor to get
-/// an [[options_description]] object from Boost.
-inline po::options_description& Parameters::parm_file_options()
+/**
+   To define the parameters, call this function from the children's
+ constructor to get an `options_description` object from
+ `Boost::program_options`.  See the
+ example in XX  and Boost documentation for the
+ declaration syntax.
+*/
+inline po::options_description& Parameters::parameter_file_options()
 {
   return description[scope];
 }
 
+/**
+   Returns the number of values given for the specified parameter.
+   Use this to determine if an optional parameter has been given
+   (otherwise value() will throw an exception).
+ */
 inline int Parameters::count(const std::string& s) const
 {
   if (variables.find(scope)==variables.end())
@@ -131,9 +149,11 @@ inline int Parameters::count(const std::string& s) const
   return variables[scope].count(s);
 }
 
+/*****************************************************************************/
 
 /** \class ParametersCL
-    \ingroup Simulation
+    \ingroup Parameters
+
 [[ParametersCL]] inherits from [[Parameters]], adding functionality to
 parse a command line, always relying on [[boost::program_options]]'
 facilities.  Only one [[ParametersCL]] object should be declared, and
@@ -159,7 +179,7 @@ protected:
 
 
 /** \class StandardCL
-    \ingroup Simulation
+    \ingroup Parameters
     \brief The standard command line
 
 The following class is used to define standard command line for the

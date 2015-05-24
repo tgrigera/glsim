@@ -49,10 +49,9 @@
  */
 namespace glsim {
 
-/** \ingroup Error
+/** \ingroup Scontext
 
- Overload of `operator<<` to output bactrace to a stream
-
+  Overload of `operator<<` to output backtrace to a stream
 */
 std::ostream& operator<<(std::ostream& o,const glsim::Backtrace& b)
 {

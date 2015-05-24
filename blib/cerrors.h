@@ -38,7 +38,7 @@
 #define CERRORS_H
 
 /** \file cerrors.h Error reporting in C
-    \ingroup Blib
+    \ingroup Error
 
 For the occasional C program we provide a simple way to abort the
 program with a backtrace through the `ERROR_EXIT` and `SYSERROR_EXIT`
@@ -52,12 +52,15 @@ report source position (to stderr), useful when debugging.
 #include <errno.h>
 #include <unistd.h>
 
+/** Exit with error code ecode and message s, reporting context */
 #define ERROR_EXIT(s,ecode) \
         exit_on_error(__FILE__,__LINE__,__func__,s,ecode)
 
+/** Like ERROR_EXIT but also print library error (with perror()) */
 #define SYSERROR_EXIT(s,ecode) \
         exit_on_system_error(__FILE__,__LINE__,__func__,s,ecode)
 
+/** Print source context (function and source line number */
 #define I_AM_HERE \
   {fprintf(stderr,"(DD) Reached %s:%d (in function %s)\n",__FILE__,__LINE__, \
 	  __func__); fflush(stderr); }

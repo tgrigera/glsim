@@ -43,29 +43,29 @@
 namespace glsim {
   
 // This is where the descriptions and values are stored.  To implement
-// scopes we simply use a [[std::map]].
+// scopes we simply use a std::map.
 
-const char* Parameters::default_scope="[default]";
+const char*           Parameters::default_scope="[default]";
 Parameters::descmap_t Parameters::description;
 Parameters::varmap_t  Parameters::variables;
-
-po::options_description            ParametersCL::command_line_options;
-po::positional_options_description ParametersCL::pos;
 
 // The parse function just properly calls the Boost component.
 
 void Parameters::parse(const char *parfile)
 {
-  po::store(po::parse_config_file<char>(parfile,parm_file_options()),
+  po::store(po::parse_config_file<char>(parfile,parameter_file_options()),
 	    variables[scope]);
   po::notify(variables[scope]);
   glsim::logs(glsim::info) << "Parameters read from " << parfile << "\n";
 }
   
-// With the next methods one can retrieve the values of the
-// options. See the Boost documentation for usage of the
-// [[po::variable_value]] object.
-
+/**
+  This returns a reference to an appropriate
+  `Boost::program_options::variable_value` object, which can be used
+  to retrieve the value of the parameter (see the
+  `Boost::program_options` documentation for usage of the
+  `variable_value` object.
+*/
 const po::variable_value& Parameters::value(const std::string& s) const 
 {
   if (variables.find(scope)==variables.end())
@@ -76,14 +76,22 @@ const po::variable_value& Parameters::value(const std::string& s) const
     throw Undefined_parameter(s);
 }
 
-// A help screen can be printed easily thanks to
-// [[boost::program_options]]' facilities.  Override if you prefer a
-// custom message.
-
+/**
+   This prints a description of all the parameters defined in the
+   scope through `Boost::program_options`.  Override if you prefer a
+   custom message.
+*/
 void Parameters::show_parameters(std::ostream& o) const
 {
   o << description[scope];
 }
+
+
+/*****************************************************************************/
+
+po::options_description            ParametersCL::command_line_options;
+po::positional_options_description ParametersCL::pos;
+
 
 
 
@@ -102,7 +110,7 @@ ParametersCL::ParametersCL(const char* scope) :
   command_line_options.add_options()
     ("help,h",po::bool_switch(),"help with usage")
     ("parameter-help",po::bool_switch(),"show accepted parameters")
-    ("parameter_file",po::value<std::string>(),"specifiy parameter (.ini) file")
+    ("parameter-file,P",po::value<std::string>(),"read further options/parameters from (.ini) file")
     ;
 }
 
@@ -129,7 +137,7 @@ void ParametersCL::parse_command_line(int argc,char *argv[],bool require_paramet
 
   try {
 
-    command_line_options.add(parm_file_options());
+    command_line_options.add(parameter_file_options());
 
     po::store(po::command_line_parser(argc,argv).options(command_line_options).
               positional(pos).run(),variables[scope]);

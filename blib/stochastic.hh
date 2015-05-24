@@ -60,7 +60,7 @@ public:
 StochasticParameters::StochasticParameters(const char* scope) :
   Parameters(scope)
 {
-  parm_file_options().add_options()
+  parameter_file_options().add_options()
     ("stochastic.random_number_generator",po::value<std::string>(),"generator to use")
     ("stochastic.seed",po::value<unsigned long int>()->default_value(0),
      "random generator seed")
