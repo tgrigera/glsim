@@ -266,7 +266,114 @@ void SimulationCL::show_version()
   // std::cerr << "glsim is Copyright (C) 2009-2015 Tomas S. Grigera <tgrigera@iflysib.unlp.edu.ar\n";
 }
 
-/*****************************************************************************/
+/*****************************************************************************
+ *
+ * class UtilityCL
+ *
+ */
+
+/**
+The constructor defines the common options `--help`, `--version`,
+`--verbose`, and `--terse`, but no positional options.
+
+\param[in] name The name of the utility for show_version().
+ */
+UtilityCL::UtilityCL(const char* name,const char *scope) :
+  CLParameters(scope),
+  name_and_ver(name)
+
+{
+  command_line_options().add_options()
+    ("help,h",po::bool_switch(),"help with usage")
+    ("verbose,V",po::bool_switch(),"be verbose")
+    ("terse,T",po::bool_switch(),"be terse: print as little as possible (e.g. omit headers)")
+    ("version",po::bool_switch(),"print version and exit")
+    ;
+}
+
+/**
+Parses the command line (through CLParameters::parse_comand_line())
+and act upon the help options (`--help` and `--version`),
+displaying the requested help and throwing an
+exception to request an early stop.
+
+To check for the legality of the command line, in simple cases it will
+suffice to mark some parameters as `required()`.  In more complex
+cases a parse_command_line can be written that calls this one to
+parse the command line and then checks that all required command-line
+parameters have been read and are consistent.
+
+If a usage error is detected, show_usage() is called and a Usage_error
+exception is thrown.  This calls notify(), so that if a parameter file
+needs to be read it must be placed in another scope, or this function
+overridden.
+
+\param[in] argc,argv      Argument count and values as passed to main()
+*/
+void UtilityCL::parse_command_line(int argc,char *argv[])
+{
+  try {
+
+    CLParameters::parse_command_line(argc,argv,true);
+
+    if (value("help").as<bool>()) {
+      show_usage();
+      throw Early_stop();
+    }
+    if (value("version").as<bool>()) {
+      show_version();
+      throw Early_stop();
+    }
+    notify();
+
+  } catch (po::too_many_positional_options_error& e) {
+    throw Usage_error();
+  } catch (po::invalid_command_line_syntax& e) {
+    throw Usage_error();
+  } catch (po::invalid_command_line_style& e) {
+    throw Usage_error();
+  } catch (po::required_option& e) {
+    throw Usage_error();
+  }
+}
+
+void UtilityCL::show_version()
+{
+  std::cerr << name_and_ver << " (part of glsim " << VERSION << ")\n";
+  std::cerr << "Copyright (C) 2009-2015 Tomas S. Grigera <tgrigera@iflysib.unlp.edu.ar>\n";
+}
+
+int UtilityEC(int argc,char *argv[],void (*wmain)(int,char**))
+{
+  enum return_codes
+  {no_error=0,early_stop=1,usage_error=2,runtime_error=10,
+   logic_error=20,other_exception=255} ;
+
+  return_codes rcode=no_error;
+
+  try {
+
+    wmain(argc,argv);
+  
+  } catch (const glsim::Early_stop &e) {
+    rcode=early_stop;
+  } catch (const glsim::Usage_error &e) {
+    std::cerr << "Wrong usage, try --help\n";
+    rcode=usage_error;
+  } catch (const glsim::Runtime_error& e) {
+    std::cerr << e.what() << '\n';
+    std::cerr << e.backtrace();
+    rcode=runtime_error;
+  } catch (const glsim::Logic_error& e) {
+    std::cerr << e.what() << '\n';
+    std::cerr << e.backtrace();
+    rcode=logic_error;
+  } catch (const std::exception &e) {
+    std::cerr << "Exception: " << e.what() << '\n';
+    rcode=other_exception;
+  }
+  return rcode;
+}
 
 
 } /* namespace */

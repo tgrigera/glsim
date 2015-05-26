@@ -77,6 +77,7 @@ public:
 
   /// Create the object in the specified scope.
   Parameters(const char* scope_=default_scope) : scope(scope_) {}
+  virtual ~Parameters() {}
   /// Parse `parfile` through `Boost::program_options`
   void parse(const char *parfile);
   /// Return the number of values given for the parameter
@@ -263,15 +264,32 @@ public:
 
 /*****************************************************************************/
 
-// class UtilityCL : public CLParameters {
-//   virtual void show_usage()=0;
+/** \class UtilityCL
+    \ingroup Parameters
+    \brief Common command-line options for utility programs
 
+This provides a parser and defines options common to all utility or
+analysis programs distributed with glsim.
+*/
+class UtilityCL : public CLParameters {
+public:
+  UtilityCL(const char* name,const char *scope=Parameters::default_scope);
+  virtual void parse_command_line(int argc,char *argv[]);
 
-//   // virtual void parse_command_line(int argc,char *argv[],
-//   // 				  bool require_parameter_file=true,
-//   // 				  bool use_parameter_file=true);
+private:
+  std::string name_and_ver;
 
-// } ;
+  void show_version();
+  virtual void show_usage()=0;
+} ;
+
+/** \brief Catch exceptions expected by standard utilities
+
+This simply calls the given function wmain, wrapping the call in a
+try...catch block that catches the glsim library exceptions and prints
+the backtrace.
+ */
+int UtilityEC(int argc,char *argv[],void (*wmain)(int,char**));
 
 } /* namespace */
 

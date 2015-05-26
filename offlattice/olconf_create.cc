@@ -34,8 +34,16 @@
  *
  */
 
+/** \file olconf_create.cc
+
+  GS_olconf_create can be used to create an off-lattice configuration
+  and save it in the format (HDF5) used bye OLconfiguration_file.
+
+ */
+
 #include <assert.h>
 
+#include "parameters.hh"
 #include "random.hh"
 #include "cerrors.h"
 #include "olconfiguration.hh"
@@ -79,24 +87,74 @@ void create_random(glsim::OLconfiguration &conf,scomp &SC)
   }
 }
 
-int main(int argc, char *argv[])
+/*****************************************************************************
+ *
+ * options and main
+ *
+ */
+
+static struct {
+  std::string   ofile;
+  unsigned long seed;
+  int           N;
+  double        density;
+} options;
+
+class CLoptions : public glsim::UtilityCL {
+public:
+  CLoptions();
+  void show_usage();
+} ;
+
+CLoptions::CLoptions() : UtilityCL("GS_olconf_create")
 {
-  assert(argc==2);
+  command_line_options().add_options()
+    ("out_file",po::value<std::string>(&options.ofile)->required(),"output file")
+    ("Nparts",po::value<int>(&options.N)->required(),"total number of particles")
+    ("seed,S",po::value<unsigned long>(&options.seed)->default_value(0),"random number seed")
+    ("density,d",po::value<double>(&options.density)->default_value(1.),"average density")
+    ;
+  positional_options().add("Nparts",1).add("out_file",1);
+}
+
+void CLoptions::show_usage()
+{
+  std::cerr
+    << "usage: " << progname << " Nparts outfile\n\n"
+    << "Create an off-lattice configuration with Nparts total particles and save to outfile.  Options:\n\n"
+    << " --density,-d   Average density\n"
+    << " --seed,-S      Specify seed for random number generator\n"
+    << "\n";
+}
+
+void wmain(int argc,char *argv[])
+{
+  CLoptions opt;
+  opt.parse_command_line(argc,argv);
 
   glsim::OLconfiguration conf;
+
   scomp SC;
   
-  SC.Nt=2;
-  SC.N=new int[2];
-  SC.N[0]=SC.N[1]=10;
-  SC.boxl[0]=0.7;
-  SC.boxl[1]=SC.boxl[2]=0.5;
+  // SC.Nt=2;
+  // SC.N=new int[2];
+  // SC.N[0]=SC.N[1]=10;
+  // SC.boxl[0]=0.7;
+  // SC.boxl[1]=SC.boxl[2]=0.5;
+  SC.Nt=1;
+  SC.N=new int[1];
+  SC.N[0]=options.N;
+  double volume=options.N/options.density;
+  SC.boxl[0]=pow(volume,1./3.);
+  SC.boxl[2]=SC.boxl[1]=SC.boxl[0];
 
-  glsim::Random_number_generator RNG(glsim::gsl_rng_mt19937,0);
+  glsim::Random_number_generator RNG(glsim::gsl_rng_mt19937,options.seed);
   create_random(conf,SC);
   conf.name="Created by olconf_create";
+  conf.save(options.ofile);
+}
 
-  conf.save(argv[1]);
-
-  return 0;
+int main(int argc, char *argv[])
+{
+  return glsim::UtilityEC(argc,argv,wmain);
 }
