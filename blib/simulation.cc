@@ -179,7 +179,7 @@ void prepare(int argc,char *argv[],SimEnvironment &env,Configuration &conf)
 {
   // Read command line
 
-  StandardCL CL(env.scope());
+  SimulationCL CL(env.scope());
   try {
     CL.parse_command_line(argc,argv);
   } catch (const Usage_error& e) {

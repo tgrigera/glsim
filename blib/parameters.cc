@@ -42,6 +42,12 @@
 
 namespace glsim {
   
+/*****************************************************************************
+ *
+ * class Parameters
+ *
+ */
+
 // This is where the descriptions and values are stored.  To implement
 // scopes we simply use a std::map.
 
@@ -86,77 +92,116 @@ void Parameters::show_parameters(std::ostream& o) const
   o << description[scope];
 }
 
+/*****************************************************************************
+ *
+ * class CLParameters
+ *
+ */
 
-/*****************************************************************************/
+po::options_description            CLParameters::CLoptions;
+po::positional_options_description CLParameters::Poptions;
+/**
 
-po::options_description            ParametersCL::command_line_options;
-po::positional_options_description ParametersCL::pos;
+Parse the command line and set the program name in progname.
+Optionally add all parameter file options to the command line options:
+in this way parameters can be given in the command line.  If the
+command line is parsed before any parameter files, the command-line
+parameters will override those given in the parameter file.
 
+\param[in] argc,argv      Argument count and values as passed to main()
+\param[in] merge_options  If `true`, add the parameter file options to the
+                          command line options.
 
-
-
-
-// The constructor declares three command-line options ([[--help]] or
-// [[-h]] to request usage help, [[--parameter-help]] to show all the
-// accepted parameters, and the optional [[parameter_file]] to name the
-// [[.ini]] file to be used).  The rest must be added by the user through
-// the [[command_line_options]] object.  Positional options can be
-// declared through the [[pos]] protected object, as documented in the
-// Boost library (see also the examples in the test section).
-
-ParametersCL::ParametersCL(const char* scope) :
-  Parameters(scope)
-{
-  command_line_options.add_options()
-    ("help,h",po::bool_switch(),"help with usage")
-    ("parameter-help",po::bool_switch(),"show accepted parameters")
-    ("parameter-file,P",po::value<std::string>(),"read further options/parameters from (.ini) file")
-    ;
-}
-
-// This method parses the command line and acts upon the help options,
-// displaying the requested help and throwing an exception.  Also, if
-// [[use_parameter_file]] is true and the [[control_file]] option is
-// given, the named file is parsed.  With [[require_parameter_file]], an
-// exception will be thrown if the parameter file is not given.  If this
-// behavior is not wanted, the method can be overriden.  To check for the
-// legality of the command line, in simple cases it will suffice to mark
-// some parameters as [[required()]].  In more complex cases a
-// [[parse_command_line]] can be written that calls this one to parse the
-// command line and then checks that all required command-line parameters
-// have been read and are consistent.
-
-// This method stores the program name in [[progname]] for the benefit of
-// [[show_usage]], if you override it be sure to initialize it also.
-
-void ParametersCL::parse_command_line(int argc,char *argv[],bool require_parameter_file,
-				      bool use_parameter_file)
+*/
+void CLParameters::parse_command_line(int argc,char *argv[],
+				      bool merge_options)
 {
   progname=basename(argv[0]);
+  if (merge_options)
+    CLoptions.add(parameter_file_options());
+
+  po::store(po::command_line_parser(argc,argv).options(CLoptions).
+	    positional(Poptions).run(),variables[scope]);
+  po::notify(variables[scope]);
+}
+
+/*****************************************************************************
+ *
+ * class SimulationCL
+ *
+ */
+
+/**
+
+The constructor declares six command-line options (`--help` or `-h`,
+`--version`, `--list-parameters`, `-c`, `-i`, and `-f`) plus three
+positional options for the parameter file and initial and final infix.
+More can be added by the user through command_line_options().
+
+*/
+SimulationCL::SimulationCL(const char* scope) :
+  CLParameters(scope)
+{
+  command_line_options().add_options()
+    ("help,h",po::bool_switch(),"help with usage")
+    ("version",po::bool_switch(),"print version and exit")
+    ("list-parameters",po::bool_switch(),"show accepted parameters")
+    ("parameter-file",po::value<std::string>(),"read further options/parameters from (.ini) file")
+    ("initial_infix",po::value<std::string>()->required())
+    ("final_infix",po::value<std::string>()->required())
+    ("configuration-init,c",po::value<std::string>())
+    ("ignore-partial-run,i",po::bool_switch())
+    ("force-overwrite,f",po::bool_switch())
+    ;
+  positional_options().add("parameter_file",1).add("initial_infix",1).
+    add("final_infix",1);
+}
+
+/**
+
+This method parses the command line (calling
+CLParameters::parse_comand_line()) and acts upon the help options
+(`--help`, `--version`, and `--list-parameters`) displaying the
+requested help and throwing an exception to request an early stop.
+Also, if the `parameter-file` option is given, the named file is
+parsed.  When `require_parameter_file` is true, an exception will be
+thrown if the parameter file is not given.  If this behavior is not
+wanted, the method can be overriden.
+
+To check for the legality of the command line, in simple cases it will
+suffice to mark some parameters as `required()`.  In more complex
+cases a [[parse_command_line]] can be written that calls this one to
+parse the command line and then checks that all required command-line
+parameters have been read and are consistent.
+
+If a usage error is detected, show_usage() is called and a Usage_error
+exception is thrown.
+
+\param[in] argc,argv      Argument count and values as passed to main()
+\param[in] require_parameter_file   If `true`, absence of a parameter filename causes Usage_error exception
+*/
+void SimulationCL::parse_command_line(int argc,char *argv[],
+				      bool require_parameter_file)
+{
   std::string parameter_file;
 
   try {
 
-    command_line_options.add(parameter_file_options());
+    CLParameters::parse_command_line(argc,argv,true);
 
-    po::store(po::command_line_parser(argc,argv).options(command_line_options).
-              positional(pos).run(),variables[scope]);
-  
     if (value("help").as<bool>()) {
       show_usage();
       throw Early_stop();
     }
-    if (value("parameter-help").as<bool>()) {
+    if (value("list-parameters").as<bool>()) {
       show_parameters(std::cerr);
       throw Early_stop();
     }
     if (count("parameter_file")>0) {
-      if (require_parameter_file || use_parameter_file)
 	parameter_file=value("parameter_file").as<std::string>();
 	parse(parameter_file.c_str());
     } else {
-      if (!require_parameter_file) po::notify(variables[scope]);
-      else throw Usage_error();
+      if (require_parameter_file) throw Usage_error();
     }
 
   } catch (po::too_many_positional_options_error& e) {
@@ -172,23 +217,12 @@ void ParametersCL::parse_command_line(int argc,char *argv[],bool require_paramet
   }
 }
 
-
-
-//<<Standard command line methods>>=
-StandardCL::StandardCL(const char* scope) :
-  ParametersCL(scope)
-{
-  command_line_options.add_options()
-    ("initial_infix",po::value<std::string>()->required())
-    ("final_infix",po::value<std::string>()->required())
-    ("configuration-init,c",po::value<std::string>())
-    ("ignore-partial-run,i",po::bool_switch())
-    ("force-overwrite,f",po::bool_switch())
-    ;
-  pos.add("parameter_file",1).add("initial_infix",1).add("final_infix",1);
-}
-
-void StandardCL::show_usage()
+/**
+This is automatically called bye parse_command_line() on detecting a
+usage error or the `--help` option.  Override if the help messega does
+not apply.
+*/
+void SimulationCL::show_usage()
 {
   std::cerr << "usage: " << progname << " [options] parameter_file initial_infix final_infix\n\n"
     << "parameter_file is an ASCII file (.ini style) with the definition of the\n"
@@ -211,6 +245,11 @@ void StandardCL::show_usage()
     << "  --parameter-help        Show accepted parameters\n"
 	 ;
 }
+
+
+
+/*****************************************************************************/
+
 
 
 

@@ -45,9 +45,9 @@
 #include "exception.hh"
 #include "cerrors.h"
 
-namespace glsim {
-
 namespace po=boost::program_options;
+
+namespace glsim {
 
 /** \class Parameters
     \ingroup Parameters
@@ -98,7 +98,7 @@ private:
   static descmap_t description;
   static varmap_t  variables;
 
-  friend class ParametersCL;
+  friend class CLParameters;
 } ;
 
 /** \class Undefined_parameter
@@ -126,11 +126,10 @@ public:
 } ;
 
 /**
-   To define the parameters, call this function from the children's
- constructor to get an `options_description` object from
- `Boost::program_options`.  See the
- example in XX  and Boost documentation for the
- declaration syntax.
+To define the parameters, call this function from the children's
+constructor to get an `options_description` object from
+`Boost::program_options`.  See the example in XX and Boost
+documentation for the declaration syntax.
 */
 inline po::options_description& Parameters::parameter_file_options()
 {
@@ -138,9 +137,9 @@ inline po::options_description& Parameters::parameter_file_options()
 }
 
 /**
-   Returns the number of values given for the specified parameter.
-   Use this to determine if an optional parameter has been given
-   (otherwise value() will throw an exception).
+Returns the number of values given for the specified parameter.  Use
+this to determine if an optional parameter has been given (otherwise
+value() will throw an exception).
  */
 inline int Parameters::count(const std::string& s) const
 {
@@ -149,54 +148,92 @@ inline int Parameters::count(const std::string& s) const
   return variables[scope].count(s);
 }
 
+
 /*****************************************************************************/
 
-/** \class ParametersCL
+/** \class CLParameters
     \ingroup Parameters
 
-[[ParametersCL]] inherits from [[Parameters]], adding functionality to
-parse a command line, always relying on [[boost::program_options]]'
-facilities.  Only one [[ParametersCL]] object should be declared, and
-it must \emph{not} be global. %'
+CLParametersCL inherits from Parameters, adding functionality to parse
+a command line (always relying on boost::program_options).  Only one
+CLParameters object should be declared, and it must _not be global._
 
-This class is abstract because [[show_usage]] is a pure virtual.
+Command line parameters must be defined by the child's constructor by
+calling command_line_options() (used the same way as
+parameter_file_options()).  In addition, most programs will define
+options called "positional options" in `Boost::program_options`
+jargon, i.e. unnamed options that take their value from the position
+of the command-line argument instead of using an option syntax (`-o x`
+or `--key=value`).  These are defined with positional_options().
+
+This class is abstract because show_usage() is a pure virtual.
 Decent command-line parsing requires definition of ``positional
 parameters'' (in Boost::program\_options jargon), and a good usage
 message to match.  See the test section for an example.
 */
-class ParametersCL : public Parameters {
+class CLParameters : public Parameters {
 public:
-  ParametersCL(const char* scope=Parameters::default_scope);
-  virtual void parse_command_line(int argc,char *argv[],bool require_parameter_file=true,
-				  bool use_parameter_file=true);
-  virtual void show_usage()=0;
+  CLParameters(const char* scope=Parameters::default_scope) :
+      Parameters(scope)
+  {}
+  /// Call the Boost parser
+  virtual void parse_command_line(int argc,char *argv[],bool merge_options=true);
 
 protected:
-  static po::options_description            command_line_options;
-  static po::positional_options_description pos;
+  /// Get object to define command line options
+  po::options_description&            command_line_options();
+  /// Get object to define positional options
+  po::positional_options_description& positional_options();
+
+  /// The (base) name of the program (`argv[0]`), set by parse_commmand_line()
   std::string                               progname;
+
+private:  
+  static po::options_description            CLoptions;
+  static po::positional_options_description Poptions;
 } ;			      
 
+/**
+Call this function from the children's constructor to define the
+command line parameters through an `options_description` object, as
+with parameter_file_options().
+*/
+inline po::options_description& CLParameters::command_line_options()
+{
+  return CLoptions;
+}
 
-/** \class StandardCL
+/**
+To define positional options call this function and operate through
+the returned `po:positional_options_description` object.
+*/
+inline po::positional_options_description& CLParameters::positional_options()
+{
+  return Poptions;
+}
+
+/*****************************************************************************/
+
+/** \class SimulationCL
     \ingroup Parameters
-    \brief The standard command line
+    \brief The simulation command line
 
-The following class is used to define standard command line for the
+This class is used to define standard command line for the
 simulations distributed with glsim.  It also serves as an additional
-example use of ParametersCL.  It is meant to use together with an
+example use of CLParameters.  It is meant to use together with an
 object of the Enviroment family (i.e. the (unique) StandardCL
 object must be created after the Environmnet) and before it is
 initialized.  If you want a different syntax for the command line you
 can define another class to replace this, just be sure to add the
 parameters defined in the constructor, either as command-line or
-parameter-file options.  The parameters corresponding to the options
-`-c`, `-i`, and `-f` below are only used in the STANDARD INIT???.
+parameter-file options.
 */
-class StandardCL : public ParametersCL {
+class SimulationCL : public CLParameters {
 public:
-  StandardCL(const char *scope=Parameters::default_scope);
-  void show_usage();
+  SimulationCL(const char *scope=Parameters::default_scope);
+  void parse_command_line(int argc,char *argv[],
+			  bool require_parameter_file=true);
+  virtual void show_usage();
 } ;
 
 /// In addition to Early_stop_required, ParametersCL can throw Usage_error.
@@ -207,6 +244,17 @@ public:
   {}
 } ;
 
+/*****************************************************************************/
+
+// class UtilityCL : public CLParameters {
+//   virtual void show_usage()=0;
+
+
+//   // virtual void parse_command_line(int argc,char *argv[],
+//   // 				  bool require_parameter_file=true,
+//   // 				  bool use_parameter_file=true);
+
+// } ;
 
 } /* namespace */
 
