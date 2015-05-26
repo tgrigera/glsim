@@ -115,6 +115,9 @@ inline OLconfiguration::OLconfiguration(const std::string &title) :
 
 /*****************************************************************************/
 
+/** \class OLconfig_file
+    \ingroup Offlattice
+*/
 class OLconfig_file : public HDF_record_file {
 public:
   OLconfig_file(const char *fname,OLconfiguration *buffer=0);

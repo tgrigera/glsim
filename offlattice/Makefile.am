@@ -37,9 +37,9 @@ libglsim_ol_la_SOURCES = olconfiguration.cc
 
 LDADD=$(top_builddir)/blib/libglsim.la libglsim_ol.la
 
-bin_PROGRAMS = GS_olconf_cp GS_olconf_create
+bin_PROGRAMS = GS_olconf_cat GS_olconf_create
 
-GS_olconf_cp_SOURCES = olconf_cp.cc
+GS_olconf_cat_SOURCES = olconf_cat.cc
 GS_olconf_create_SOURCES = olconf_create.cc
 
 #

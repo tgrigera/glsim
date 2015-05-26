@@ -36,21 +36,49 @@
 
 // This is so far very primitive...
 
-#include <assert.h>
-
+#include "parameters.hh"
 #include "olconfiguration.hh"
+
+static struct {
+  std::string ifile;
+  std::string ofile;
+} options;
+
+class CLoptions : public glsim::UtilityCL {
+public:
+  CLoptions();
+  void show_usage();
+} ;
+
+CLoptions::CLoptions() : glsim::UtilityCL("GS_olconf_cat")
+{
+  command_line_options().add_options()
+    ("ifile",po::value<std::string>(&options.ifile)->required(),"input file")
+    ("ofile",po::value<std::string>(&options.ofile)->required(),"output file")
+    ;
+  positional_options().add("ifile",1).add("ofile",1);
+}
+
+void CLoptions::show_usage()
+{
+  std::cerr
+    << "usage: " << progname << "ifile ofile\n\n"
+    << "Copy configurations from ifile to ofile\n"
+    << "\n";
+}
+
+void wmain(int argc,char *argv[])
+{
+  CLoptions o;
+  o.parse_command_line(argc,argv);
+  
+  glsim::OLconfiguration cin;
+  cin.load(options.ifile);
+  glsim::OLconfiguration cout(cin);
+  cout.save(options.ofile);
+}
 
 int main(int argc, char *argv[])
 {
-  assert(argc==3);
-
-  glsim::OLconfiguration cin;
-  cin.load(argv[1]);
-
-  std::cout << "Copying " << cin.name << '\n';
-
-  glsim::OLconfiguration cout(cin);
-  cout.save(argv[2]);
-
-  return 0;
+  return glsim::UtilityEC(argc,argv,wmain);
 }
