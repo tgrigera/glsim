@@ -184,7 +184,8 @@ protected:
   po::options_description&            command_line_options();
   /// Get object to define positional options
   po::positional_options_description& positional_options();
-
+  /// Call Boost::program_options() notify
+  void notify();
   /// The (base) name of the program (`argv[0]`), set by parse_commmand_line()
   std::string                               progname;
 
@@ -212,6 +213,18 @@ inline po::positional_options_description& CLParameters::positional_options()
   return Poptions;
 }
 
+/**
+If parse() was called with merge_options=true, it is necessary to call
+Boost::program_options::notify() (which function can throw on errors
+like undefined parameters.  If parse() will call notify, but if
+parse() is not called after parse_command_line(), then you must call
+notify() explicitly.
+*/
+inline void CLParameters::notify()
+{
+  po::notify(variables[scope]);
+}
+
 /*****************************************************************************/
 
 /** \class SimulationCL
@@ -230,10 +243,14 @@ parameter-file options.
 */
 class SimulationCL : public CLParameters {
 public:
-  SimulationCL(const char *scope=Parameters::default_scope);
-  void parse_command_line(int argc,char *argv[],
-			  bool require_parameter_file=true);
+  SimulationCL(const char* name,const char* copyright,const char *scope=Parameters::default_scope);
+  void parse_command_line(int argc,char *argv[]);
   virtual void show_usage();
+
+private:
+  std::string name_and_ver,copyr;
+
+  void show_version();
 } ;
 
 /// In addition to Early_stop_required, ParametersCL can throw Usage_error.

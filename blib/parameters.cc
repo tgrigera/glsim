@@ -39,6 +39,7 @@
 
 #include "log.hh"
 #include "parameters.hh"
+#include "config.h"
 
 namespace glsim {
   
@@ -108,9 +109,16 @@ in this way parameters can be given in the command line.  If the
 command line is parsed before any parameter files, the command-line
 parameters will override those given in the parameter file.
 
-\param[in] argc,argv      Argument count and values as passed to main()
-\param[in] merge_options  If `true`, add the parameter file options to the
-                          command line options.
+\param[in] argc,argv     Argument count and values as passed to main()
+
+\param[in] merge_options If `true`, add the parameter file options to
+                         the command line options.  In this case, the
+                         Boost notify function is not called, since it
+                         may still be necessary to parse a parameter
+                         file (notfiy must be called only when all
+                         sources have been parsed, since it can throw
+                         exceptions related to missing options).
+                         Notify will then be called by parse().
 
 */
 void CLParameters::parse_command_line(int argc,char *argv[],
@@ -122,7 +130,7 @@ void CLParameters::parse_command_line(int argc,char *argv[],
 
   po::store(po::command_line_parser(argc,argv).options(CLoptions).
 	    positional(Poptions).run(),variables[scope]);
-  po::notify(variables[scope]);
+  if (!merge_options) po::notify(variables[scope]);
 }
 
 /*****************************************************************************
@@ -132,21 +140,24 @@ void CLParameters::parse_command_line(int argc,char *argv[],
  */
 
 /**
-
 The constructor declares six command-line options (`--help` or `-h`,
 `--version`, `--list-parameters`, `-c`, `-i`, and `-f`) plus three
 positional options for the parameter file and initial and final infix.
 More can be added by the user through command_line_options().
 
+ \param[in] name_and_version  Name and version string to print with --version
+ \param[in] copyright         Copyright string to print with --version
 */
-SimulationCL::SimulationCL(const char* scope) :
-  CLParameters(scope)
+SimulationCL::SimulationCL(const char* name_and_version,const char* copyright,const char* scope) :
+  CLParameters(scope),
+  name_and_ver(name_and_version),
+  copyr(copyright)
 {
   command_line_options().add_options()
     ("help,h",po::bool_switch(),"help with usage")
     ("version",po::bool_switch(),"print version and exit")
     ("list-parameters",po::bool_switch(),"show accepted parameters")
-    ("parameter-file",po::value<std::string>(),"read further options/parameters from (.ini) file")
+    ("parameter_file",po::value<std::string>(),"read further options/parameters from (.ini) file")
     ("initial_infix",po::value<std::string>()->required())
     ("final_infix",po::value<std::string>()->required())
     ("configuration-init,c",po::value<std::string>())
@@ -158,7 +169,6 @@ SimulationCL::SimulationCL(const char* scope) :
 }
 
 /**
-
 This method parses the command line (calling
 CLParameters::parse_comand_line()) and acts upon the help options
 (`--help`, `--version`, and `--list-parameters`) displaying the
@@ -178,10 +188,8 @@ If a usage error is detected, show_usage() is called and a Usage_error
 exception is thrown.
 
 \param[in] argc,argv      Argument count and values as passed to main()
-\param[in] require_parameter_file   If `true`, absence of a parameter filename causes Usage_error exception
 */
-void SimulationCL::parse_command_line(int argc,char *argv[],
-				      bool require_parameter_file)
+void SimulationCL::parse_command_line(int argc,char *argv[])
 {
   std::string parameter_file;
 
@@ -193,6 +201,10 @@ void SimulationCL::parse_command_line(int argc,char *argv[],
       show_usage();
       throw Early_stop();
     }
+    if (value("version").as<bool>()) {
+      show_version();
+      throw Early_stop();
+    }
     if (value("list-parameters").as<bool>()) {
       show_parameters(std::cerr);
       throw Early_stop();
@@ -201,7 +213,7 @@ void SimulationCL::parse_command_line(int argc,char *argv[],
 	parameter_file=value("parameter_file").as<std::string>();
 	parse(parameter_file.c_str());
     } else {
-      if (require_parameter_file) throw Usage_error();
+      notify();
     }
 
   } catch (po::too_many_positional_options_error& e) {
@@ -219,8 +231,8 @@ void SimulationCL::parse_command_line(int argc,char *argv[],
 
 /**
 This is automatically called bye parse_command_line() on detecting a
-usage error or the `--help` option.  Override if the help messega does
-not apply.
+the `--help` option.  You can call it explicitly on catching a
+Usage_error excpetion.  Override if the help messega does not apply.
 */
 void SimulationCL::show_usage()
 {
@@ -242,18 +254,19 @@ void SimulationCL::show_usage()
     << "  -f,--force-overwrite    Overwrite any eventual files with completed runs\n"
     << "  -i,--ignore-partial-run Ignore eventual files with partially completed runs\n"
     << "  -h,--help               Show this help\n"
-    << "  --parameter-help        Show accepted parameters\n"
+    << "  --version               Show this version\n"
+    << "  --list-parameters       Show accepted parameters\n"
 	 ;
 }
 
-
+void SimulationCL::show_version()
+{
+  std::cerr << name_and_ver << " (with glsim " << VERSION << ")\n";
+  std::cerr << copyr << '\n';
+  // std::cerr << "glsim is Copyright (C) 2009-2015 Tomas S. Grigera <tgrigera@iflysib.unlp.edu.ar\n";
+}
 
 /*****************************************************************************/
-
-
-
-
-
 
 
 } /* namespace */

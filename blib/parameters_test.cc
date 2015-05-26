@@ -84,6 +84,7 @@ morepars::morepars(const char*scope) : Parameters(scope)
     ("title",po::value<std::string>()->default_value("[no title]"),"Simulation title")
     ("special.steps",po::value<int>(),"Number of special steps")
     ("special.T",po::value<double>()->required(),"Special temperature")
+    ("extra_parameters_file",po::value<std::string>(),"Parameters for second scope")
     ;
 }
 
@@ -106,45 +107,13 @@ myscopepars::myscopepars(const char* scope) :
     ;
 }
 
-// Now for the command line.  We define a few more parameters, specify the
-// position some of those will occupy in the command line, and write a
-// usage message.
-
-class CLIpar : public SimulationCL {
-public:
-  CLIpar();
-} ;
-
-CLIpar::CLIpar() :
-  SimulationCL()
-{
-  command_line_options().add_options()
-    ("output_file,o",po::value<std::string>(),"Output file")
-    ("extra_parameters_file",po::value<std::string>()->required(),"another param file")
-    ("input_file",po::value<std::vector<std::string> >()->required(),"Input files")
-    ;
-  // positional_options().add("extra_parameters_file",1).add("input_file",-1);
-}
-
-// void CLIpar::show_usage()
-// {
-//   std::cerr << "\nusage: " << progname << " [options] parameter_file extra_parameters_file ifile [ifile ...]\n\n"
-//     << "Options:\n"
-//     << "  -o  file      Output file\n"
-//     << "\n\n"
-//     ;
-// }
-
-// Now main(), where we declare one instance of the above classes, and
-// parse all options through CLIpar.parse_command_line().
-
 int main(int argc, char *argv[])
 {
   int rcode=0;
 
-  filepars fpar;
-  morepars mpar;
-  CLIpar   cl;
+  filepars     fpar;
+  morepars     mpar;
+  SimulationCL cl("Parameter test 1.0","(C) TSG");
 
   try {
 
@@ -162,11 +131,6 @@ int main(int argc, char *argv[])
 	      << "special.T = " << mpar.value("special.T").as<double>() << '\n'
       ;
 
-    std::vector<std::string> input_files(cl.value("input_file").as<std::vector<std::string> >());
-    std::cout << "\nInput files :";
-    std::copy(input_files.begin(),input_files.end(),
-	    std::ostream_iterator<std::string>(std::cout," "));
-    std::cout << "\n\n";
 
     // Let's load the second scope
 
