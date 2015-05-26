@@ -40,7 +40,11 @@
 
 namespace glsim {
 
-// \subsection{Creation, initialization and destruction}
+/******************************************************************************
+ *
+ * BaseEnv
+ *
+ */
 
 // The default constructor below adds the object to the list of
 // environments belonging to the specified scope.  This is managed with a
@@ -66,20 +70,20 @@ Environment::~Environment()
   scopes[scope_name].remove(this);
 }
 
-// @ Initialization: in this case there is no difference between full and
-// warm, so [[warm_init()]] just calls [[init()]. Note however that we
-// must be careful because [[init()]] and [[warm_init()]] are virtual.
-// At this level, it is correct to implement [[warm_init()]] by calling
-// [[init()]], but if we must avoid the virtual call mechanism (by
-// qualifying it with the class name), because otherwise way we would in
-// effect be invoking the [[init()]] of the \emph{derived} class, which
-// is not what we want.
+// Initialization: in this case there is no difference between full
+// and warm, so warm_init() just calls init(). Note however that we
+// must be careful because init() and warm_init() are virtual.  At
+// this level, it is correct to implement warm_init() by calling
+// init(), but if we must avoid the virtual call mechanism (by
+// qualifying it with the class name), because otherwise way we would
+// in effect be invoking the init() of the __derived__ class, which is
+// not what we want.
 
-// Note also that [[ini_infix]] and [[fin_infix]] are expected from a
-// parameters object to be declared elsewhere.  Normally this would be a
-// [[StandardCL]] with the same scope, but you may provide otherwise.  If
-// you do not wish to use the filename creation functions just ignore
-// them, it is not an error if the infixes are not declared.
+// Note also that ini_infix and fin_infix are expected from a
+// parameters object to be declared elsewhere.  Normally this would be
+// a StandardCL with the same scope, but you may provide otherwise.
+// If you do not wish to use the filename creation functions just
+// ignore them, it is not an error if the infixes are not declared.
 
 void Environment::warm_init_local() {Environment::init_local();}
 
@@ -90,8 +94,6 @@ void Environment::init_local()
   if (par.count("final_infix")>0)
     fin_infix=par.value("final_infix").as<std::string>();
 }
-
-// @ \subsection{Filename building}
 
 // Finally, these methods can be used to build an initial and final
 // filenames.  If the first argument contains the string [["[AUTO]"]],
@@ -113,6 +115,12 @@ void Environment::final_filename(std::string& name,
   if (name!="[AUTO]") return;
   name=prefix+fin_infix+extension;
 }
+
+/******************************************************************************
+ *
+ * BaseEnv
+ *
+ */
 
 BaseEnv_par::BaseEnv_par(const char* scope) :
   Parameters(scope)

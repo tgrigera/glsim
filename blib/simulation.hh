@@ -62,9 +62,11 @@ public:
   virtual long run();
 
   virtual void step()=0;
+  /// Log start of simulation and record initial time
   virtual void log_start_sim();
-  virtual void log() {}
+  /// Log end of simulation and print elapsed and final time
   virtual void log_stop_sim();
+  virtual void log() {}
   virtual ~Simulation() {}
 
 protected:
@@ -86,16 +88,18 @@ inline Simulation::Simulation(glsim::SimEnvironment& e,glsim::Configuration& c) 
   env(e),conf(c)
 {}
 
-/// Preparing configuration and environment
-///
-/// Configuration and environment must be ready to run before the
-/// simulation is created.  The following function can be used to set them
-/// up.  They rely on [[StandardCL]] to find the appropriate files from
-/// the command line and through partial initialization of the
-/// environment.  Before the [[prepare()]] call, all the environments
-/// belonging to the scope of the environment passed to [[prepare()]] must
-/// have been constructed in their default state, or the call will fail
-/// (perhaps silently and miserably).
+/** \ingroup Simulation
+    \brief Preparing configuration and environment
+
+Configuration and environment must be ready to run before the
+simulation is created.  The following function can be used to set them
+up.  They rely on SimulationCL to find the appropriate files from the
+command line and through partial initialization of the environment.
+Before the prepare() call, all the environments belonging to the scope
+of the environment passed to prepare() must have been constructed in
+their default state, or the call will fail (perhaps silently and
+miserably).
+*/
 void prepare(int argc,char *argv[],SimEnvironment &env,Configuration &conf);
 
 

@@ -432,9 +432,15 @@ WIP
 
 # Scopes
 
+It is a mechanism similar to the singleton construction, so that saving and
+restoring can be done through a single object, as required by the
+simulation.  To allow for several independent environments to coexist
+(as is useful for instance in parallel simulations), environments will
+be consolidated only if they belong to the same \emph{scope,} labeled
+with a string and defined at the time the object is created.
+
 It is legal to define two objects of the same class with different
 scopes.
-
 
 
 */

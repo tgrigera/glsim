@@ -37,42 +37,16 @@
 #ifndef OBSERVABLE_HH
 #define OBSERVABLE_HH
 
-// @ \chapter{Observables}
-
-// These are notes for an observable.
-
-// For things like magnetization etc which are normally computed from
-// within the simulation step, an observable hierarchy is of questionable
-// value.  Rather we shall provide (but not now), files that will be
-// monitored for consistent checkpointing.
-
-// The objects sketched here are useful for the ``plug-in'' situation,
-// where the observation is completely independent from the simulation.
-// It might even be argued that this should be independent from the sim
-// and observe the configuration alone. We shall see.
-
-
-// For checkpointing I need
-
-//  - a FILE-castable object that remembers last position
-//  - a way to distinguish whether is second+ stage or not
-
-//  - if second stage, move to end and don't write header
-//  - if first stage, open file (delete if existing), write header.
-//  - need and environment for that.
-//  - need an aditional ``INIT'' method for observables? ---> es mejor
-//  que no, y que se arregle step.  Para optimizar, en el futuro,
-//  existira el step_is_noop() (en BaseEnv), y un first_step (para que la
-//  primera vez llame a una función y luego llame a otra).
-
 #include "environment.hh"
 
 namespace glsim {
 
-// @ \section{Observable}
-
 // step_local() missing at this point.
 
+/** \class Observable
+    \brief Base for classes representing observables
+    \ingroup Observable
+*/
 template <typename ITYP>
 class Observable : public Environment {
 public:
@@ -154,9 +128,8 @@ void Observable<ITYP>::warm_init_local()
   write_header();
 }
 
-// If desired, this can be called before the first simulation step (but
-// after construction), so that step 0 gets observed.
-
+/// If desired, this can be called before the first simulation step (but
+/// after construction), so that step 0 gets observed.
 template <typename ITYP>
 void Observable<ITYP>::observe_first()
 {
@@ -165,8 +138,16 @@ void Observable<ITYP>::observe_first()
   first_observed=true;
 }
 
-// @ \section{Step based observable}
+/******************************************************************************
+ *
+ * SBObservable
+ *
+ */
 
+/** \class SBObservable
+    \brief Step-based observable
+    \ingroup Observable
+*/
 class SBObservable : public Observable<int> {
 public:
   SBObservable(SimEnvironment& senv_) : Observable(senv_),
@@ -178,7 +159,16 @@ private:
   SimEnvironment &senv;
 } ;
 
-// <<KMCObservable declaration>>=
+/******************************************************************************
+ *
+ * SBObservable
+ *
+ */
+
+/** \class KMCObservable
+    \brief Real-time-based observable (as for Kinetic MC)
+    \ingroup Observable
+*/
 class KMCObservable : public Observable<double> {
 public:
   KMCObservable(CTSimEnvironment& env_);

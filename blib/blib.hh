@@ -224,47 +224,45 @@ options in the command line, overriding the file values.
 \defgroup Environment Environment
 
 The concept of environment is one of the major abstractions of the
-library, and in this chapter we give the classes that represent it.
+library, and this module contains the classes that represent it.
 
 By our definition, there should be an Environment class to match any
 Simulation class.  The Environment class corresponding to a given
-Simulation must hold \emph{all} the data needed to perform the
-simulation.  The [[Parameters]] objects are meant to be used only to
-initialize the environment, and not for storing data.  The environment
-is endowed with method to allow saving to disk and restoring, while
-the [[Parameters]] classes have no such capability.  This is
-important, as the environment can evolve during the simulation (see
-the method [[step()]] below.)
+Simulation must hold _all_ the data needed to perform the simulation.
+The Parameters objects are meant to be used only to initialize the
+environment, and not for storing data.  The environment is endowed
+with methods to allow saving to disk and restoring, while Parameters
+classes have no such capability.  This is important, as the
+environment can evolve during the simulation (see the method step()).
 
 The parts of the environment essential for the simulation should be
-represented by an object of a type derived from [[class]]
-[[SimEnvironment]] below.  However, observables (which see), which
-will require a part of the environment to store their internal data,
-are designed to be used as ``plug-ins'', and thus it is inconvenient
-to require that all the environment be in a single object.  Rather we
-allow to define several objects, belonging to several hierarchies
-(descending from [[Environment]]), which will consolidate with each
-other through a mechanism similar to the singleton construction, so
-that saving and restoring can be done through a single object, as
-required by the simulation.  To allow for several independent
-environments to coexist (as is useful for instance in parallel
-simulations), environments will be consolidated only if they belong to
-the same \emph{scope,} labeled with a string and defined at the time
-the object is created.
+represented by an object of a type derived from SimEnvironment below.
+However, observables (which see), which will require a part of the
+environment to store their internal data, are designed to be used as
+``plug-ins'', and thus it is inconvenient to require that all the
+environment be in a single object.  Rather we allow to define several
+objects, belonging to several hierarchies (descending from
+Environment), which will consolidate with each other through a
+mechanism similar to the singleton construction, so that saving and
+restoring can be done through a single object.  To allow for several
+independent environments to coexist (as is useful for instance in
+parallel simulations), environments will be consolidated only if they
+belong to the same \link Scope scope\endlink labeled with a string and
+defined at the time the object is created.
 
 The intended use of the hierarchy is as folows: for every simulation
 to be created, there will be an object of a type derived from
-[[SimEnvironment]].  Each of these would be in a different scope.
+SimEnvironment.  Each of these would be in a different scope.
 Plugin-like object such as observables will create private
 environments (derived from Environment), in one of the scopes used
-when creating the [[SimEnvironment]]s.  The simulation then will deal
-with the [[SimEnvironment]]s only, and will call methods to
-initialize, load, or save automatically all the consolidated
-environments in the scope (in effect working conceptually as a single
-environment).
+when creating the `SimEnvironment`s.  The simulation then will deal
+with the `SimEnvironment`s only, and will call methods to initialize,
+load, or save automatically all the consolidated environments in the
+scope (in effect working conceptually as a single environment).
 
-We explain below how to correctly derive from [[Environment]] and how
-the saving and restoring of environments can be controlled.
+See the class documentation for how to correctly derive from
+Environment and how the saving and restoring of environments can be
+controlled.
 
 
 \defgroup Simulation Simulation
@@ -278,6 +276,39 @@ specific environment.
 Before the simulation is created, Env and configuration must be ready
 to run.   Simulation wil \emph{not} initialize config or env.  To aid
 in this initialization we provide a [[prepare]] function below.
+
+
+
+\defgroup Observable
+	   \brief Observables
+
+These are notes for an observable.
+
+For things like magnetization etc which are normally computed from
+within the simulation step, an observable hierarchy is of questionable
+value.  Rather we shall provide (but not now), files that will be
+monitored for consistent checkpointing.
+
+The objects sketched here are useful for the ``plug-in'' situation,
+where the observation is completely independent from the simulation.
+It might even be argued that this should be independent from the sim
+and observe the configuration alone. We shall see.
+
+
+For checkpointing I need
+
+ - a FILE-castable object that remembers last position
+ - a way to distinguish whether is second+ stage or not
+
+ - if second stage, move to end and don't write header
+ - if first stage, open file (delete if existing), write header.
+ - need and environment for that.
+ - need an aditional ``INIT'' method for observables? ---> es mejor
+ que no, y que se arregle step.  Para optimizar, en el futuro,
+ existira el step_is_noop() (en BaseEnv), y un first_step (para que la
+ primera vez llame a una función y luego llame a otra).
+
+
 
 @}
 

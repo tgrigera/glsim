@@ -42,18 +42,25 @@
 
 namespace glsim {
 
-// @ \subsection{Construction and static data}
+/******************************************************************************
+ * 
+ * Simulation
+ * 
+ */
+
+// Construction and static data
 
 volatile sig_atomic_t Simulation::termination_requested,
                       Simulation::signal_received;
 struct sigaction Simulation::postpone_term;
 
-// @ \paragraph{Signals.}  We install a new handler for SIGTERM and
-// SIGINT so that the sim can terminate gracefully at the end of the
-// current step.  The handler is installed with the [[SA_RESTART]] flag
-// so that library functions are resumed after the handler ends.  Signals
-// are blocked until handler is installed.
-
+/** 
+We install a new handler for SIGTERM and SIGINT so that the sim can
+terminate gracefully at the end of the current step.  The handler is
+installed with the SA_RESTART flag so that library functions are
+resumed after the handler ends.  Signals are blocked until handler is
+installed.
+*/
 void Simulation::set_up_signals()
 {
   sigemptyset(&postpone_term.sa_mask);
@@ -75,7 +82,7 @@ void Simulation::sigterm_handler(int signal)
   signal_received=signal;
 }
 
-// @ \paragraph{Run method.}
+/// Run method
 long Simulation::run()
 {
   set_up_signals();
@@ -109,8 +116,6 @@ long Simulation::run()
   log_stop_sim();
   return env.steps_in_stage;
 }
-
-// @ \subsection{Start and stop logging}
 
 // Keep track of elapsed time.
 void Simulation::log_start_sim()
@@ -169,7 +174,13 @@ Simulation::boost_duration_to_string(boost::posix_time::time_duration t)
   return ss.str();
 }
 
-// <<prepare definition>>=  
+/******************************************************************************
+ *
+ * prepare
+ *
+ */
+
+
 enum existing_file_status {none, partial, exist};
 
 static existing_file_status check_existing_files(SimEnvironment &env,
@@ -188,7 +199,6 @@ void prepare(int argc,char *argv[],SimEnvironment &env,Configuration &conf)
   }
 
   // Check for existing files and partial run
-
   env.init_base();
   existing_file_status old_files=
     check_existing_files(env,CL.value("ignore-partial-run").as<bool>());
