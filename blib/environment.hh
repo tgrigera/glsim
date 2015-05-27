@@ -180,7 +180,7 @@ template <typename Archive>
 inline void Environment::serialize(Archive &ar,const unsigned int version)
 {
   if (version!=class_version)
-    throw Environment_wrong_version("CTSimEnvironment",version,class_version);
+    throw Environment_wrong_version("Environment",version,class_version);
   ar & scope_name;
   ar & ini_infix;
   ar & fin_infix;
@@ -278,7 +278,7 @@ template <typename Archive>
 inline void BaseEnvironment::serialize(Archive &ar,const unsigned int version)
 {
   if (version!=class_version)
-    throw Environment_wrong_version("CTSimEnvironment",version,class_version);
+    throw Environment_wrong_version("BaseEnvironment",version,class_version);
   ar & boost::serialization::base_object<Environment>(*this);
   ar & configuration_file_ini & configuration_file_fin;
   ar & environment_file_ini & environment_file_fin;
@@ -355,7 +355,7 @@ template <typename Archive>
 inline void SimEnvironment::serialize(Archive &ar,const unsigned int version)
 {
   if (version!=class_version)
-    throw Environment_wrong_version("CTSimEnvironment",version,class_version);
+    throw Environment_wrong_version("SimEnvironment",version,class_version);
   ar & boost::serialization::base_object<BaseEnvironment>(*this);
   ar & title;
   ar & steps_completed & steps_in_run & steps_in_stage;
