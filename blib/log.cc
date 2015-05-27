@@ -54,6 +54,7 @@ logger& logger::set_stream(std::ostream& str,loglevel level)
   // add an aditional ``tee'' stream (TODO).  stream1.str=&str;
 
   stream1.level=level;
+  stream1.str=&str;
   for (int i=0; i<level; i++)
     logstream[i]=&nullstream;
   for (int i=level; i<=error; i++)
