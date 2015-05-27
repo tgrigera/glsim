@@ -126,7 +126,10 @@ OLconfiguration& OLconfiguration::swap(OLconfiguration& c)
  *
  */
 void OLconfiguration::init(const char* s)
-{}
+{
+  if (s==0) throw glsim::Unimplemented("Create config from scratch",HERE);
+  load(s);
+}
 
 /**
 This reads from a file than can contain one or many configurations, in
