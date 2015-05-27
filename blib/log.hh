@@ -41,17 +41,26 @@
 
 namespace glsim {
 
+/** The four verbosity levels */
 enum loglevel {debug=0, info=1, warn=2, error=3};
 
 /** \class logger
     \ingroup Logging
+
+Only one global object of this class should exist, defined in the
+library and declared in this header.
+
+The output is done through operator():
+
+     glsim::logs(glsim::warn) << "WARNING\n";
+
 */
 class logger {
 public:
-  logger();
-  std::ostream& operator()(loglevel) const;
+  logger();  ///< Creates the log stream defaulting to std::cout at debug level
+  std::ostream& operator()(loglevel) const;  ///<Return reference to the output stream at the given level
 
-  logger& set_stream(std::ostream&,loglevel);
+  logger& set_stream(std::ostream&,loglevel);  ///< Chose the log stream and verbosity
   logger& set_additional_stream(std::ostream&,loglevel);
 
 private:
@@ -66,12 +75,35 @@ logger logs;
 extern logger logs;
 #endif
 
+
+/**
+The constructor initializes the logstream at the highest level and
+outputing to `std::cout`, and sets up the null stream.  The easiest
+way to do the last appears to be the trick suggested in StackOverflow
+(http://stackoverflow.com/questions/6240950/platform-independent-dev-null-in-c/6240980\#6240980):
+define a `std::ostream` initialized with a null pointer.  This creates
+a stream without a `streambuf` buffer, so that the stream is left in
+an error state and never outputs anything (I also believe that it
+skips all formatting, thus calls to the insertion operator should be
+rather fast).
+*/
 inline logger::logger() :
   nullstream(0)
 {
   set_stream(std::cout,debug);
 }
 
+/** 
+operator() simply returns a reference to the actual stream that will
+do the output.  This stream can be
+
+ 1. an actual output stream such as `std::cerr` or a `std::ofstream` linked to a file,
+
+ 2. a tee stream to implement writing to two sinks with just one
+    insertion operator, or
+
+ 3. a null stream that discards everything sent to it.
+*/
 inline std::ostream& logger::operator()(loglevel l) const
 {
   return *(logstream[l]);
