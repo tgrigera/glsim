@@ -223,7 +223,7 @@ void SimulationCL::parse_command_line(int argc,char *argv[])
   } catch (po::invalid_command_line_style& e) {
     throw Usage_error();
   } catch (po::required_option& e) {
-    throw Usage_error();
+    throw Required_parameter_absent(e.what());
   } catch (po::reading_file& e) {
     throw Runtime_error("Cannot read parameter file "+parameter_file);
   }

@@ -126,6 +126,17 @@ public:
   ~Scope_not_parsed() throw() {}
 } ;
 
+/** \class Required_parameter_absent
+    \ingroup Exception
+    \brief Exception thrown requested a required parameter is not defined
+*/
+class Required_parameter_absent : public glsim::Runtime_error {
+public:
+  explicit Required_parameter_absent(const std::string& msg,
+				     const Source_context &c=Source_context()) :
+  Runtime_error("ERROR: "+msg,c) {}
+  ~Required_parameter_absent() throw() {}
+} ;
 /**
 To define the parameters, call this function from the children's
 constructor to get an `options_description` object from
