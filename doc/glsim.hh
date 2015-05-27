@@ -317,7 +317,6 @@
 
 \subpage Author
 
-
 # Library organization
 
 \subpage Concepts
@@ -334,6 +333,11 @@ Modules are
    - Main simulation abstractions
  - Graph and lattice library
  - Offlattice library
+
+# Tutorials
+
+\subpage Quick
+
 
 */
 
