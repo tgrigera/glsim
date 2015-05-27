@@ -56,7 +56,7 @@ public:
   void load(const std::string& fname) {this->load(fname.c_str());}
   void save(const std::string& fname) {this->save(fname.c_str());}
 
-  void init() {init(0);}
+  virtual void init() {init(0);}
   virtual void init(const char* fname)=0;
   virtual void load(const char* fname)=0;
   virtual void save(const char* fname)=0;
