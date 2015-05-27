@@ -42,7 +42,7 @@ namespace glsim {
 
 /******************************************************************************
  *
- * BaseEnv
+ * Environment
  *
  */
 
@@ -249,27 +249,11 @@ void BaseEnvironment::load()
     e->vserial(iar);
 }
 
-void SimEnvironment::warm_init_local()
-{
-  BaseEnvironment::warm_init_local();
-  title=par.value("title").as<std::string>();
-  steps_in_run=0;
-  steps_in_stage=0;
-  max_steps=par.value("max_steps").as<long>();
-  log_interval=par.value("log_interval").as<int>();
-  run_completed=false;
-}
-
-void SimEnvironment::init_local()
-{
-  BaseEnvironment::init_local();
-  steps_completed=0;
-  steps_in_run=0;
-  steps_in_stage=0;
-  max_steps=par.value("max_steps").as<long>();
-  log_interval=par.value("log_interval").as<int>();
-  run_completed=false;
-}
+/******************************************************************************
+ *
+ * SimEnvironment
+ *
+ */
 
 SimEnvironment_par::SimEnvironment_par(const char* scope) :
   Parameters(scope)
@@ -282,31 +266,47 @@ SimEnvironment_par::SimEnvironment_par(const char* scope) :
      "interval (in steps) to write logs (0=no logging)")
     ;
 }
+  /// \name Public data initialized from parameters (SimEnvironment_par)
+  /// @{
+  std::string title;  ///< A title for the simulation
+  long        max_steps;  ///< Maximum allowed steps in the stage (used by run()), 0=unlimited
+  int         log_interval; ///<Interval for logging (in simulation steps)
 
-CTSimEnvironment::CTSimEnvironment(const char* scope) :
-  SimEnvironment(scope),
-  time_completed(0.),
-  time_in_run(0.),
-  time_in_stage(0.)
+  /// @} \name Public data computed/updated by Simulation::run() or step()
+  /// @{
+  long   steps_completed; ///< Steps completed since the first run
+  long   steps_in_run;    ///< Steps completed in this run
+  long   steps_in_stage;  ///< Steps completed in the present stage of this run
+  bool   run_completed;   ///< Whether the run has been completed (set by Simulation::step())
+  double time_completed;  ///< System time advanced since the first run, when applicable
+  double time_in_run;     ///< System time advanced in this run, when applicable
+  double time_in_stage;   ///< System time advanced in this stage, when applicable
+  double precision;       ///< Precision reached, when applicable
+  /// @}
+
+void SimEnvironment::warm_init_local()
 {
+  BaseEnvironment::warm_init_local();
+  title=par.value("title").as<std::string>();
+  max_steps=par.value("max_steps").as<long>();
+  log_interval=par.value("log_interval").as<int>();
+
+  run_completed=false;
+  steps_in_run=steps_in_stage=0;
+  time_in_run=time_in_stage=0.;
 }
 
-void CTSimEnvironment::init_local()
+void SimEnvironment::init_local()
 {
-  SimEnvironment::init_local();
-  time_completed=0.;
-  time_in_run=0.;
-  time_in_stage=0;
+  BaseEnvironment::init_local();
+  title=par.value("title").as<std::string>();
+  max_steps=par.value("max_steps").as<long>();
+  log_interval=par.value("log_interval").as<int>();
+
+  run_completed=false;
+  steps_completed=steps_in_run=steps_in_stage=0;
+  time_completed=time_in_run=time_in_stage=0.;
+  precision=DBL_MAX;
 }
-
-void CTSimEnvironment::warm_init_local()
-{
-  SimEnvironment::warm_init_local();
-  time_in_run=0.;
-  time_in_stage=0;
-}
-
-
-
 
 }

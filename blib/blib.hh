@@ -267,18 +267,26 @@ controlled.
 
 
 \defgroup Simulation 
-\brief Simulation
+\brief The base simulation classes
 
-- sim::run() executes the abstract simulation algorithm
+Currently there is only one class here (Simulation), which must be the
+base for all simulations.  The user will inherit from Simulation,
+defining the pure virtual step(), which carries out the actual
+simulation step.  Then, after proper initialization of configuration
+and environment (descended from Configuration and SimEnvironment), the
+simulation object is created and the simulation is started by calling
+Simulation::run() (note that Simulation wile _not_ attemtp to
+initialize configuration or environment, see the prepare() function
+for a way to perform this inizialization more easily).
 
 Define step-based and target-based simulations; explain how both can
 be dealt with here.  env.run_completed must be set by child sim or
 specific environment.
 
-Before the simulation is created, Env and configuration must be ready
-to run.   Simulation wil \emph{not} initialize config or env.  To aid
-in this initialization we provide a [[prepare]] function below.
+Define run and stage.
 
+IMPORTANT: step() must decide when the sim is finished (set
+run_completed), and compute time and tolerance when applicable.
 
 
 \defgroup Observable

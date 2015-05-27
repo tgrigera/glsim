@@ -318,11 +318,23 @@ class SimEnvironment : public BaseEnvironment {
 public:
   SimEnvironment(const char* scope=Parameters::default_scope);
 
-  std::string title;
-  long        steps_completed,steps_in_run,steps_in_stage;
-  long        max_steps;
-  int         log_interval;
-  bool        run_completed;
+  /// \name Public data initialized from parameters (SimEnvironment_par)
+  /// @{
+  std::string title;  ///< A title for the simulation
+  long        max_steps;  ///< Maximum allowed steps in the stage (used by run()), 0=unlimited
+  int         log_interval; ///<Interval for logging (in simulation steps)
+
+  /// @} \name Public data computed/updated by Simulation::run() or step()
+  /// @{
+  long   steps_completed; ///< Steps completed since the first run
+  long   steps_in_run;    ///< Steps completed in this run
+  long   steps_in_stage;  ///< Steps completed in the present stage of this run
+  bool   run_completed;   ///< Whether the run has been completed (set by Simulation::step())
+  double time_completed;  ///< System time advanced since the first run, when applicable
+  double time_in_run;     ///< System time advanced in this run, when applicable
+  double time_in_stage;   ///< System time advanced in this stage, when applicable
+  double precision;       ///< Precision reached, when applicable
+  /// @}
 
 protected:
   void init_local();
@@ -338,16 +350,18 @@ private:
   virtual void vserial(oarchive_t &ar) {ar << *this;}
 
 public:
-  static const int class_version=1;
+  static const int class_version=2;
 } ;
 
 inline SimEnvironment::SimEnvironment(const char* scope) :
   BaseEnvironment(scope),
   title("[untitled]"),
-  steps_completed(0), steps_in_run(0),steps_in_stage(0),
   max_steps(0),
   log_interval(0),
+  steps_completed(0), steps_in_run(0), steps_in_stage(0),
   run_completed(false),
+  time_completed(0.), time_in_run(0.), time_in_stage(0.),
+  precision(0.),
   par(scope)
 {}
 
@@ -358,49 +372,11 @@ inline void SimEnvironment::serialize(Archive &ar,const unsigned int version)
     throw Environment_wrong_version("SimEnvironment",version,class_version);
   ar & boost::serialization::base_object<BaseEnvironment>(*this);
   ar & title;
-  ar & steps_completed & steps_in_run & steps_in_stage;
   ar & max_steps & log_interval;
+  ar & steps_completed & steps_in_run & steps_in_stage;
   ar & run_completed;
-}
-
-/******************************************************************************
- *
- * CTSimEnviornment
- *
- */
-
-/** \class CTSimEnvironment
-    \ingroup Environment
-    \brief Environment for continuous time simulations
-*/
-class CTSimEnvironment : public SimEnvironment {
-public:
-  CTSimEnvironment(const char* scope=Parameters::default_scope);
-
-  double       time_completed,time_in_run,time_in_stage;
-
-protected:
-  void init_local();
-  void warm_init_local();
-
-private:
-  friend class boost::serialization::access;
-  template <typename Archive>
-  void serialize(Archive &ar,const unsigned int version);
-  virtual void vserial(iarchive_t &ar) {ar >> *this;}
-  virtual void vserial(oarchive_t &ar) {ar << *this;}
-
-public:
-  static const int class_version=1;
-} ;
-
-template <typename Archive>
-inline void CTSimEnvironment::serialize(Archive &ar,const unsigned int version)
-{
-  if (version!=class_version)
-    throw Environment_wrong_version("CTSimEnvironment",version,class_version);
-  ar & boost::serialization::base_object<SimEnvironment>(*this);
   ar & time_completed & time_in_run & time_in_stage;
+  ar & precision;
 }
 
 } /* namespace */
@@ -408,7 +384,5 @@ inline void CTSimEnvironment::serialize(Archive &ar,const unsigned int version)
 BOOST_CLASS_VERSION(glsim::Environment,glsim::Environment::class_version);
 BOOST_CLASS_VERSION(glsim::BaseEnvironment,glsim::BaseEnvironment::class_version);
 BOOST_CLASS_VERSION(glsim::SimEnvironment,glsim::SimEnvironment::class_version);
-BOOST_CLASS_VERSION(glsim::CTSimEnvironment,glsim::CTSimEnvironment::class_version);
-
 
 #endif /* ENVIRONMENT_HH */

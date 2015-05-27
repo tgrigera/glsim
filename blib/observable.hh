@@ -171,7 +171,7 @@ private:
 */
 class KMCObservable : public Observable<double> {
 public:
-  KMCObservable(CTSimEnvironment& env_);
+  KMCObservable(SimEnvironment& env_);
 
 protected:
   void   step_local();
@@ -181,7 +181,7 @@ protected:
   double obs_time;
 
 private:
-  CTSimEnvironment& env;
+  SimEnvironment& env;
 
   friend class boost::serialization::access;
   template <typename Archive>
@@ -190,7 +190,7 @@ private:
   virtual void vserial(oarchive_t &ar) {ar << *this;}
 } ;
 
-KMCObservable::KMCObservable(CTSimEnvironment& env_) :
+KMCObservable::KMCObservable(SimEnvironment& env_) :
   Observable(env_),
   obs_time(0.),
   env(env_)
