@@ -153,11 +153,18 @@ void HDF_record_file::init(const char* tit,version_require vr,long minver)
 {
   hid_t H5_maj,H5_min;
 
+  // Create the frame (unlimited) dataspace
+  hsize_t cur[1]={0};
+  hsize_t max[1]={H5S_UNLIMITED};
+  H5_frame_s=H5Screate_simple(1,cur,max);
+  HE(H5_frame_s);
+
+  // Open and check version
   switch(file_mode) {
   case f_readonly:
   case f_append:
     HE(H5_maj=H5Aopen(rootg,"structure_version",H5P_DEFAULT));
-    HE(H5Aread(H5_maj,H5T_NATIVE_SHORT,&disk_file_version));
+    HE(H5Aread(H5_maj,H5T_NATIVE_LONG,&disk_file_version));
     HE(H5Aclose(H5_maj));
 
     if (disk_file_version>file_object_version) {
@@ -206,11 +213,6 @@ void HDF_record_file::init(const char* tit,version_require vr,long minver)
     user_attrs.create(rootg,"User attributes");
     break;
   }
-  // Create the frame (unlimited) dataspace
-  hsize_t cur[1]={0};
-  hsize_t max[1]={H5S_UNLIMITED};
-  H5_frame_s=H5Screate_simple(1,cur,max);
-  HE(H5_frame_s);
 
   declare_header_fields(file_mode);
   if (file_mode!=f_replace) read_header();
