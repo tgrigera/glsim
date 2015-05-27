@@ -54,13 +54,20 @@ namespace glsim {
 
 /** \class Simulation
     \ingroup Simulation
+
+This is the base for all (nonparallel at least) simulations.  It
+handles logging and termination (by interruption through signals or on
+completion of the simulation).
 */
 class Simulation {
 public:
+  /// The constructor just stores references to environment and configuration
   Simulation(glsim::SimEnvironment&,glsim::Configuration&);
   virtual const char *name() const=0;
+  /// This runs the simulation, calling step() as appropriate
   virtual long run();
 
+  /// Step must be defined by the actual simulation class
   virtual void step()=0;
   /// Log start of simulation and record initial time
   virtual void log_start_sim();
@@ -99,8 +106,13 @@ Before the prepare() call, all the environments belonging to the scope
 of the environment passed to prepare() must have been constructed in
 their default state, or the call will fail (perhaps silently and
 miserably).
+
+ \param CL  The command-line parameters (must be already parsed)
+ \param env The eviroment to be initialized
+ \param conf The cofiguration to be initialized
+
 */
-void prepare(int argc,char *argv[],SimEnvironment &env,Configuration &conf);
+void prepare(SimulationCL &CL,SimEnvironment &env,Configuration &conf);
 
 
 } /* namespace */

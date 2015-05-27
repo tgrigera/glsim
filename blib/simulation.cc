@@ -82,7 +82,25 @@ void Simulation::sigterm_handler(int signal)
   signal_received=signal;
 }
 
-/// Run method
+/**
+run() executes the abstract simulation algorithm.
+
+run() takes care of:
+
+ - counts the number of steps completed in total, in the presen run
+   and in the present stage of the run
+
+ - calls step() repeatedly until either
+   - a termination signal (SIGTERM or SIGINT) is received
+   - the maximum number of steps (if specified) is reached
+   - the maximum allowed wall time is reached (TO BE IMPLEMENTED)
+
+ - calls the logging functions as appropriate
+
+ - calls env.step() to advance the environment (also triggering
+   observation of desired quantities)
+
+ */
 long Simulation::run()
 {
   set_up_signals();
@@ -117,7 +135,9 @@ long Simulation::run()
   return env.steps_in_stage;
 }
 
-// Keep track of elapsed time.
+/**
+Prints and records starting time
+*/
 void Simulation::log_start_sim()
 {
   boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
@@ -130,6 +150,9 @@ void Simulation::log_start_sim()
   simulation_timer.start();
 }
 
+/**
+   Computes elapsed time and writes to log stream
+*/
 void Simulation::log_stop_sim()
 {
   using namespace boost::posix_time;
@@ -186,18 +209,8 @@ enum existing_file_status {none, partial, exist};
 static existing_file_status check_existing_files(SimEnvironment &env,
 						 bool ignore_partial);
 
-void prepare(int argc,char *argv[],SimEnvironment &env,Configuration &conf)
+void prepare(SimulationCL& CL,SimEnvironment &env,Configuration &conf)
 {
-  // Read command line
-
-  SimulationCL CL("tes","dd",env.scope());
-  try {
-    CL.parse_command_line(argc,argv);
-  } catch (const Usage_error& e) {
-    CL.show_usage();
-    throw;
-  }
-
   // Check for existing files and partial run
   env.init_base();
   existing_file_status old_files=
