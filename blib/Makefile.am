@@ -53,9 +53,11 @@ libglsim_la_SOURCES = scontext.cc cerrors.c log.cc random.cc		\
 
 LDADD=libglsim.la
 
-check_PROGRAMS = exception_test parameters_test hdf_recfile_test
+check_PROGRAMS = exception_test parameters_test environment_test hdf_recfile_test
 
 exception_test_SOURCES = exception_test.cc
+
+environment_test_SOURCES = environment_test.cc
 
 hdf_recfile_test_SOURCES = hdf_recfile_test.cc
 
