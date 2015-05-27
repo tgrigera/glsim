@@ -107,10 +107,10 @@ long Simulation::run()
   log_start_sim();
   env.steps_in_stage=0;
   while (!env.run_completed && termination_requested==0) {
-    step();
     env.steps_completed++;
     env.steps_in_run++;
     env.steps_in_stage++;
+    step();
     env.step();
     if (env.steps_completed % env.log_interval==0) log();
     if (env.max_steps>0 && env.steps_in_stage>env.max_steps)
