@@ -46,7 +46,10 @@ GS_olconf_create_SOURCES = olconf_create.cc
 # Test programs
 #
 
-check_PROGRAMS = h5md_test
+check_PROGRAMS = h5md_test pseudo-md
 
 h5md_test_SOURCES = h5md_test.cc h5md.cc
+
+pseudo_md_SOURCES = pseudo-md.cc
+
 
