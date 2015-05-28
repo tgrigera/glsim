@@ -37,7 +37,7 @@
 /** \file olconf_create.cc
 
   GS_olconf_create can be used to create an off-lattice configuration
-  and save it in the format (HDF5) used bye OLconfiguration_file.
+  and save it in the format (HDF5) used by OLconfiguration_file.
 
  */
 
@@ -87,6 +87,20 @@ void create_random(glsim::OLconfiguration &conf,scomp &SC)
   }
 }
 
+void set_velocities(glsim::OLconfiguration &conf,double kT)
+{
+  delete[] conf.v;
+  conf.v = new double[conf.N][3];
+  glsim::Gaussian_distribution gauss(sqrt(kT),0);
+  for (int i=0; i<conf.N; ++i) {
+    conf.v[i][0]=gauss();
+    conf.v[i][1]=gauss();
+    conf.v[i][2]=gauss();
+  }
+  
+}
+
+
 /*****************************************************************************
  *
  * options and main
@@ -98,6 +112,7 @@ static struct {
   unsigned long seed;
   int           N;
   double        density;
+  double        vtemp;
 } options;
 
 class CLoptions : public glsim::UtilityCL {
@@ -113,6 +128,8 @@ CLoptions::CLoptions() : UtilityCL("GS_olconf_create")
     ("Nparts",po::value<int>(&options.N)->required(),"total number of particles")
     ("seed,S",po::value<unsigned long>(&options.seed)->default_value(0),"random number seed")
     ("density,d",po::value<double>(&options.density)->default_value(1.),"average density")
+    ("velocities,v",po::value<double>(&options.vtemp)->default_value(0.),
+     "Maxwellian velocities with kT=arg")
     ;
   positional_options().add("Nparts",1).add("out_file",1);
 }
@@ -122,8 +139,10 @@ void CLoptions::show_usage()
   std::cerr
     << "usage: " << progname << " Nparts outfile\n\n"
     << "Create an off-lattice configuration with Nparts total particles and save to outfile.  Options:\n\n"
-    << " --density,-d   Average density\n"
-    << " --seed,-S      Specify seed for random number generator\n"
+    << " --density,-d arg    Average density\n"
+    << " --seed,-S arg       Specify seed for random number generator\n"
+    << " --velociites,-v arg Generate Maxwellian velocities with kT=arg (if not given,\n"
+    << "                     velocities are not written).  Unit mass is assumed.\n"
     << "\n";
 }
 
@@ -151,10 +170,13 @@ void wmain(int argc,char *argv[])
   glsim::Random_number_generator RNG(glsim::gsl_rng_mt19937,options.seed);
   create_random(conf,SC);
   conf.name="Created by olconf_create";
+  if (options.vtemp>0)
+    set_velocities(conf,options.vtemp);
+
   conf.save(options.ofile);
 }
 
 int main(int argc, char *argv[])
 {
-  return glsim::UtilityEC(argc,argv,wmain);
+  return glsim::StandardEC(argc,argv,wmain);
 }
