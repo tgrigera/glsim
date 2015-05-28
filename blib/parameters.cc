@@ -209,12 +209,11 @@ void SimulationCL::parse_command_line(int argc,char *argv[])
       show_parameters(std::cerr);
       throw Early_stop();
     }
-    if (count("parameter_file")>0) {
-	parameter_file=value("parameter_file").as<std::string>();
-	parse(parameter_file.c_str());
-    } else {
-      notify();
+    if (count("parameter_file")!=1 || count("initial_infix")!=1 || count("final_infix")!=1) {
+      throw Usage_error();
     }
+    parameter_file=value("parameter_file").as<std::string>();
+    parse(parameter_file.c_str()); // Calls notify
 
   } catch (po::too_many_positional_options_error& e) {
     throw Usage_error();
@@ -343,7 +342,7 @@ void UtilityCL::show_version()
   std::cerr << "Copyright (C) 2009-2015 Tomas S. Grigera <tgrigera@iflysib.unlp.edu.ar>\n";
 }
 
-int UtilityEC(int argc,char *argv[],void (*wmain)(int,char**))
+int StandardEC(int argc,char *argv[],void (*wmain)(int,char**))
 {
   enum return_codes
   {no_error=0,early_stop=1,usage_error=2,runtime_error=10,

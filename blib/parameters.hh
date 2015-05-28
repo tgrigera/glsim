@@ -294,13 +294,13 @@ private:
   virtual void show_usage()=0;
 } ;
 
-/** \brief Catch exceptions expected by standard utilities
+/** \brief Catch exceptions thrown by glsim
 
 This simply calls the given function wmain, wrapping the call in a
 try...catch block that catches the glsim library exceptions and prints
 the backtrace.
  */
-int UtilityEC(int argc,char *argv[],void (*wmain)(int,char**));
+int StandardEC(int argc,char *argv[],void (*wmain)(int,char**));
 
 } /* namespace */
 

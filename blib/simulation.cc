@@ -142,11 +142,11 @@ void Simulation::log_start_sim()
 {
   boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
   boost::gregorian::date  d=now.date();
-  logs(info) << "***** SIMULATION START ***** "
+  logs(info) << "\n***** SIMULATION START ***** "
 	     << d.day_of_week() << ' '
 	     << d.day() << '-' << d.month() << '-' << d.year()
 	     << ' ' << now.time_of_day()
-	     << '\n';
+	     << "\n\n";
   simulation_timer.start();
 }
 
@@ -162,7 +162,7 @@ void Simulation::log_stop_sim()
   simulation_timer.stop();
   ptime now = second_clock::local_time();
   date  d=now.date();
-  logs(info) << "***** SIMULATION STOP ****** "
+  logs(info) << "\n***** SIMULATION STOP ****** "
 	     << d.day_of_week() << ' '
 	     << d.day() << '-' << d.month() << '-' << d.year()
 	     << ' ' << now.time_of_day()
@@ -180,7 +180,7 @@ void Simulation::log_stop_sim()
 	     << "  (" << boost_duration_to_string(user) << " user)\n";
   if (total.total_milliseconds()>0)
     logs(info) << "      Steps/second : "
-	       << 1000.0*env.steps_in_stage / total.total_milliseconds() << '\n';
+	       << 1000.0*env.steps_in_stage / total.total_milliseconds() << "\n\n";
 }
 
 std::string 
