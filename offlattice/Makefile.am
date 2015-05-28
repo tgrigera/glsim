@@ -29,7 +29,7 @@ pkginclude_HEADERS = h5md.hh olconfiguration.hh
 
 lib_LTLIBRARIES = libglsim_ol.la
 libglsim_ol_la_LDFLAGS = -version-info @LIBGLSIM_VERSION@
-libglsim_ol_la_SOURCES = olconfiguration.cc
+libglsim_ol_la_SOURCES = olconfiguration.cc mdenvironment.cc vverletmd.cc
 
 #
 # Binaries
@@ -37,10 +37,11 @@ libglsim_ol_la_SOURCES = olconfiguration.cc
 
 LDADD=$(top_builddir)/blib/libglsim.la libglsim_ol.la
 
-bin_PROGRAMS = GS_olconf_cat GS_olconf_create
+bin_PROGRAMS = GS_olconf_cat GS_olconf_create GS_ljmd
 
 GS_olconf_cat_SOURCES = olconf_cat.cc
 GS_olconf_create_SOURCES = olconf_create.cc
+GS_ljmd_SOURCES = ljmd.cc
 
 #
 # Test programs
