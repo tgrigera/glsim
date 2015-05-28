@@ -47,24 +47,26 @@ namespace glsim {
 
 /** \class OLconfiguration
     \ingroup Offlattice
+    \brief A configuration class for off-lattice systems
 
 */
 class OLconfiguration : public Configuration {
 public:
-  int       N;
-  double    time;
-  long      step;
-  double    box_length[3];
-  double    box_angles[3];
+  int       N;             ///< Number of particles
+  double    time;          ///< Time at which the configuration was recorded
+  long      step;          ///< Step number at which the configuration was recorded
+  double    box_length[3]; ///< Length of the box vectors
+  double    box_angles[3]; ///< Angles
 
-  short     *id;
-  short     *type;
-  short     *flags;
-  double    (*r)[3];
-  double    (*v)[3];
-  double    (*a)[3];
+  short     *id;           ///< Particle (unique) identification
+  short     *type;         ///< Particle type (use as index to find properties)
+  short     *flags;        ///< Flags for special signalling
+  double    (*r)[3];       ///< Positions
+  double    (*v)[3];       ///< Velocities
+  double    (*a)[3];       ///< Accelerations or forces
   
 public:
+  /// @{ \name Creation, destruction, and copying
   OLconfiguration();
   OLconfiguration(const std::string &title);
   OLconfiguration(const OLconfiguration&);
@@ -72,6 +74,7 @@ public:
   ~OLconfiguration();
   OLconfiguration& swap(OLconfiguration& c);
 
+  /// @}@{ \name Initialization, load and save
   using Configuration::init;
   using Configuration::load;
   using Configuration::save;
@@ -79,8 +82,10 @@ public:
   void save(const char* fname);
   void init(const char* fname);
 
-  // void fold_coordinates();
-  // void fold_one(double x[]);
+  /// @}@{ \name Periodic boundary conditions
+  void fold_coordinates();     ///< Move all particles inside the primary box (shifting by a multiple of the box length)
+  void fold_one(double x[]);   ///< Apply PBCs to one particle
+  /// @}
 
   // double distancesq(const double x[],const double y[]) const;
   // double distancesq(int i,int j) const;

@@ -217,5 +217,5 @@ void wmain(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-  return glsim::UtilityEC(argc,argv,wmain);
+  return glsim::StandardEC(argc,argv,wmain);
 }

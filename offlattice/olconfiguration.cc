@@ -35,6 +35,7 @@
  */
 
 #include <string.h>
+#include <math.h>
 #include <utility>
 
 #include "cerrors.h"
@@ -149,6 +150,26 @@ void OLconfiguration::save(const char* s)
   f.write_header();
 }
 
+/*
+ * Periodic boundary conditions
+ *
+ */
+
+void OLconfiguration::fold_coordinates()
+{
+  for (int n=0; n<N; n++) {
+    r[n][0]-=box_length[0]*floor(r[n][0]/box_length[0]);
+    r[n][1]-=box_length[1]*floor(r[n][1]/box_length[1]);
+    r[n][2]-=box_length[2]*floor(r[n][2]/box_length[2]);
+  }
+}
+
+/*inline*/ void OLconfiguration::fold_one(double x[])
+{
+  x[0]-=box_length[0]*floor(x[0]/box_length[0]);
+  x[1]-=box_length[1]*floor(x[1]/box_length[1]);
+  x[2]-=box_length[2]*floor(x[2]/box_length[2]);
+}
 
 /*****************************************************************************
  *
