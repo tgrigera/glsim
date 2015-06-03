@@ -23,7 +23,7 @@ include $(top_srcdir)/Makefile-common
 pkginclude_HEADERS = cerrors.h exception.hh log.hh parameters.hh	\
                      scontext.hh random.hh configuration.hh		\
                      environment.hh simulation.hh observable.hh		\
-                     stochastic.hh
+                     stochastic.hh hdf_file.hh
 
 #
 # Doc-only headers

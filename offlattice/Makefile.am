@@ -21,7 +21,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/blib
 # Headers
 #
 
-pkginclude_HEADERS = h5md.hh olconfiguration.hh
+pkginclude_HEADERS = h5md.hh olconfiguration.hh interactions.hh lj.hh	\
+		     mc.hh mdenvironment.hh vverletmd.hh
 
 #
 # Offlattice library
