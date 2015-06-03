@@ -36,17 +36,21 @@
 
 #include "olconfiguration.hh"
 #include "mdenvironment.hh"
+#include "lj.hh"
 #include "vverletmd.hh"
 
 void wmain(int argc, char *argv[])
 {
   glsim::MDEnvironment  env;
   glsim::OLconfiguration conf;
+  glsim::RepulsiveLennardJones LJ(env.scope());
   glsim::SimulationCL CL("GS_ljmd","(C) 2015 Tomas S. Grigera",env.scope());
   CL.parse_command_line(argc,argv);
   glsim::prepare(CL,env,conf);
 
-  glsim::FreeParticles inter;
+  glsim::Interactions_isotropic_pairwise_naive<glsim::RepulsiveLennardJones>
+    inter(LJ,conf);
+  // inter.tabulate_potential(std::cout,0,0); exit(1);
   glsim::VVerletMD sim(env,conf,&inter);
   sim.run();
   env.save();
