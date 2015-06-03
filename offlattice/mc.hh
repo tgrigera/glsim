@@ -76,6 +76,10 @@ public:
 } ;
 
 
+/** \class MC
+    \ingroup OfflatticeSIM
+    \brief Metropolis Monte Carlo
+*/
 class MC : public Simulation {
 public:
   MC(MCEnvironment& e, OLconfiguration &c,Interactions* i);

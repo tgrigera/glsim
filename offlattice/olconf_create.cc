@@ -35,6 +35,7 @@
  */
 
 /** \file olconf_create.cc
+    \ingroup Offlattice
 
   GS_olconf_create can be used to create an off-lattice configuration
   and save it in the format (HDF5) used by OLconfiguration_file.

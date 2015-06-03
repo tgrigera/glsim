@@ -34,7 +34,12 @@
  *
  */
 
-// This is so far very primitive...
+/** \file olconf_cat.cc
+    \ingroup Offlattice
+    \brief A cat program for OLconfiguration files
+
+    This is so far very primitive...
+*/
 
 #include "parameters.hh"
 #include "olconfiguration.hh"

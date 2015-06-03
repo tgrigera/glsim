@@ -48,7 +48,7 @@ namespace glsim {
  */
 
 /** \class Interactions
-    \ingroup Offlattice
+    \ingroup OfflatticeINT
 
 The interactions object here is abstract.  We allow the constructor to
 take a configuration as argument, so that consistency checks on the
@@ -107,7 +107,7 @@ class FreeParticles : public Interactions {
  */
 
 /** \class Interactions_isotropic_pairwise_naive.
-    \ingroup Offlattice
+    \ingroup OfflatticeINT
 
 This class can compute force and energy for isotropic pairwise
 interactions.  We will provide several versions of this, since there

@@ -34,6 +34,10 @@
  *
  */
 
+/** \file ljmc.cc
+    \ingroup Offlattice
+    \brief Metropolis Monte Carlo of repulsive Lennard-Jones particles
+*/
 
 #include "olconfiguration.hh"
 #include "lj.hh"

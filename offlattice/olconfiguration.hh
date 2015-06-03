@@ -48,7 +48,7 @@ namespace glsim {
 /*****************************************************************************/
 
 /** \class OLconfiguration
-    \ingroup Offlattice
+    \ingroup OfflatticeCONF
     \brief A configuration class for off-lattice systems
 
 */
@@ -157,7 +157,7 @@ inline double OLconfiguration::distancesq(int i,int j) const
 /*****************************************************************************/
 
 /** \class OLconfig_file
-    \ingroup Offlattice
+    \ingroup OfflatticeCONF
 */
 class OLconfig_file : public HDF_record_file {
 public:

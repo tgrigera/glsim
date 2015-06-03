@@ -127,7 +127,7 @@ serialize(Archive &ar,const unsigned int version)
 
 
 /** \class RepulsiveLennardJones
-    \ingroup Offlattice
+    \ingroup OfflatticeINT
 
     This is the Lennard-Jones potential without the attractive tail
     (it is cut-off at the minimum).

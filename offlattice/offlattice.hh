@@ -37,4 +37,14 @@
 /** \defgroup Offlattice
     \brief Off-lattice library and utilities
 
+@{
+
+  \defgroup OfflatticeSIM Off-lattice simulation techniques
+
+  \defgroup OfflatticeINT Description of off-lattice interactions
+
+  \defgroup OfflatticeCONF Off-lattice configurations and trajectories
+
+@}
+
  */

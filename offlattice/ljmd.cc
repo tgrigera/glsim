@@ -34,6 +34,11 @@
  *
  */
 
+/** \file ljmd.cc
+    \ingroup Offlattice
+    \brief Molecular dynamics of repulsive Lennard-Jones particles
+*/
+
 #include "olconfiguration.hh"
 #include "mdenvironment.hh"
 #include "lj.hh"

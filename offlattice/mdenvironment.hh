@@ -46,6 +46,9 @@ public:
   MDParameters(const char *scope);
 } ;
 
+/** \class MDEnvironment
+    \ingroup OfflatticeSIM
+*/
 class MDEnvironment : public SimEnvironment {
 public:
   MDEnvironment(const char* scope=Parameters::default_scope);

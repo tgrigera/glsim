@@ -46,7 +46,7 @@ namespace glsim {
 /*****************************************************************************/
 
 /** \class VVerletMD
-    \ingroup Offlattice
+    \ingroup OfflatticeSIM
 
 */
 class VVerletMD : public Simulation {
