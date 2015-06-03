@@ -38,6 +38,42 @@
 
 namespace glsim {
 
+VVerletMD::VVerletMD(MDEnvironment& e,OLconfiguration &c,Interactions *i) :
+  Simulation(e,c),
+  env(e),
+  conf(c),
+  inter(i)
+{
+  Dt=env.time_step;
+  Dt2=Dt/2;
+  Dtsq2=Dt*Dt2;
+
+  if (conf.a==0) {
+    conf.a=new double[conf.N][3];
+    memset(conf.a,0,conf.N*3*sizeof(double));
+  }
+  if (conf.v==0) {
+    conf.v=new double[conf.N][3];
+    // maxwell!!!
+  }
+  // Substract Vcm
+  total_mass=0;
+  for (int i=0; i<conf.N; ++i) {
+    total_mass+=inter->mass(conf.type[i]);
+    Ptot[0]+=conf.v[i][0]*inter->mass(conf.type[i]);
+    Ptot[1]+=conf.v[i][1]*inter->mass(conf.type[i]);
+    Ptot[2]+=conf.v[i][2]*inter->mass(conf.type[i]);
+  }
+  for (int i=0; i<conf.N; ++i) {
+    conf.v[i][0]-=Ptot[0]/total_mass;
+    conf.v[i][1]-=Ptot[1]/total_mass;
+    conf.v[i][2]-=Ptot[2]/total_mass;
+  }
+
+  Epot=inter->potential_energy(conf);
+  update_observables();
+}
+
 void VVerletMD::step()
 {
   for (int i=0; i<conf.N; ++i) {
@@ -48,11 +84,8 @@ void VVerletMD::step()
     conf.v[i][1] += Dt2*conf.a[i][1];
     conf.v[i][2] += Dt2*conf.a[i][2];
   }
-  Epot=inter->force_and_energy(conf);
+  Epot=inter->acceleration_and_potential_energy(conf);
   for (int i=0; i<conf.N; ++i) {
-    conf.a[i][0]/=mass[i];
-    conf.a[i][1]/=mass[i];
-    conf.a[i][2]/=mass[i];
     conf.v[i][0] += Dt2*conf.a[i][0];
     conf.v[i][1] += Dt2*conf.a[i][1];
     conf.v[i][2] += Dt2*conf.a[i][2];
@@ -68,33 +101,30 @@ void VVerletMD::step()
 
 void VVerletMD::update_observables()
 {
-  Ekin=0;
-  memset(Ptot,0,3*sizeof(double));
-  for (int i=0; i<conf.N; ++i) {
-    double *vi = conf.v[i];
-    double vsq = vi[0]*vi[0] + vi[1]*vi[1] + vi[2]*vi[2];
-    Ekin+=mass[i]*vsq;
-    Ptot[0]+=mass[i]*vi[0];
-    Ptot[1]+=mass[i]*vi[1];
-    Ptot[2]+=mass[i]*vi[2];
-  }
-  Ekin*=0.5;
+  Ekin=inter->kinetic_energy_and_momentum(conf,Ptot);
   Etot=Ekin+Epot;
 }
 
 void VVerletMD::log_start_sim()
 {
+  char buff[300];
+  
   Simulation::log_start_sim();
-  logs(info) << "   Step       Time         Px         Py         Pz       Epot       Ekin       Etot\n";
+  logs(info) << "   Step       Time         Px         Py         Pz       Epot       Ekin       Etot         kT\n";
+
+  sprintf(buff,"Initial            %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e\n",
+	  Ptot[0],Ptot[1],Ptot[2],Epot/conf.N,Ekin/conf.N,Etot/conf.N,
+	  (2./3.)*(Ekin/conf.N));
+  logs(info) << buff;
 }
 
 void VVerletMD::log()
 {
   update_observables();
   static char buff[300];
-  sprintf(buff,"%7ld %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e\n",
+  sprintf(buff,"%7ld %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e\n",
 	  env.steps_completed,env.time_completed,Ptot[0],Ptot[1],Ptot[2],
-	  Epot,Ekin,Etot);
+	  Epot/conf.N,Ekin/conf.N,Etot/conf.N,(2./3)*(Ekin/conf.N));
   logs(info) << buff;
 }
 

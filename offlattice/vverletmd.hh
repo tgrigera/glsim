@@ -52,7 +52,6 @@ namespace glsim {
 class VVerletMD : public Simulation {
 public:
   VVerletMD(MDEnvironment& e,OLconfiguration &c,Interactions *i);
-  ~VVerletMD() {delete[] mass;}
 
   const char* name() const {return "MD with velocity Verlet integrator";}
   void        step();
@@ -66,6 +65,7 @@ public:
   double      Ekin;    ///< Kinetic energy
   double      Epot;    ///< Potential energy
   double      Ptot[3]; ///< Total momentum
+  double      total_mass;
   ///@}
 
 private:
@@ -74,30 +74,7 @@ private:
   Interactions     *inter;
 
   double           Dt,Dt2,Dtsq2;
-  double           *mass;
 } ;
-
-VVerletMD::VVerletMD(MDEnvironment& e,OLconfiguration &c,Interactions *i) :
-  Simulation(e,c),
-  env(e),
-  conf(c),
-  inter(i),
-  mass(0)
-{
-  Dt=env.time_step;
-  Dt2=Dt/2;
-  Dtsq2=Dt*Dt2;
-
-  if (conf.a==0) {
-    conf.a=new double[conf.N][3];
-    memset(conf.a,0,conf.N*3*sizeof(double));
-  }
-
-  /// Load masses!!!!!
-  mass=new double[conf.N];
-  for (double *m=mass; m!=mass+conf.N; ++m)
-    *m=1.;
-}
 
 } /* namespace */
 
