@@ -37,6 +37,8 @@
 #ifndef OLCONFIGURATION_HH
 #define OLCONFIGURATION_HH
 
+#include <math.h>
+
 #include "configuration.hh"
 #include "exception.hh"
 #include "hdf_file.hh"
@@ -87,13 +89,15 @@ public:
   void fold_one(double x[]);   ///< Apply PBCs to one particle
   /// @}
 
-  // double distancesq(const double x[],const double y[]) const;
-  // double distancesq(int i,int j) const;
+  double ddiff(const double a,const double b,const double box_length) const;
+  double distancesq(const double x[],const double y[]) const;
+  double distancesq(int i,int j) const;
 
   // int CountType(short t) const;
   // int CountFlag(short f) const;
 
   // void ApplyCubicSymmetry(OLconfiguration&,int n);
+
 } ;
 
 inline OLconfiguration::OLconfiguration() :
@@ -116,6 +120,38 @@ inline OLconfiguration::OLconfiguration(const std::string &title) :
 {
   box_length[0]=box_length[1]=box_length[2]=0;
   box_angles[0]=box_angles[1]=box_angles[2]=0;
+}
+
+/* 
+ * Functions for periodic boundary conditions
+ *
+ */
+
+
+/** Returns a-b shifted by periodic images as necessary so that |a-b|<box/2
+ */
+inline double OLconfiguration::ddiff(const double a,const double b,
+				     const double box_length) const
+{
+  double temp=a-b;
+  return temp-box_length*rint(temp/box_length);
+}
+
+inline double OLconfiguration::distancesq(const double x[],
+					  const double y[]) const
+{
+  double dx=ddiff(x[0],y[0],box_length[0]);
+  double dy=ddiff(x[1],y[1],box_length[1]);
+  double dz=ddiff(x[2],y[2],box_length[2]);
+  return dx*dx+dy*dy+dz*dz;
+}
+
+inline double OLconfiguration::distancesq(int i,int j) const
+{
+  double dx=ddiff(r[i][0],r[j][0],box_length[0]);
+  double dy=ddiff(r[i][1],r[j][1],box_length[1]);
+  double dz=ddiff(r[i][2],r[j][2],box_length[2]);
+  return dx*dx+dy*dy+dz*dz;
 }
 
 /*****************************************************************************/
