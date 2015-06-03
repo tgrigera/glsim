@@ -39,6 +39,8 @@
   GS_olconf_create can be used to create an off-lattice configuration
   and save it in the format (HDF5) used by OLconfiguration_file.
 
+  BUG: All particles have the same mass --- this must be fixed.
+
  */
 
 #include <assert.h>
@@ -87,11 +89,11 @@ void create_random(glsim::OLconfiguration &conf,scomp &SC)
   }
 }
 
-void set_velocities(glsim::OLconfiguration &conf,double kT)
+void set_velocities(glsim::OLconfiguration &conf,double kT,double mass)
 {
   delete[] conf.v;
   conf.v = new double[conf.N][3];
-  glsim::Gaussian_distribution gauss(sqrt(kT),0);
+  glsim::Gaussian_distribution gauss(sqrt(kT/mass),0);
   for (int i=0; i<conf.N; ++i) {
     conf.v[i][0]=gauss();
     conf.v[i][1]=gauss();
@@ -113,6 +115,7 @@ static struct {
   int           N;
   double        density;
   double        vtemp;
+  double        mass;
 } options;
 
 class CLoptions : public glsim::UtilityCL {
@@ -130,6 +133,7 @@ CLoptions::CLoptions() : UtilityCL("GS_olconf_create")
     ("density,d",po::value<double>(&options.density)->default_value(1.),"average density")
     ("velocities,v",po::value<double>(&options.vtemp)->default_value(0.),
      "Maxwellian velocities with kT=arg")
+    ("mass,m",po::value<double>(&options.mass)->default_value(1.),"mass")
     ;
   positional_options().add("Nparts",1).add("out_file",1);
 }
@@ -143,6 +147,7 @@ void CLoptions::show_usage()
     << " --seed,-S arg       Specify seed for random number generator\n"
     << " --velociites,-v arg Generate Maxwellian velocities with kT=arg (if not given,\n"
     << "                     velocities are not written).  Unit mass is assumed.\n"
+    << " --mass,-m arg       Particle mass\n"
     << "\n";
 }
 
@@ -171,7 +176,7 @@ void wmain(int argc,char *argv[])
   create_random(conf,SC);
   conf.name="Created by olconf_create";
   if (options.vtemp>0)
-    set_velocities(conf,options.vtemp);
+    set_velocities(conf,options.vtemp,options.mass);
 
   conf.save(options.ofile);
 }
