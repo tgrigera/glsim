@@ -161,13 +161,42 @@ inline double OLconfiguration::distancesq(int i,int j) const
 */
 class OLconfig_file : public HDF_record_file {
 public:
-  OLconfig_file(const char *fname,OLconfiguration *buffer=0);
+  struct options;
+  OLconfig_file(const char *fname,OLconfiguration *buffer=0,
+		OLconfig_file::options o=OLconfig_file::options());
   ~OLconfig_file();
   
   void create();
   void open();
 
+struct options {
+  bool time_frame_;
+  bool box_frame_;
+  bool id_frame_;
+  bool type_frame_;
+  bool flags_frame_;
+  bool r_frame_;
+  bool v_frame_;
+  bool a_frame_;
+
+  options() :
+    time_frame_(false), box_frame_(false), id_frame_(false),
+    type_frame_(false), flags_frame_(false),
+    r_frame_(false), v_frame_(false), a_frame_(false) {}
+
+  options& box_frame() {time_frame_=true; box_frame_=true;}
+  options& id_frame() {time_frame_=true; id_frame_=true;}
+  options& type_frame() {time_frame_=true; type_frame_=true;}
+  options& flags_frame() {time_frame_=true; flags_frame_=true;}
+  options& r_frame() {time_frame_=true; r_frame_=true;}
+  options& v_frame() {time_frame_=true; v_frame_=true;}
+  options& a_frame() {time_frame_=true; a_frame_=true;}
+} ;
+
+
+
 private:
+  options         opt;
   const int       version;
   std::string     fname;
   OLconfiguration *cbuffer;
