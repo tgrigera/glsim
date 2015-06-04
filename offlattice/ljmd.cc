@@ -41,8 +41,9 @@
 
 #include "olconfiguration.hh"
 #include "mdenvironment.hh"
+#include "mdobservable.hh"
 #include "lj.hh"
-#include "vverletmd.hh"
+#include "md.hh"
 
 void wmain(int argc, char *argv[])
 {
@@ -50,6 +51,8 @@ void wmain(int argc, char *argv[])
   glsim::OLconfiguration conf;
   glsim::RepulsiveLennardJones LJ(env.scope());
   glsim::SimulationCL CL("GS_ljmd","(C) 2015 Tomas S. Grigera",env.scope());
+  glsim::MDObservable obs(env,conf);
+  
   CL.parse_command_line(argc,argv);
   glsim::prepare(CL,env,conf);
 
@@ -57,6 +60,7 @@ void wmain(int argc, char *argv[])
     inter(LJ,conf);
   // inter.tabulate_potential(std::cout,0,0); exit(1);
   glsim::VVerletMD sim(env,conf,&inter);
+  obs.observe_first();
   sim.run();
   env.save();
   conf.save(env.configuration_file_fin);

@@ -1,5 +1,5 @@
 /*
- * vverlet.hh -- MD with velocity Verlet integrator
+ * md.hh -- MD simulations w/different integrators
  *
  * This file is part of glsim, a numerical simulation class library and
  * helper programs.
@@ -45,34 +45,40 @@ namespace glsim {
 
 /*****************************************************************************/
 
+/** \class MDSimulation
+    \ingroup OfflatticeSIM
+
+Common methods for MD (does not include the integrator)
+
+This assumes that number of particles and mass are conserved.
+
+*/
+class MDSimulation : public Simulation {
+public:
+  MDSimulation(MDEnvironment& e,OLconfiguration &c,Interactions *i);
+  void        log();
+  void        log_start_sim();
+
+protected:
+  void update_observables();
+
+  MDEnvironment&   env;
+  OLconfiguration& conf;
+  Interactions     *inter;
+} ;
+
 /** \class VVerletMD
     \ingroup OfflatticeSIM
 
 */
-class VVerletMD : public Simulation {
+class VVerletMD : public MDSimulation {
 public:
   VVerletMD(MDEnvironment& e,OLconfiguration &c,Interactions *i);
 
   const char* name() const {return "MD with velocity Verlet integrator";}
-  void        step();
-  void        log();
-  void        log_start_sim();
-
-  void update_observables();
-  ///@{ \name Public data (for observers)
-  /// Note that these quantities are only updated upon request
-  double      Etot;    ///< Total energy
-  double      Ekin;    ///< Kinetic energy
-  double      Epot;    ///< Potential energy
-  double      Ptot[3]; ///< Total momentum
-  double      total_mass;
-  ///@}
+  void step();
 
 private:
-  MDEnvironment&   env;
-  OLconfiguration& conf;
-  Interactions     *inter;
-
   double           Dt,Dt2,Dtsq2;
 } ;
 

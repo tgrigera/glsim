@@ -22,7 +22,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/blib
 #
 
 pkginclude_HEADERS = h5md.hh olconfiguration.hh interactions.hh lj.hh	\
-		     mc.hh mdenvironment.hh vverletmd.hh
+		     mc.hh mdenvironment.hh mdobservable.hh md.hh
 
 #
 # Offlattice library
@@ -31,7 +31,7 @@ pkginclude_HEADERS = h5md.hh olconfiguration.hh interactions.hh lj.hh	\
 lib_LTLIBRARIES = libglsim_ol.la
 libglsim_ol_la_LDFLAGS = -version-info @LIBGLSIM_VERSION@
 libglsim_ol_la_SOURCES = olconfiguration.cc interactions.cc	\
-			 mc.cc mdenvironment.cc vverletmd.cc
+			 mc.cc md.cc mdenvironment.cc mdobservable.cc
 
 #
 # Binaries
