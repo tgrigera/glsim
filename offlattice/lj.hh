@@ -139,7 +139,8 @@ public:
   const char* name() const {return "Purely repulsive Lennard-Jones particles";}
   bool within_cutoff(double dsq,int ta,int tb)
   {return dsq<=rcsq;}
-  double mass(short t) {return env.mass;}
+  double mass(short t) const {return env.mass;}
+  bool   has_efield() const {return false;}
   double cutoff() {return rc;}
 
   double external_field(double *d,short t) {return 0;}

@@ -54,9 +54,10 @@ VVerletMD::VVerletMD(MDEnvironment& e,OLconfiguration &c,Interactions *i) :
   }
   if (conf.v==0) {
     conf.v=new double[conf.N][3];
+    memset(conf.v,0,conf.N*sizeof(double));
     // maxwell!!!
   }
-  // Substract Vcm
+
   total_mass=0;
   for (int i=0; i<conf.N; ++i) {
     total_mass+=inter->mass(conf.type[i]);
@@ -64,11 +65,13 @@ VVerletMD::VVerletMD(MDEnvironment& e,OLconfiguration &c,Interactions *i) :
     Ptot[1]+=conf.v[i][1]*inter->mass(conf.type[i]);
     Ptot[2]+=conf.v[i][2]*inter->mass(conf.type[i]);
   }
-  for (int i=0; i<conf.N; ++i) {
-    conf.v[i][0]-=Ptot[0]/total_mass;
-    conf.v[i][1]-=Ptot[1]/total_mass;
-    conf.v[i][2]-=Ptot[2]/total_mass;
-  }
+  // Substract Vcm (if P is conserved)
+  if (inter->conserve_P())
+    for (int i=0; i<conf.N; ++i) {
+      conf.v[i][0]-=Ptot[0]/total_mass;
+      conf.v[i][1]-=Ptot[1]/total_mass;
+      conf.v[i][2]-=Ptot[2]/total_mass;
+    }
 
   Epot=inter->potential_energy(conf);
   update_observables();

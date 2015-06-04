@@ -73,7 +73,8 @@ class Interactions {
 public:
   Interactions() {}
   virtual const char *name() const =0;
-  virtual double mass(short type)=0;
+  virtual bool   conserve_P() const =0; ///< Whether the interactions conserves momentum (e.g. has external field)
+  virtual double mass(short type) const =0;
   virtual double potential_energy(OLconfiguration&) = 0;
   virtual double force_and_potential_energy(OLconfiguration&) = 0;
   virtual double acceleration_and_potential_energy(OLconfiguration&) = 0;
@@ -93,7 +94,8 @@ inline void Interactions::fold_coordinates(OLconfiguration& conf)
 
 class FreeParticles : public Interactions {
   const char* name() const {return "Free particles";}
-  double mass(short t) {return 1.;}
+  double mass(short t) const {return 1.;}
+  bool   conserve_P() const {return true;}
   double potential_energy(OLconfiguration& c) {return 0;}
   double force_and_potential_energy(OLconfiguration& c) {return 0;}
   double acceleration_and_energy(OLconfiguration& c) {return 0;}
@@ -127,7 +129,8 @@ class Interactions_isotropic_pairwise_naive : public Interactions {
 public:
   Interactions_isotropic_pairwise_naive(potential &P,OLconfiguration&);
   const  char *name() const;
-  double mass(short type) {return PP.mass(type);}
+  double mass(short type) const {return PP.mass(type);}
+  bool   conserve_P() const {return !PP.has_efield();}
   double potential_energy(OLconfiguration&);
   double force_and_potential_energy(OLconfiguration&);
   double acceleration_and_potential_energy(OLconfiguration&);
@@ -196,8 +199,8 @@ force_and_potential_energy(OLconfiguration &conf)
     memcpy(rn,conf.r[n],3*sizeof(double));
     int typen=conf.type[n];
 
-    if ( (Et=PP.external_field(rn,typen,force))!=0) {
-      E+=Et;
+    if (PP.has_efield()) {
+      E+=PP.external_field(rn,typen,force);
       conf.a[n][0]+=force[0];
       conf.a[n][1]+=force[1];
       conf.a[n][2]+=force[2];
