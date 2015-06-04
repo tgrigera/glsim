@@ -1,5 +1,5 @@
 /*
- * mdenvironment.hh -- Environment for Molecular Dynamics
+ * mdobservable.hh --  Recording basic MD quantities
  *
  * This file is part of glsim, a numerical simulation class library and
  * helper programs.
@@ -34,60 +34,43 @@
  *
  */
 
-#ifndef MDENVIRONMENT_HH
-#define MDENVIRONMENT_HH
+#include <cstdio>
 
-#include "environment.hh"
-#include "interactions.hh"
+#include "olconfiguration.hh"
+#include "observable.hh"
+#include "md.hh"
+
+#ifndef MDOBSERVABLE_HH
+#define MDOBSERVABLE_HH
 
 namespace glsim {
 
-class MDParameters : public Parameters {
+class MDObservable_parameters : public Parameters {
 public:
-  MDParameters(const char *scope);
+  MDObservable_parameters(const char* scope);
 } ;
 
-/** \class MDEnvironment
-    \ingroup OfflatticeSIM
-*/
-class MDEnvironment : public SimEnvironment {
+class MDObservable : public SBObservable {
 public:
-  MDEnvironment(const char* scope=Parameters::default_scope);
+  MDObservable(MDEnvironment&,OLconfiguration&);
 
-  ///@{ \name Set from parameters
-  long   MDsteps;
-  double time_step;
+  void interval_and_file();
+  void write_header();
+  void observe();
 
-  ///@}@{ Computed by the simulation (guaranteed accurate only upon request)
-  double      Etot;    ///< Total energy
-  double      Ekin;    ///< Kinetic energy
-  double      Epot;    ///< Potential energy
-  double      Ptot[3]; ///< Total momentum
-  double      total_mass;
-  double      total_number;
-
-  Interactions *inter;  ///< The simulation can/should place here the pointer to interactions to allow observers to report interactions information
-  ///@}
-
-protected:
-  void init_local(),warm_init_local();
-  
 private:
-  MDParameters par;
-
-  void vserial(oarchive_t &ar) {ar << *this;}
-  void vserial(iarchive_t &ar) {ar >> *this;}
-  template <typename Archive>
-  void serialize(Archive &ar,const unsigned int version);
-  friend class boost::serialization::access;
-
-public:
-  static const int class_version=1;
+  MDEnvironment           &env;
+  OLconfiguration         &conf;
+  MDObservable_parameters par;
 } ;
+
+MDObservable::MDObservable(MDEnvironment& e,OLconfiguration &c) :
+  SBObservable(e),
+  env(e),
+  conf(c),
+  par(e.scope())
+{}
 
 } /* namespace */
 
-
-BOOST_CLASS_VERSION(glsim::MDEnvironment,glsim::MDEnvironment::class_version);
-
-#endif /* MDENVIRONMENT_HH */
+#endif /* MDOBSERVABLE_HH */

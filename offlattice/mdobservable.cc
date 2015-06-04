@@ -1,5 +1,5 @@
 /*
- * mdenvironment.hh -- Environment for Molecular Dynamics
+ * mdobservable.cc --  Recording basic MD quantities
  *
  * This file is part of glsim, a numerical simulation class library and
  * helper programs.
@@ -34,60 +34,40 @@
  *
  */
 
-#ifndef MDENVIRONMENT_HH
-#define MDENVIRONMENT_HH
-
-#include "environment.hh"
-#include "interactions.hh"
+#include "mdobservable.hh"
 
 namespace glsim {
 
-class MDParameters : public Parameters {
-public:
-  MDParameters(const char *scope);
-} ;
+MDObservable_parameters::MDObservable_parameters(const char* scope) :
+  Parameters(scope)
+{
+  parameter_file_options().add_options()
+    ("MD.obs_interval",po::value<int>()->default_value(0),
+     "Interval for standard observation, 0=skip")
+    ("MD.obs_file_prefix",po::value<std::string>(),"Observation file prefix")
+    ;
+}
 
-/** \class MDEnvironment
-    \ingroup OfflatticeSIM
-*/
-class MDEnvironment : public SimEnvironment {
-public:
-  MDEnvironment(const char* scope=Parameters::default_scope);
+void MDObservable::interval_and_file()
+{
+  obs_interval=par.value("MD.obs_interval").as<int>();
+  obs_file_prefix=par.value("MD.obs_file_prefix").as<std::string>();
+}
 
-  ///@{ \name Set from parameters
-  long   MDsteps;
-  double time_step;
+void MDObservable::write_header()
+{
+  fprintf(of,"    Step       Time         Px         Py         Pz       Epot       Ekin       Etot         kT\n");
+}
 
-  ///@}@{ Computed by the simulation (guaranteed accurate only upon request)
-  double      Etot;    ///< Total energy
-  double      Ekin;    ///< Kinetic energy
-  double      Epot;    ///< Potential energy
-  double      Ptot[3]; ///< Total momentum
-  double      total_mass;
-  double      total_number;
-
-  Interactions *inter;  ///< The simulation can/should place here the pointer to interactions to allow observers to report interactions information
-  ///@}
-
-protected:
-  void init_local(),warm_init_local();
-  
-private:
-  MDParameters par;
-
-  void vserial(oarchive_t &ar) {ar << *this;}
-  void vserial(iarchive_t &ar) {ar >> *this;}
-  template <typename Archive>
-  void serialize(Archive &ar,const unsigned int version);
-  friend class boost::serialization::access;
-
-public:
-  static const int class_version=1;
-} ;
+void MDObservable::observe()
+{
+  env.Ekin=env.inter->kinetic_energy_and_momentum(conf,env.Ptot);
+  env.Etot=env.Ekin+env.Epot;
+  int N=env.total_number;
+  fprintf(of,"%8ld %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e\n",
+	  env.steps_completed,env.time_completed,
+	  env.Ptot[0],env.Ptot[1],env.Ptot[2],
+	  env.Epot/N,env.Ekin/N,env.Etot/N,(2./3)*(env.Ekin/N));
+}
 
 } /* namespace */
-
-
-BOOST_CLASS_VERSION(glsim::MDEnvironment,glsim::MDEnvironment::class_version);
-
-#endif /* MDENVIRONMENT_HH */
