@@ -72,6 +72,8 @@ MDSimulation::MDSimulation(MDEnvironment& e,OLconfiguration &c,Interactions *i) 
     }
 
   env.Epot=inter->potential_energy(conf);
+  conf.step=env.steps_completed;
+  conf.time=env.time_completed;
   update_observables();
 }
 
