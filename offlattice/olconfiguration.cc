@@ -224,17 +224,17 @@ void OLconfig_file::declare_header_fields(mode fmode)
 
   if (fmode==f_replace) {
     if (!opt.id_frame_)
-      create_if_present("id","has_id",cbuffer->id);
+      create_if_present("id","has_id",cbuffer->id,f_header);
     if (!opt.type_frame_)
-      create_if_present("type","has_type",cbuffer->type);
+      create_if_present("type","has_type",cbuffer->type,f_header);
     if (!opt.flags_frame_)
-      create_if_present("flags","has_flags",cbuffer->flags);
+      create_if_present("flags","has_flags",cbuffer->flags,f_header);
     if (!opt.r_frame_)
-      create_if_present("r","has_r",cbuffer->r);
+      create_if_present("r","has_r",cbuffer->r,f_header);
     if (!opt.v_frame_)
-      create_if_present("v","has_v",cbuffer->v);
+      create_if_present("v","has_v",cbuffer->v,f_header);
     if (!opt.a_frame_)
-      create_if_present("a","has_a",cbuffer->a);
+      create_if_present("a","has_a",cbuffer->a,f_header);
   } else {
     open_if_present("id","has_id",cbuffer->id);
     open_if_present("type","has_type",cbuffer->type);
@@ -247,19 +247,27 @@ void OLconfig_file::declare_header_fields(mode fmode)
 
 void OLconfig_file::declare_record_fields(mode fmode)
 {
+  if (opt.time_frame_) {
+    declare_field(f_record,"time",&(cbuffer->time));
+    declare_field(f_record,"step",&(cbuffer->step));
+  }
+  if (opt.box_frame_) {
+    declare_field(f_record,"box_length",cbuffer->box_length,3);
+    declare_field(f_record,"box_angles",cbuffer->box_angles,3);
+  }
   if (fmode==f_replace) {
     if (opt.id_frame_)
-      create_if_present("id","has_id",cbuffer->id);
+      create_if_present("id","has_id",cbuffer->id,f_record);
     if (opt.type_frame_)
-      create_if_present("type","has_type",cbuffer->type);
+      create_if_present("type","has_type",cbuffer->type,f_record);
     if (opt.flags_frame_)
-      create_if_present("flags","has_flags",cbuffer->flags);
+      create_if_present("flags","has_flags",cbuffer->flags,f_record);
     if (opt.r_frame_)
-      create_if_present("r","has_r",cbuffer->r);
+      create_if_present("r","has_r",cbuffer->r,f_record);
     if (opt.v_frame_)
-      create_if_present("v","has_v",cbuffer->v);
+      create_if_present("v","has_v",cbuffer->v,f_record);
     if (opt.a_frame_)
-      create_if_present("a","has_a",cbuffer->a);
+      create_if_present("a","has_a",cbuffer->a,f_record);
   }
 }
 

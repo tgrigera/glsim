@@ -184,6 +184,7 @@ struct options {
     type_frame_(false), flags_frame_(false),
     r_frame_(false), v_frame_(false), a_frame_(false) {}
 
+  options& time_frame() {time_frame_=true;}
   options& box_frame() {time_frame_=true; box_frame_=true;}
   options& id_frame() {time_frame_=true; id_frame_=true;}
   options& type_frame() {time_frame_=true; type_frame_=true;}
@@ -205,20 +206,21 @@ private:
   void declare_header_fields(mode);
   void declare_record_fields(mode);
   template <typename FTYPE>
-  void create_if_present(const char* field_name,const char* aname,FTYPE* p);
+  void create_if_present(const char* field_name,const char* aname,FTYPE* p,
+			 field_kind fkind);
   template <typename FTYPE>
   void open_if_present(const char* field_name,const char* aname,FTYPE* (&p));
 } ;
 
 template <typename FTYPE>
 void OLconfig_file::create_if_present(const char* field_name,const char* aname,
-				      FTYPE* p)
+				      FTYPE* p,field_kind fkind)
 {
   bool hasp;
   hasp= p!=0;
   declare_attribute(aname,&hasp);
   if (hasp)
-    declare_field(f_header,field_name,p,cbuffer->N);
+    declare_field(fkind,field_name,p,cbuffer->N);
 }
 
 template <typename FTYPE>
