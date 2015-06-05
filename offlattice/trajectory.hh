@@ -127,13 +127,15 @@ inline Trajectory::Trajectory(const SimEnvironment &e,const OLconfiguration& c,
 inline Trajectory::~Trajectory()
 {
   delete of;
-  iconf->id=0;
-  iconf->type=0;  // Because these buffers are conf's, not ours
-  iconf->flags=0;
-  iconf->r=0;
-  iconf->v=0;
-  iconf->a=0;
-  delete iconf;
+  if (iconf) {
+    iconf->id=0;
+    iconf->type=0;  // Because these buffers are conf's, not ours
+    iconf->flags=0;
+    iconf->r=0;
+    iconf->v=0;
+    iconf->a=0;
+    delete iconf;
+  }
 }
 
 template <typename Arch>
