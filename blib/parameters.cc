@@ -326,12 +326,14 @@ void UtilityCL::parse_command_line(int argc,char *argv[])
     notify();
 
   } catch (po::too_many_positional_options_error& e) {
+    std::cerr << "Too many options!\n";
     throw Usage_error();
   } catch (po::invalid_command_line_syntax& e) {
     throw Usage_error();
   } catch (po::invalid_command_line_style& e) {
     throw Usage_error();
   } catch (po::required_option& e) {
+    std::cerr << "Required options missing!\n";
     throw Usage_error();
   }
 }
