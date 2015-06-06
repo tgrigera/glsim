@@ -67,6 +67,12 @@ class H5file {
 public:
   H5file();
   ~H5file();
+  hid_t id() const {return hfile_id;}
+
+  virtual void create(const char* fname,unsigned flags,
+		      hid_t file_creation_pl=H5P_DEFAULT,
+		      hid_t file_access_pl=H5_file_access_p);
+
   static void handle_HDF_error(Source_context); ///<Prints the HDF error message and thows HDF_error
 
 protected:
@@ -78,6 +84,13 @@ protected:
 private:
   static int file_count;
 } ;
+
+inline void H5file::create(const char* fname,unsigned flags,
+			   hid_t file_creation_pl,hid_t file_access_pl)
+{
+  HE(hfile_id=H5Fcreate(fname,flags,file_creation_pl,file_access_pl));
+}
+
 
 /******************************************************************************
  *
@@ -280,19 +293,127 @@ public:
   }
 } ;
 
+/*****************************************************************************
+ *
+ * H5space
+ *
+ */
+class H5space {
+public:
+  H5space() : sid(-1) {}
+  ~H5space() {close();}
+  hid_t id() {return sid;}
 
-// class H5set {
-// public:
-//   H5set()
-//   H5group() : dset_id(-1) {}
-//   ~H5group() {close();}
-//   hid_t id() const {return dset_id;}
+  void close() {if (sid>=0) HE(H5Sclose(sid));}
 
-//   void close() {if (dset_id>=0) HE(H5Dclose(dset_id)); dset_id=-1;}
-// private:
-//   hid_t  dset_id;
-// }
+protected:
+  hid_t sid;
+} ;
+
+class H5space_simple_base : public H5space {
+public:
+  H5space_simple_base(int rank) :
+    rank_(rank)
+  {
+    curr_dims=new hsize_t[rank_];
+    max_dims=new hsize_t[rank_];
+  }
+  ~H5space_simple_base() {delete[] curr_dims; delete[] max_dims;}
+
+protected:
+  hsize_t rank_,*curr_dims,*max_dims;
+} ;
+
+template <int rank>
+class H5space_simple : public H5space_simple_base {
+public:
+  H5space_simple() : H5space_simple_base(rank) {}
+  void create(const hsize_t * const cur,const hsize_t * const max);
+} ;
+
+template <>
+class H5space_simple<3> : public H5space_simple_base {
+public:
+  H5space_simple() : H5space_simple_base(3) {}
+  void create(hsize_t c1,hsize_t c2,hsize_t c3,
+	      hsize_t m1,hsize_t m2,hsize_t m3);
+} ;
+
+inline void H5space_simple<3>::create(hsize_t c1,hsize_t c2,hsize_t c3,
+				      hsize_t m1,hsize_t m2,hsize_t m3)
+{
+  curr_dims[0]=c1;
+  curr_dims[1]=c2;
+  curr_dims[2]=c3;
+  max_dims[0]=m1;
+  max_dims[1]=m2;
+  max_dims[2]=m3;
+  HE(sid=H5Screate_simple(rank_,curr_dims,max_dims));
+}
+
+template <>
+class H5space_simple<2> : public H5space_simple_base {
+public:
+  H5space_simple() : H5space_simple_base(2) {}
+  void create(hsize_t c1,hsize_t c2,hsize_t m1,hsize_t m2);
+} ;
+
+inline void H5space_simple<2>::create(hsize_t c1,hsize_t c2,
+				      hsize_t m1,hsize_t m2)
+{
+  curr_dims[0]=c1;
+  curr_dims[1]=c2;
+  max_dims[0]=m1;
+  max_dims[1]=m2;
+  HE(sid=H5Screate_simple(rank_,curr_dims,max_dims));
+}
+
+template <>
+class H5space_simple<1> : public H5space_simple_base {
+public:
+  H5space_simple() : H5space_simple_base(1) {}
+  void create(const hsize_t cur,const hsize_t max);
+} ;
+
+inline void H5space_simple<1>::create(const hsize_t cur,const hsize_t max)
+{
+  curr_dims[0]=cur;
+  max_dims[0]=max;
+  HE(sid=H5Screate_simple(rank_,curr_dims,max_dims));
+}
+
+/*****************************************************************************
+ *
+ * H5set
+ *
+ */
+
+class H5set {
+public:
+  H5set() : dset_id(-1) {}
+  ~H5set() {close();}
+  hid_t id() const {return dset_id;}
+  void create(hid_t loc_id,const char *name,hid_t datatype_id,
+	      hid_t dataspace_id,hid_t link_creation_pl=H5P_DEFAULT,
+	      hid_t dataset_creation_cpl=H5P_DEFAULT,
+	      hid_t dataset_access_pl=H5P_DEFAULT);
+
+
+  void close() {if (dset_id>=0) HE(H5Dclose(dset_id)); dset_id=-1;}
+private:
+  hid_t  dset_id;
+} ;
     
+inline void H5set::create(hid_t loc_id,const char *name,hid_t datatype_id,
+			  hid_t dataspace_id,hid_t link_creation_pl,
+			  hid_t dataset_creation_pl,hid_t dataset_access_pl)
+{
+  dset_id=H5Dcreate2(loc_id,name,datatype_id,dataspace_id,
+		     link_creation_pl,dataset_creation_pl,dataset_access_pl);
+  HE(dset_id);
+}
+
+
 /** Exception for HDF5 library errors */
 class HDF_error : public glsim::Runtime_error {
 public:

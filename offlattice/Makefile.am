@@ -31,7 +31,7 @@ pkginclude_HEADERS = h5md.hh olconfiguration.hh interactions.hh lj.hh	\
 
 lib_LTLIBRARIES = libglsim_ol.la
 libglsim_ol_la_LDFLAGS = -version-info @LIBGLSIM_VERSION@
-libglsim_ol_la_SOURCES = olconfiguration.cc interactions.cc	\
+libglsim_ol_la_SOURCES = h5md.cc olconfiguration.cc interactions.cc	\
 			 mc.cc md.cc mdenvironment.cc mdobservable.cc \
 			 trajectory.cc
 
@@ -41,20 +41,19 @@ libglsim_ol_la_SOURCES = olconfiguration.cc interactions.cc	\
 
 LDADD=$(top_builddir)/blib/libglsim.la libglsim_ol.la
 
-bin_PROGRAMS = GS_olconf_cat GS_olconf_create GS_ljmc GS_ljmd
+bin_PROGRAMS = GS_olconf_cat GS_olconf_create GS_ljmc GS_ljmd GS_traj2h5md
 
 GS_olconf_cat_SOURCES = olconf_cat.cc
 GS_olconf_create_SOURCES = olconf_create.cc
 GS_ljmc_SOURCES = ljmc.cc
 GS_ljmd_SOURCES = ljmd.cc
+GS_traj2h5md_SOURCES = traj2h5md.cc
 
 #
 # Test programs
 #
 
-check_PROGRAMS = h5md_test pseudo-md
-
-h5md_test_SOURCES = h5md_test.cc h5md.cc
+check_PROGRAMS = pseudo-md
 
 pseudo_md_SOURCES = pseudo-md.cc
 

@@ -38,15 +38,40 @@
 #define H5MD_HH
 
 #include "hdf_file.hh"
+#include "olconfiguration.hh"
 
 namespace glsim {
 
+/** \class H5MD
+    \ingroup Offlatticeconf
+
+This is a helper class to write `OLconfiguration`screate trajectory
+files in H5MD format.  So far it is rather primitive, writing only
+positions vs time and with a fixed box.
+*/
 class H5MD : public H5file {
 public:
-  H5MD(const char *fname,const char *author=0,const char *author_email=0);
+  H5MD() :
+    position_step_t(1),
+    position_time_t(1),
+    position_value_t(1),
+    last_record(-1)
+  {}
+  void create(const char *fname,int Nparticles,const char *author,
+	      const char *author_email=0);
+  void set_box(double b[]);
+  void append_positions(const OLconfiguration &c);
 
 private:
-  H5group h5md,author,creator,particles;
+  H5group h5md,particles;
+  H5group author,creator;
+  H5group all,box,position;
+
+  H5set                   position_step,position_time,position_value;
+  H5simple_type<long,1>   position_step_t;
+  H5simple_type<double,1> position_time_t,position_value_t;
+
+  hsize_t                 last_record;
 } ;
 
 } /* namespace */
