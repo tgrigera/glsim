@@ -1,6 +1,6 @@
 
-				glsim
-				=====
+				*glsim*
+
 
 The glsim project aims to provide a C++ class library to build
 numerical simulation software.  The basic library consists of classes
@@ -17,57 +17,44 @@ simulation programs, by freeing them of the need to write code for the
 housekeeping part of the simulation.
 
 
-INSTALLATION
-------------
+* Installation
 
 See the file INSTALL for detailed instructions. Basically, after
 unpacking you must run
 
-./configure.sh
-make
-sudo make install
-
-As of version 0.3alpha, you do not need noweb to build the
-library. Note however that the official sources are the .nw files, the
-.cc and other sources are only distributed for convenience.  If you
-contact the maintainers with comments/questions/patches about the
-source, you must refer to the .nw files.
+: ./configure.sh
+: make
+: sudo make install
 
 
-DOCUMENTATION
--------------
-
-glsim is written under the literate progamming paradigm.  The
-documentation and source code go together.  If you have LaTeX/BiBTex
-installed in your system, then
-
-make doc
-
-will generate the documentation (a LaTeX .dvi file with the commented
-source and general documentation) in doc/glsim.dvi.  If you decide to
-make a hardcopy, be advised that it is a *long* document.
+* Documentation
 
 
-OBTAINING GLSIM
----------------
+glsim documentation is transitioning from a literate progamming
+paradigm using Noweb to in-code documentation with Doxygen.  Doing
 
-glsim is hosted by SourceForge, and can be downloaded at
+: make doc
 
-https://sourceforge.net/projects/glsim/
+will generate the LaTeX and HTML documentation (still not complete).
+It is not currently being installed, you can find it in the doc
+directory. 
 
 
-AUTHOR
-------
+* Obtaining GLSIM
+
+glsim is hosted by GitHub
+
+
+* Author
 
 glsim is written and maintained by Tomas S. Grigera at the University
 of La Plata. He can be contacted by e-mail at
-<tgrigera@inifta.unlp.edu.ar>.
+~tgrigera@iflysib.unlp.edu.ar~.
 
 
-COPYRIGHT STATEMENTS AND LICENSING TERMS
-----------------------------------------
+* COPYRIGHT STATEMENTS AND LICENSING TERMS
 
-glsim is copyright (C) 2009, 2010 by Tomas S. Grigera.
+glsim is copyright (C) 2009--2015 by Tomas S. Grigera.
 
 glsim is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License (GPL) as published by the
