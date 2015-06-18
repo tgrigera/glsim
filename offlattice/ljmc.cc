@@ -40,6 +40,7 @@
 */
 
 #include "olconfiguration.hh"
+#include "trajectory.hh"
 #include "lj.hh"
 #include "mc.hh"
 
@@ -49,6 +50,8 @@ void wmain(int argc, char *argv[])
   glsim::OLconfiguration conf;
   glsim::RepulsiveLennardJones LJ(env.scope());
   glsim::SimulationCL CL("GS_ljmd","(C) 2015 Tomas S. Grigera",env.scope());
+  glsim::Trajectory traj(env,conf,glsim::OLconfig_file::options().r_frame());
+
   CL.parse_command_line(argc,argv);
   glsim::prepare(CL,env,conf);
 
@@ -56,6 +59,7 @@ void wmain(int argc, char *argv[])
   glsim::Interactions_isotropic_pairwise_naive<glsim::RepulsiveLennardJones>
     inter(LJ,conf);
   glsim::MC sim(env,conf,&inter);
+  traj.observe_first();  // This is mandatory!
   sim.run();
   env.save();
   conf.save(env.configuration_file_fin);

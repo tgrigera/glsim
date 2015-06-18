@@ -119,7 +119,9 @@ void wmain(int argc,char *argv[])
 	      options.author.c_str(),options.email.c_str());
   h5md.set_box(conf.box_length);
 
-  for (int n=0; n<cfile.size(); ++n) {
+  h5md.append_positions(conf); // So that positions are saved if it is
+			       // a simple configuration file (i.e. 0 records)
+  for (int n=1; n<cfile.size(); ++n) {
     cfile.read_record(n);
     h5md.append_positions(conf);
   }
