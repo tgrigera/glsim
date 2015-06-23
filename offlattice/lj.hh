@@ -181,7 +181,7 @@ init(OLconfiguration &c)
 	     << "  epsilon = " << env.epsilon
 	     << "  sigma   = " << env.sigma
 	     << "  mass    = " << env.mass
-	     << "\n [applying cut-off at sigma^(1/6)]\n";
+	     << "\n[applying cut-off at sigma*2^(1/6)]\n";
 
   // check configuration here
 

@@ -43,12 +43,42 @@
 
 namespace glsim {
 
+/** \class NearestNeighbours
+    \ingroup OFFlatticeint
+
+    ABC for nearest neighbours interface
+*/
 class NearestNeighbours {
 public:
   struct Pair {int first,second; Pair(int i,int j) : first(i),second(j) {} } ;
 
-  NearestNeighbours() {}
-  void reset(OLconfiguration&,double rsq);
+  NearestNeighbours(double rc_) : rc(rc_) {}
+  virtual ~NearestNeighbours() {}
+  virtual void rebuild(OLconfiguration&,double rc=-1)=0;  ///< Build lists from scratch for given conf
+  virtual void rebuild(OLconfiguration&,int n)=0; ///< Build list from scratch for n neighbour case, does not build pair list since it has no meaning in this case
+  virtual void update(OLconfiguration&,double)=0; ///< Inform of change in configuration, will try to update lists assuming particles have not moved much, may rebuild everything from scratch
+
+  virtual std::vector<Pair>::iterator pair_begin()=0;
+  virtual std::vector<Pair>::iterator pair_end()=0;
+  virtual std::vector<int>::iterator neighbours_begin(int i)=0;
+  virtual std::vector<int>::iterator neighbours_end(int i)=0;
+
+protected:
+  double rc;
+} ;
+
+
+/** \class NeighbourList_naive
+    \ingroup OFFlatticeint
+
+    Naive implementation of Verlet's neighbour/pair list
+*/
+class NeighbourList_naive : public NearestNeighbours {
+public:
+  NeighbourList_naive(double rc,double delta_r=-1);
+  void rebuild(OLconfiguration&,double rc=-1);
+  void rebuild(OLconfiguration&,int n);
+  void update(OLconfiguration&,double maxdisp);
 
   std::vector<Pair>::iterator pair_begin() {return pairs.begin();}
   std::vector<Pair>::iterator pair_end() {return pairs.end();}
@@ -58,6 +88,11 @@ public:
 private:
   std::vector<Pair> pairs;
   std::vector<std::vector<int>>  neighbours;
+
+  bool   topological;
+  int    Nnearest;
+  double rdsq,delta_r;
+  double accum_maxdisp;
 } ;
 
 

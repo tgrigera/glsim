@@ -85,15 +85,15 @@ public:
   // virtual double delta_energy_particle_swap(olconfig&,int a,int b)
   //= 0;
 
-  virtual void   fold_coordinates(OLconfiguration&,double amove=-1.);
+  virtual void   fold_coordinates(OLconfiguration&,double maxdisp=-1.);
   virtual ~Interactions() {}
 } ;
   
-/// After moving particles, call this.  amove is a measure of how much
-/// particles have moved in this step.  Interactions keeps track of
-/// these movements and reinits structures as needed.  If -1 means
-/// reset now.
-inline void Interactions::fold_coordinates(OLconfiguration& conf,double amove)
+/// After moving particles, call this.  maxdisp is a measure of how
+/// much particles have moved in this step (mostly an upper bound on
+/// displacemets).  Interactions keeps track of these movements and
+/// reinits structures as needed.  If -1 means reset now.
+inline void Interactions::fold_coordinates(OLconfiguration& conf,double maxdisp)
 {
   conf.fold_coordinates();
 }
@@ -443,7 +443,7 @@ public:
   double acceleration_and_potential_energy(OLconfiguration&);
   double delta_energy_particle_shift(OLconfiguration &conf,int n,double *rnew);
   void   tabulate_potential(std::ostream&,short t1,short t2);
-  void   fold_coordinates(OLconfiguration& conf,double amove);
+  void   fold_coordinates(OLconfiguration& conf,double maxdisp=-1);
 
 private:
   potential& PP;
@@ -453,10 +453,13 @@ private:
 } ;
 
 template <typename potential> inline void Interactions_isotropic_pairwise<potential>::
-fold_coordinates(OLconfiguration& conf,double amove)
+fold_coordinates(OLconfiguration& conf,double maxdisp)
 {
   conf.fold_coordinates();
-  NN->reset(conf,PP.cutoffsq());
+  if (maxdisp<0)
+    NN->rebuild(conf,PP.cutoff());
+  else
+    NN->update(conf,maxdisp);
 }
 
 template <typename potential> inline
@@ -469,10 +472,10 @@ Interactions_isotropic_pairwise(potential &p,OLconfiguration& c,NearestNeighbour
     NN=n;
     own_NN=false;
   } else {
-    NN=new NearestNeighbours;
+    NN=new NeighbourList_naive(PP.cutoff());
     own_NN=true;
   }
-  NN->reset(c,PP.cutoffsq());
+  NN->rebuild(c,PP.cutoff());
 }
 
 template <typename potential> inline

@@ -123,7 +123,7 @@ void MC::step()
     }
     
   }
-  inter->fold_coordinates(conf);
+  inter->fold_coordinates(conf,env.DR);
 
   conf.step=env.steps_completed;
   conf.time=conf.step;

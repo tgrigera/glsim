@@ -1,5 +1,5 @@
 /*
- * nnkdtree.cc 
+ * nnneighbours.cc -- structures to find nearest neighbours
  *
  * This file is part of glsim, a numerical simulation class library and
  * helper programs.
@@ -38,19 +38,64 @@
 
 namespace glsim {
 
-void NearestNeighbours::reset(OLconfiguration& conf,double rcsq)
+/*****************************************************************************
+ *
+ * NeighbourList_naive
+ *
+ */
+
+
+NeighbourList_naive::NeighbourList_naive(double rc_,double delta_r_) :
+  NearestNeighbours(rc_),
+  topological(false), Nnearest(0),
+  delta_r(delta_r_),
+  accum_maxdisp(0.)
 {
+  if (delta_r<0)
+    delta_r=rc*0.3;
+  rdsq=rc+delta_r;
+  rdsq*=rdsq;
+}
+
+void NeighbourList_naive::rebuild(OLconfiguration& conf,double rc_)
+{
+  if (rc_>0) {
+    rc=rc_;
+    rdsq=rc+delta_r;
+    rdsq*=rdsq;
+  }
+  topological=false;
+  
   neighbours.clear();
   neighbours.resize(conf.N);
   pairs.clear();
   for (size_t i=0; i<conf.N-1; ++i)
     for (size_t j=i+1; j<conf.N; ++j)
-      if (conf.distancesq(i,j) < 1.2*rcsq) {
+      if (conf.distancesq(i,j) <= rdsq) {
 	pairs.push_back(Pair(i,j));
 	neighbours[i].push_back(j);
 	neighbours[j].push_back(i);
       }
+  accum_maxdisp=0.;
 }
 
+void NeighbourList_naive::rebuild(OLconfiguration& conf,int n)
+{
+  Nnearest=n;
+  topological=true;
+  
+  throw glsim::Unimplemented("Topological neighbours");
+}
+
+void NeighbourList_naive::update(OLconfiguration& conf,double maxdisp)
+{
+  if (topological)
+    rebuild(conf,Nnearest);
+  else {
+    accum_maxdisp+=maxdisp;
+    if (accum_maxdisp>=delta_r/2.)
+      rebuild(conf);
+  }
+}
 
 } /* namespace */

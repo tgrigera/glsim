@@ -123,21 +123,31 @@ VVerletMD::VVerletMD(MDEnvironment& e,OLconfiguration &c,Interactions *i) :
 
 void VVerletMD::step()
 {
+  double maxdisp=0;
+  double drx,dry,drz;
+
   for (int i=0; i<conf.N; ++i) {
-    conf.r[i][0] += Dt*conf.v[i][0] + Dtsq2*conf.a[i][0];
-    conf.r[i][1] += Dt*conf.v[i][1] + Dtsq2*conf.a[i][1];
-    conf.r[i][2] += Dt*conf.v[i][2] + Dtsq2*conf.a[i][2];
+    conf.r[i][0] += ( drx = Dt*conf.v[i][0] + Dtsq2*conf.a[i][0] );
+    conf.r[i][1] += ( dry = Dt*conf.v[i][1] + Dtsq2*conf.a[i][1] );
+    conf.r[i][2] += ( drz = Dt*conf.v[i][2] + Dtsq2*conf.a[i][2] );
     conf.v[i][0] += Dt2*conf.a[i][0];
     conf.v[i][1] += Dt2*conf.a[i][1];
     conf.v[i][2] += Dt2*conf.a[i][2];
+
+    double drsq=drx*drx + dry*dry + drz*drz;
+    if (drsq>maxdisp) maxdisp=drsq;
   }
+  maxdisp=sqrt(maxdisp);  // This is the modulus of the largest
+			  // displacement, to be used by
+			  // fold_coordinates to rebuild neighbour
+			  // list when needed
   env.Epot=inter->acceleration_and_potential_energy(conf);
   for (int i=0; i<conf.N; ++i) {
     conf.v[i][0] += Dt2*conf.a[i][0];
     conf.v[i][1] += Dt2*conf.a[i][1];
     conf.v[i][2] += Dt2*conf.a[i][2];
   }
-  inter->fold_coordinates(conf);
+  inter->fold_coordinates(conf,maxdisp);
 
   env.time_completed+=Dt;
   env.time_in_run+=Dt;
