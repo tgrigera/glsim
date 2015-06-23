@@ -57,7 +57,7 @@ public:
   StochasticParameters(const char* scope=Parameters::default_scope);
 } ;
 
-StochasticParameters::StochasticParameters(const char* scope) :
+inline StochasticParameters::StochasticParameters(const char* scope) :
   Parameters(scope)
 {
   parameter_file_options().add_options()

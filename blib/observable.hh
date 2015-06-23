@@ -190,7 +190,7 @@ private:
   virtual void vserial(oarchive_t &ar) {ar << *this;}
 } ;
 
-KMCObservable::KMCObservable(SimEnvironment& env_) :
+inline KMCObservable::KMCObservable(SimEnvironment& env_) :
   Observable(env_),
   obs_time(0.),
   env(env_)
