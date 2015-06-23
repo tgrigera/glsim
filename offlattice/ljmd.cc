@@ -58,9 +58,8 @@ void wmain(int argc, char *argv[])
   CL.parse_command_line(argc,argv);
   glsim::prepare(CL,env,conf);
 
-  glsim::Interactions_isotropic_pairwise_naive<glsim::RepulsiveLennardJones>
+  glsim::Interactions_isotropic_pairwise<glsim::RepulsiveLennardJones>
     inter(LJ,conf);
-  // inter.tabulate_potential(std::cout,0,0); exit(1);
   glsim::VVerletMD sim(env,conf,&inter);
   obs.observe_first();   // This is optional
   traj.observe_first();  // This is mandatory!

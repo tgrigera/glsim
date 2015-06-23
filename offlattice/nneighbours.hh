@@ -1,5 +1,5 @@
 /*
- * ljmc.cc -- Simple Metropolis Mote Carlo of Lennard-Jones particles
+ * nneighbours.hh -- structures to find nearest neighbours
  *
  * This file is part of glsim, a numerical simulation class library and
  * helper programs.
@@ -34,39 +34,33 @@
  *
  */
 
-/** \file ljmc.cc
-    \ingroup Offlattice
-    \brief Metropolis Monte Carlo of repulsive Lennard-Jones particles
-*/
+#include <vector>
 
 #include "olconfiguration.hh"
-#include "lj.hh"
-#include "mc.hh"
-#include "mcobservable.hh"
-#include "trajectory.hh"
 
-void wmain(int argc, char *argv[])
-{
-  glsim::MCEnvironment  env;
-  glsim::OLconfiguration conf;
-  glsim::RepulsiveLennardJones LJ(env.scope());
-  glsim::MCObservable obs(env,conf);
-  glsim::SimulationCL CL("GS_ljmd","(C) 2015 Tomas S. Grigera",env.scope());
-  glsim::Trajectory traj(env,conf,glsim::OLconfig_file::options().r_frame());
+#ifndef NNEIGHBOURS_HH
+#define NNEIGHBOURS_HH
 
-  CL.parse_command_line(argc,argv);
-  glsim::prepare(CL,env,conf);
+namespace glsim {
 
-  glsim::Interactions_isotropic_pairwise<glsim::RepulsiveLennardJones>
-    inter(LJ,conf);
-  glsim::MC sim(env,conf,&inter);
-  traj.observe_first();  // This is mandatory!
-  sim.run();
-  env.save();
-  conf.save(env.configuration_file_fin);
-}
+class NearestNeighbours {
+public:
+  struct Pair {int first,second; Pair(int i,int j) : first(i),second(j) {} } ;
 
-int main(int argc, char *argv[])
-{
-  return glsim::StandardEC(argc,argv,wmain);
-}
+  NearestNeighbours() {}
+  void reset(OLconfiguration&,double rsq);
+
+  std::vector<Pair>::iterator pair_begin() {return pairs.begin();}
+  std::vector<Pair>::iterator pair_end() {return pairs.end();}
+  std::vector<int>::iterator neighbours_begin(int i) {return neighbours[i].begin();}
+  std::vector<int>::iterator neighbours_end(int i) {return neighbours[i].end();}
+
+private:
+  std::vector<Pair> pairs;
+  std::vector<std::vector<int>>  neighbours;
+} ;
+
+
+} /* namespace */
+
+#endif /* NNEIGHBOURS_HH */

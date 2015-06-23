@@ -102,6 +102,7 @@ MC::MC(MCEnvironment &e,OLconfiguration& c,Interactions* i) :
   mbeta=-1./env.temperature;
   env.total_number=conf.N;
   env.energy=0;
+  update_observables();
 }
 
 void MC::step()

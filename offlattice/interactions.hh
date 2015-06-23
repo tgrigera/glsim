@@ -39,6 +39,8 @@
 
 #include "olconfiguration.hh"
 
+#include "nneighbours.hh"
+
 namespace glsim {
   
 /*****************************************************************************
@@ -66,7 +68,7 @@ To write a potential object
 
  - Potential need not be completely initialized; interactions will
    call a potential init that may also do checks on configuration.
-   Then the potential constructor can create its own environment.
+   This way the potential constructor can create its own environment.
 
 */
 class Interactions {
@@ -80,18 +82,27 @@ public:
   virtual double acceleration_and_potential_energy(OLconfiguration&) = 0;
   virtual double kinetic_energy_and_momentum(OLconfiguration&,double P[]);
   virtual double delta_energy_particle_shift(OLconfiguration&,int,double*) = 0;
-  // virtual double delta_energy_particle_shift(olconfig&,int,double *rnew) = 0;
-  // virtual double pair_energy(olconfig& conf,int a,int b) = 0;
-  // virtual double delta_energy_particle_swap(olconfig&,int a,int b) = 0;
-  virtual void   fold_coordinates(OLconfiguration&);
+  // virtual double delta_energy_particle_swap(olconfig&,int a,int b)
+  //= 0;
+
+  virtual void   fold_coordinates(OLconfiguration&,double amove=-1.);
   virtual ~Interactions() {}
 } ;
   
-inline void Interactions::fold_coordinates(OLconfiguration& conf)
+/// After moving particles, call this.  amove is a measure of how much
+/// particles have moved in this step.  Interactions keeps track of
+/// these movements and reinits structures as needed.  If -1 means
+/// reset now.
+inline void Interactions::fold_coordinates(OLconfiguration& conf,double amove)
 {
   conf.fold_coordinates();
 }
 
+/** \class FreeParticles
+    \ingroup OfflatticeINT
+
+    Trivial implementation of interactions for free particles.
+*/
 class FreeParticles : public Interactions {
   const char* name() const {return "Free particles";}
   double mass(short t) const {return 1.;}
@@ -406,6 +417,204 @@ void Interactions_isotropic_pairwise_naive<potential>::tabulate_potential(std::o
     double r=r0+delta*i;
     o << r << "  " << PP.pair_potential(r*r,t1,t2) << '\n';
   }
+}
+
+/*****************************************************************************
+ *
+ * class Interactions_isotropic_pairwise
+ *
+ */
+
+/** \class  Interactions_isotropic_pairwise_nn
+
+    This uses some kind of NN finder.
+
+*/
+template <typename potential>
+class Interactions_isotropic_pairwise : public Interactions {
+public:
+  Interactions_isotropic_pairwise(potential &P,OLconfiguration&,NearestNeighbours *NN=0);
+  ~Interactions_isotropic_pairwise();
+  const  char *name() const;
+  double mass(short type) const {return PP.mass(type);}
+  bool   conserve_P() const {return !PP.has_efield();}
+  double potential_energy(OLconfiguration&);
+  double force_and_potential_energy(OLconfiguration&);
+  double acceleration_and_potential_energy(OLconfiguration&);
+  double delta_energy_particle_shift(OLconfiguration &conf,int n,double *rnew);
+  void   tabulate_potential(std::ostream&,short t1,short t2);
+  void   fold_coordinates(OLconfiguration& conf,double amove);
+
+private:
+  potential& PP;
+
+  bool               own_NN;
+  NearestNeighbours* NN;
+} ;
+
+template <typename potential> inline void Interactions_isotropic_pairwise<potential>::
+fold_coordinates(OLconfiguration& conf,double amove)
+{
+  conf.fold_coordinates();
+  NN->reset(conf,PP.cutoffsq());
+}
+
+template <typename potential> inline
+Interactions_isotropic_pairwise<potential>::
+Interactions_isotropic_pairwise(potential &p,OLconfiguration& c,NearestNeighbours *n) :
+  Interactions(), PP(p)
+{
+  PP.init(c);
+  if (n) {
+    NN=n;
+    own_NN=false;
+  } else {
+    NN=new NearestNeighbours;
+    own_NN=true;
+  }
+  NN->reset(c,PP.cutoffsq());
+}
+
+template <typename potential> inline
+Interactions_isotropic_pairwise<potential>::
+~Interactions_isotropic_pairwise()
+{
+  if (own_NN) delete NN;
+}
+
+template <typename potential> inline
+const char *Interactions_isotropic_pairwise<potential>::name() const
+{
+  return PP.name();
+}
+
+template <typename potential>
+double Interactions_isotropic_pairwise<potential>::
+potential_energy(OLconfiguration& conf)
+{
+  int    n,m;
+  double E;
+
+  E=0;
+  if (PP.has_efield()) {
+    for (n=0; n<conf.N-1; n++)
+      E+=PP.external_field(conf.r[n],conf.type[n]);
+  }
+
+  for (auto p = NN->pair_begin(); p!=NN->pair_end(); ++p) {
+      int    typen=conf.type[p->first];
+      int    typem=conf.type[p->second];
+      double dsq=conf.distancesq(conf.r[p->first],conf.r[p->second]);
+      if (!PP.within_cutoff(dsq,typen,typem)) continue;
+      E+=PP.pair_potential_r(dsq,typen,typem);
+  }
+  
+  return E;
+}
+
+/**
+   NOTE that we expect v'(r)/r rather than the derivative
+
+*/
+template <typename potential>
+double Interactions_isotropic_pairwise<potential>::
+force_and_potential_energy(OLconfiguration &conf)
+{
+  int    n,m;
+  double vpr,Et,E=0,force[3];
+  memset(conf.a,0,3*conf.N*sizeof(double));
+
+  if (PP.has_efield()) {
+    for (int n=0; n<conf.N-1; n++) { 
+      E+=PP.external_field(conf.r[n],conf.type[n],force);
+      conf.a[n][0]+=force[0];
+      conf.a[n][1]+=force[1];
+      conf.a[n][2]+=force[2];
+    }
+  }
+
+  for (auto p = NN->pair_begin(); p!=NN->pair_end(); ++p) {
+    int typen=conf.type[p->first];
+    int typem=conf.type[p->second];
+    double rxmn=conf.ddiff(conf.r[p->first][0],conf.r[p->second][0],conf.box_length[0]);
+    double rymn=conf.ddiff(conf.r[p->first][1],conf.r[p->second][1],conf.box_length[1]);
+    double rzmn=conf.ddiff(conf.r[p->first][2],conf.r[p->second][2],conf.box_length[2]);
+    double dsq=rxmn*rxmn+rymn*rymn+rzmn*rzmn;
+    if (!PP.within_cutoff(dsq,typen,typem)) continue;
+    E+=PP.pair_potential_r(dsq,typen,typem,vpr);
+    conf.a[p->first][0]-=vpr*rxmn;
+    conf.a[p->first][1]-=vpr*rymn;
+    conf.a[p->first][2]-=vpr*rzmn;
+    conf.a[p->second][0]+=vpr*rxmn;
+    conf.a[p->second][1]+=vpr*rymn;
+    conf.a[p->second][2]+=vpr*rzmn;
+  }
+
+  return E;
+}
+
+template <typename potential>
+double Interactions_isotropic_pairwise<potential>::
+acceleration_and_potential_energy(OLconfiguration &conf)
+{
+  int    n,m;
+  double vpr,Et,E=0,force[3];
+  memset(conf.a,0,3*conf.N*sizeof(double));
+
+  if (PP.has_efield()) {
+    for (int n=0; n<conf.N-1; n++) { 
+      E+=PP.external_field(conf.r[n],conf.type[n],force);
+      conf.a[n][0]+=force[0]/PP.mass(conf.type[n]);
+      conf.a[n][1]+=force[1]/PP.mass(conf.type[n]);
+      conf.a[n][2]+=force[2]/PP.mass(conf.type[n]);
+    }
+  }
+
+  for (auto p = NN->pair_begin(); p!=NN->pair_end(); ++p) {
+    int typen=conf.type[p->first];
+    int typem=conf.type[p->second];
+    double rxmn=conf.ddiff(conf.r[p->first][0],conf.r[p->second][0],conf.box_length[0]);
+    double rymn=conf.ddiff(conf.r[p->first][1],conf.r[p->second][1],conf.box_length[1]);
+    double rzmn=conf.ddiff(conf.r[p->first][2],conf.r[p->second][2],conf.box_length[2]);
+    double dsq=rxmn*rxmn+rymn*rymn+rzmn*rzmn;
+    if (!PP.within_cutoff(dsq,typen,typem)) continue;
+    E+=PP.pair_potential_r(dsq,typen,typem,vpr);
+    double vprm=vpr/PP.mass(typem);
+    double vprn=vpr/PP.mass(typen);
+    conf.a[p->first][0]-=vpr*rxmn;
+    conf.a[p->first][1]-=vpr*rymn;
+    conf.a[p->first][2]-=vpr*rzmn;
+    conf.a[p->second][0]+=vpr*rxmn;
+    conf.a[p->second][1]+=vpr*rymn;
+    conf.a[p->second][2]+=vpr*rzmn;
+  }
+
+  return E;
+}
+
+template <typename potential>
+double Interactions_isotropic_pairwise<potential>::
+delta_energy_particle_shift(OLconfiguration &conf,int n,double *rnew)
+{
+  double PE,PEshift,rn[3];
+  int typen=conf.type[n];
+  memcpy(rn,conf.r[n],3*sizeof(double));
+
+  double DE=0;
+  if (PP.has_efield()) {
+    PE=PP.external_field(rn,typen);
+    PEshift=PP.external_field(rnew,typen);
+    DE=PEshift-PE;
+  }
+  for (auto m=NN->neighbours_begin(n); m!=NN->neighbours_end(n); ++m) {
+    int    typem=conf.type[*m];
+    double dsq=conf.distancesq(rn,conf.r[*m]);
+    PE=PP.pair_potential(dsq,typen,typem);
+    dsq=conf.distancesq(rnew,conf.r[*m]);
+    PEshift=PP.pair_potential(dsq,typen,typem);
+    DE+=PEshift-PE;
+  }
+  return DE;
 }
 
 

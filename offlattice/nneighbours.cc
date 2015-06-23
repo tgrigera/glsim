@@ -1,5 +1,5 @@
 /*
- * ljmc.cc -- Simple Metropolis Mote Carlo of Lennard-Jones particles
+ * nnkdtree.cc 
  *
  * This file is part of glsim, a numerical simulation class library and
  * helper programs.
@@ -34,39 +34,23 @@
  *
  */
 
-/** \file ljmc.cc
-    \ingroup Offlattice
-    \brief Metropolis Monte Carlo of repulsive Lennard-Jones particles
-*/
+#include "nneighbours.hh"
 
-#include "olconfiguration.hh"
-#include "lj.hh"
-#include "mc.hh"
-#include "mcobservable.hh"
-#include "trajectory.hh"
+namespace glsim {
 
-void wmain(int argc, char *argv[])
+void NearestNeighbours::reset(OLconfiguration& conf,double rcsq)
 {
-  glsim::MCEnvironment  env;
-  glsim::OLconfiguration conf;
-  glsim::RepulsiveLennardJones LJ(env.scope());
-  glsim::MCObservable obs(env,conf);
-  glsim::SimulationCL CL("GS_ljmd","(C) 2015 Tomas S. Grigera",env.scope());
-  glsim::Trajectory traj(env,conf,glsim::OLconfig_file::options().r_frame());
-
-  CL.parse_command_line(argc,argv);
-  glsim::prepare(CL,env,conf);
-
-  glsim::Interactions_isotropic_pairwise<glsim::RepulsiveLennardJones>
-    inter(LJ,conf);
-  glsim::MC sim(env,conf,&inter);
-  traj.observe_first();  // This is mandatory!
-  sim.run();
-  env.save();
-  conf.save(env.configuration_file_fin);
+  neighbours.clear();
+  neighbours.resize(conf.N);
+  pairs.clear();
+  for (size_t i=0; i<conf.N-1; ++i)
+    for (size_t j=i+1; j<conf.N; ++j)
+      if (conf.distancesq(i,j) < 1.2*rcsq) {
+	pairs.push_back(Pair(i,j));
+	neighbours[i].push_back(j);
+	neighbours[j].push_back(i);
+      }
 }
 
-int main(int argc, char *argv[])
-{
-  return glsim::StandardEC(argc,argv,wmain);
-}
+
+} /* namespace */

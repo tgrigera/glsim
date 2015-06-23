@@ -141,7 +141,8 @@ public:
   {return dsq<=rcsq;}
   double mass(short t) const {return env.mass;}
   bool   has_efield() const {return false;}
-  double cutoff() {return rc;}
+  double cutoff() const {return rc;}
+  double cutoffsq() const {return rcsq;}
 
   double external_field(double *d,short t) {return 0;}
   double external_field(double *d,short t,double *f) { f[0]=f[1]=f[2]=0.; return 0.;}
