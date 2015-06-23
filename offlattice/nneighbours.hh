@@ -44,9 +44,14 @@
 namespace glsim {
 
 /** \class NearestNeighbours
-    \ingroup OFFlatticeint
+    \ingroup OfflatticeINT
 
-    ABC for nearest neighbours interface
+    NearestNeighbours is an abstract base class that serves as front
+end to different implementations of nearest-neighbour search.  It
+supports rebuilding on demand or updates (which may imply complete
+rebuilding) controlled by the maximum modulus of particle
+displacements.
+
 */
 class NearestNeighbours {
 public:
@@ -69,9 +74,14 @@ protected:
 
 
 /** \class NeighbourList_naive
-    \ingroup OFFlatticeint
+    \ingroup OfflatticeINT
 
-    Naive implementation of Verlet's neighbour/pair list
+    This provides a naive implementation of a neighbour list.
+    Although the list is built by iterating through all possible
+    pairs, if the simulation step provides information on the maximum
+    displacement, this brings noticeable speed improvements at more
+    than 200 particles, at least for potentials with relatively short
+    cut-offs (such as the repulsive Lennard-Jones).
 */
 class NeighbourList_naive : public NearestNeighbours {
 public:

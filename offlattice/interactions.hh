@@ -425,9 +425,13 @@ void Interactions_isotropic_pairwise_naive<potential>::tabulate_potential(std::o
  *
  */
 
-/** \class  Interactions_isotropic_pairwise_nn
+/** \class  Interactions_isotropic_pairwise
+    \ingroup OfflatticeINT
 
-    This uses some kind of NN finder.
+    This class provides functions to compute energy, acceleration and
+force given an isotropic pair potential that must be indicated as a
+template parameter.  It uses an object of type NearestNeighbours to
+find the particles within the cut-off distance.  
 
 */
 template <typename potential>
@@ -462,6 +466,10 @@ fold_coordinates(OLconfiguration& conf,double maxdisp)
     NN->update(conf,maxdisp);
 }
 
+/**
+The last argument is a pointer to a NearestNeighbour objetc.  If null
+(default), a NeighbourList_naive object will be created and used.
+*/
 template <typename potential> inline
 Interactions_isotropic_pairwise<potential>::
 Interactions_isotropic_pairwise(potential &p,OLconfiguration& c,NearestNeighbours *n) :

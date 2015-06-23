@@ -81,6 +81,11 @@ public:
 /** \class MC
     \ingroup OfflatticeSIM
     \brief Metropolis Monte Carlo
+
+    This class implements a Metropolis Monte Carlo simulation with
+local particle displacements, suitable for systems of nonbonded
+particles.
+
 */
 class MC : public Simulation {
 public:
