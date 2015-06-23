@@ -93,7 +93,6 @@ inline void MCEnvironment::serialize(Archive &ar,const unsigned int version)
 
 MC::MC(MCEnvironment &e,OLconfiguration& c,Interactions* i) :
   Simulation(e,c),
-  energy(0),
   dran(-e.DR,e.DR),
   pran(0,1),
   env(e),
@@ -101,6 +100,8 @@ MC::MC(MCEnvironment &e,OLconfiguration& c,Interactions* i) :
   inter(i)
 {
   mbeta=-1./env.temperature;
+  env.total_number=conf.N;
+  env.energy=0;
 }
 
 void MC::step()
@@ -116,7 +117,7 @@ void MC::step()
     
     if (DE<0 || exp(mbeta*DE)>pran() ) {       /* Metropolis */
       env.accepted_moves++;
-      energy+=DE;
+      env.energy+=DE;
       memcpy(conf.r[n],rn,sizeof(double[3]));
     }
     
@@ -130,7 +131,7 @@ void MC::step()
 
 void MC::update_observables()
 {
-  energy=inter->potential_energy(conf);
+  env.energy=inter->potential_energy(conf);
 }
 
 void MC::log_start_sim()
@@ -142,7 +143,7 @@ void MC::log_start_sim()
 
   update_observables();
   sprintf(buff,"Initial %10.3e %10.3e\n",
-	  env.steps_completed,energy/conf.N,
+	  env.steps_completed,env.energy/conf.N,
 	  env.accepted_moves/(((double) env.steps_in_run)*conf.N));
   logs(info) << buff;
 }
@@ -152,7 +153,7 @@ void MC::log()
   update_observables();
   static char buff[300];
   sprintf(buff,"%7ld %10.3e %10.3e\n",
-	  env.steps_completed,energy/conf.N,
+	  env.steps_completed,env.energy/conf.N,
 	  env.accepted_moves/(((double) env.steps_in_run)*conf.N));
   logs(info) << buff;
 }

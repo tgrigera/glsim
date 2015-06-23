@@ -57,6 +57,8 @@ public:
   double                temperature;
   double                DR;
   long                  accepted_moves;
+  double                energy;
+  double                total_number;
   StochasticEnvironment SE;
 
 protected:
@@ -90,7 +92,6 @@ public:
   void        log_start_sim();
 
   void        update_observables();
-  double      energy;
 
 private:
   double           mbeta;

@@ -1,5 +1,5 @@
 /*
- * ljmd.hh -- Molecular Dynamics of Lennard-Jones particles
+ * mcobservable.hh --  Recording basic quantities along a MC run
  *
  * This file is part of glsim, a numerical simulation class library and
  * helper programs.
@@ -34,42 +34,43 @@
  *
  */
 
-/** \file ljmd.cc
-    \ingroup Offlattice
-    \brief Molecular dynamics of repulsive Lennard-Jones particles
-*/
+#ifndef MCOBSERVABLE_HH
+#define MCOBSERVABLE_HH
+
+#include <cstdio>
 
 #include "olconfiguration.hh"
-#include "mdenvironment.hh"
-#include "mdobservable.hh"
-#include "trajectory.hh"
-#include "lj.hh"
-#include "md.hh"
+#include "observable.hh"
+#include "mc.hh"
 
-void wmain(int argc, char *argv[])
-{
-  glsim::MDEnvironment  env;
-  glsim::OLconfiguration conf;
-  glsim::RepulsiveLennardJones LJ(env.scope());
-  glsim::MDObservable obs(env,conf);
-  glsim::SimulationCL CL("GS_ljmd","(C) 2015 Tomas S. Grigera",env.scope());
-  glsim::Trajectory traj(env,conf,glsim::OLconfig_file::options().r_frame());
-  
-  CL.parse_command_line(argc,argv);
-  glsim::prepare(CL,env,conf);
+namespace glsim {
 
-  glsim::Interactions_isotropic_pairwise_naive<glsim::RepulsiveLennardJones>
-    inter(LJ,conf);
-  // inter.tabulate_potential(std::cout,0,0); exit(1);
-  glsim::VVerletMD sim(env,conf,&inter);
-  obs.observe_first();   // This is optional
-  traj.observe_first();  // This is mandatory!
-  sim.run();
-  env.save();
-  conf.save(env.configuration_file_fin);
-}
+class MCObservable_parameters : public Parameters {
+public:
+  MCObservable_parameters(const char* scope);
+} ;
 
-int main(int argc, char *argv[])
-{
-  return glsim::StandardEC(argc,argv,wmain);
-}
+class MCObservable : public SBObservable {
+public:
+  MCObservable(MCEnvironment&,OLconfiguration&);
+
+  void interval_and_file();
+  void write_header();
+  void observe();
+
+private:
+  MCEnvironment           &env;
+  OLconfiguration         &conf;
+  MCObservable_parameters par;
+} ;
+
+MCObservable::MCObservable(MCEnvironment& e,OLconfiguration &c) :
+  SBObservable(e),
+  env(e),
+  conf(c),
+  par(e.scope())
+{}
+
+} /* namespace */
+
+#endif /* MCOBSERVABLE_HH */

@@ -1,5 +1,5 @@
 /*
- * ljmd.hh -- Molecular Dynamics of Lennard-Jones particles
+ * mcobservable.cc --  Recording basic quantities along a MC run
  *
  * This file is part of glsim, a numerical simulation class library and
  * helper programs.
@@ -34,42 +34,37 @@
  *
  */
 
-/** \file ljmd.cc
-    \ingroup Offlattice
-    \brief Molecular dynamics of repulsive Lennard-Jones particles
-*/
+#include "mcobservable.hh"
 
-#include "olconfiguration.hh"
-#include "mdenvironment.hh"
-#include "mdobservable.hh"
-#include "trajectory.hh"
-#include "lj.hh"
-#include "md.hh"
+namespace glsim {
 
-void wmain(int argc, char *argv[])
+MCObservable_parameters::MCObservable_parameters(const char* scope) :
+  Parameters(scope)
 {
-  glsim::MDEnvironment  env;
-  glsim::OLconfiguration conf;
-  glsim::RepulsiveLennardJones LJ(env.scope());
-  glsim::MDObservable obs(env,conf);
-  glsim::SimulationCL CL("GS_ljmd","(C) 2015 Tomas S. Grigera",env.scope());
-  glsim::Trajectory traj(env,conf,glsim::OLconfig_file::options().r_frame());
-  
-  CL.parse_command_line(argc,argv);
-  glsim::prepare(CL,env,conf);
-
-  glsim::Interactions_isotropic_pairwise_naive<glsim::RepulsiveLennardJones>
-    inter(LJ,conf);
-  // inter.tabulate_potential(std::cout,0,0); exit(1);
-  glsim::VVerletMD sim(env,conf,&inter);
-  obs.observe_first();   // This is optional
-  traj.observe_first();  // This is mandatory!
-  sim.run();
-  env.save();
-  conf.save(env.configuration_file_fin);
+  parameter_file_options().add_options()
+    ("MC.obs_interval",po::value<int>()->default_value(0),
+     "Interval for standard observation, 0=skip")
+    ("MC.obs_file_prefix",po::value<std::string>(),"Observation file prefix")
+    ;
 }
 
-int main(int argc, char *argv[])
+void MCObservable::interval_and_file()
 {
-  return glsim::StandardEC(argc,argv,wmain);
+  obs_interval=par.value("MC.obs_interval").as<int>();
+  obs_file_prefix=par.value("MC.obs_file_prefix").as<std::string>();
 }
+
+void MCObservable::write_header()
+{
+  fprintf(of,"    Step     Energy   Acc.Rate\n");
+}
+
+void MCObservable::observe()
+{
+  int N=env.total_number;
+  fprintf(of,"%8ld %10.3e %10.3e\n",
+	  env.steps_completed,
+	  env.energy/N,(double) env.accepted_moves/(N*env.steps_in_run));
+}
+
+} /* namespace */
