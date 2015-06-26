@@ -109,7 +109,7 @@ class FreeParticles : public Interactions {
   bool   conserve_P() const {return true;}
   double potential_energy(OLconfiguration& c) {return 0;}
   double force_and_potential_energy(OLconfiguration& c) {return 0;}
-  double acceleration_and_energy(OLconfiguration& c) {return 0;}
+  double acceleration_and_potential_energy(OLconfiguration& c) {return 0;}
   double delta_energy_particle_shift(OLconfiguration&,int,double*) {return 0;}
 } ;
 
