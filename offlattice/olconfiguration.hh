@@ -38,7 +38,6 @@
 #define OLCONFIGURATION_HH
 
 #include <math.h>
-#include <map>
 
 #include "configuration.hh"
 #include "exception.hh"

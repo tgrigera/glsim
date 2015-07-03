@@ -37,6 +37,7 @@
 #include <string.h>
 #include <math.h>
 #include <utility>
+#include <unordered_map>
 
 #include "cerrors.h"
 #include "olconfiguration.hh"
@@ -177,7 +178,7 @@ void OLconfiguration::fold_coordinates()
  */
 size_t OLconfiguration::NTypes() const
 {
-  std::map<short,int> types;
+  std::unordered_map<short,int> types;
   for (int i=0; i<N; ++i)
     types[type[i]]++;
   return types.size();
