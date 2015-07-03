@@ -356,6 +356,42 @@ inline double Gaussian_distribution::operator()()
   return mean + gsl_ran_gaussian(generator,sigma);
 }
 
+/*****************************************************************************/
+
+/** \class BivariateGaussian_distribution
+    \ingroup Random
+
+This class uses GSL RNG to return two real numbers distributed 
+according to the bivariate Gassian distribution with zero mean:
+\f$$
+ p(x,y) dx dy = {1 \over 2 \pi \sigma_x \sigma_y \sqrt{1-\rho^2}}
+ \exp (-(x^2/\sigma_x^2 + y^2/\sigma_y^2 - 2 \rho x y/(\sigma_x\sigma_y))/2(1-\rho^2)) dx dy,
+\f$$
+where the correlathio coefficient \f$\rho\f$ should lien between -1 and 1.
+*/
+class BivariateGaussian_distribution : public rdbase_double {
+public:
+  BivariateGaussian_distribution(double sigmax,double sigmay, double rho,
+				 const char* scope=Random_number_generator::default_scope);
+  void operator()(double &x,double &y);
+  double operator()() {throw Invalid_operation("operator() cannot be used on BivariateGaussian");}
+
+private:
+  double sigmax,sigmay,rho;
+    
+} ;
+
+inline BivariateGaussian_distribution::
+BivariateGaussian_distribution(double sx,double sy, double r,const char *scope) :
+    Random_distribution_base(scope),
+    sigmax(sx), sigmay(sy), rho(r)
+{}
+
+inline void BivariateGaussian_distribution::operator()(double &x,double &y)
+{
+  gsl_ran_bivariate_gaussian(generator,sigmax,sigmay,rho,&x,&y);
+}
+
 
 /*****************************************************************************/
 
