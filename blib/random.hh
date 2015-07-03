@@ -330,9 +330,9 @@ inline double Uniform_real::operator()()
 
 This class uses GSL RNG to return a real ([[double]]) distributed
 according to
-\f$$
+\f[
 p(x)\, dx = {1 \over \sqrt{2 \pi \sigma^2}} \exp (-x^2 / 2\sigma^2) \,dx.
-\f$$
+\f]
 */
 class Gaussian_distribution : public rdbase_double {
 public:
@@ -363,10 +363,10 @@ inline double Gaussian_distribution::operator()()
 
 This class uses GSL RNG to return two real numbers distributed 
 according to the bivariate Gassian distribution with zero mean:
-\f$$
+\f[
  p(x,y) dx dy = {1 \over 2 \pi \sigma_x \sigma_y \sqrt{1-\rho^2}}
  \exp (-(x^2/\sigma_x^2 + y^2/\sigma_y^2 - 2 \rho x y/(\sigma_x\sigma_y))/2(1-\rho^2)) dx dy,
-\f$$
+\f]
 where the correlathio coefficient \f$\rho\f$ should lien between -1 and 1.
 */
 class BivariateGaussian_distribution : public rdbase_double {
@@ -399,9 +399,9 @@ inline void BivariateGaussian_distribution::operator()(double &x,double &y)
     \ingroup Random
 
 The exponential distribution is defined by
-$$
+\f[
           p(x)\, dx = {1 \over \mu} \exp(-x/\mu)\, dx.
-$$
+\f]
 */
 class Exponential_distribution : public Random_distribution_base<double> {
 public:
@@ -430,10 +430,10 @@ inline double Exponential_distribution::operator()()
     \ingroup Random
 
 The log-normal distribution is
-$$
+\f[
 p(x)\, dx = {1 \over x \sqrt{2 \pi \sigma^2} } 
           \exp\left[-\frac{(\ln x - \zeta)^2}{2 \sigma^2}\right] \, dx.
-$$
+\f]
 */
 class Lognormal_distribution : public rdbase_double {
 public:
@@ -464,9 +464,9 @@ inline double Lognormal_distribution::operator()()
     \ingroup Random
 
 This distribution is defined by
-$$
+\f[
 p(x) = {1 \over 2 \pi} \int_{-\infty}^{+\infty} dt \exp(-it x - |c t|^\alpha).
-$$
+\f]
 */
 class Levy_distribution : public rdbase_double {
 public:
