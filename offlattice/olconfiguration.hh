@@ -38,6 +38,7 @@
 #define OLCONFIGURATION_HH
 
 #include <math.h>
+#include <map>
 
 #include "configuration.hh"
 #include "exception.hh"
@@ -93,8 +94,11 @@ public:
   double distancesq(const double x[],const double y[]) const;
   double distancesq(int i,int j) const;
 
+  /// @}@{ \name Configuration composition
+  size_t NTypes() const;
   // int CountType(short t) const;
   // int CountFlag(short f) const;
+  /// @}
 
   // void ApplyCubicSymmetry(OLconfiguration&,int n);
 

@@ -171,6 +171,19 @@ void OLconfiguration::fold_coordinates()
   x[2]-=box_length[2]*floor(x[2]/box_length[2]);
 }
 
+/*
+ * Configuration composition
+ *
+ */
+size_t OLconfiguration::NTypes() const
+{
+  std::map<short,int> types;
+  for (int i=0; i<N; ++i)
+    types[type[i]]++;
+  return types.size();
+}
+
+
 /*****************************************************************************
  *
  * OLconfig_file

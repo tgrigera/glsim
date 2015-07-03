@@ -34,8 +34,8 @@
  *
  */
 
-#ifndef VVERLETMD_HH
-#define VVERLETMD_HH
+#ifndef MD_HH
+#define MD_HH
 
 #include "mdenvironment.hh"
 #include "simulation.hh"
@@ -84,4 +84,4 @@ private:
 
 } /* namespace */
 
-#endif /* VVERLETMD_HH */
+#endif /* MD_HH */
