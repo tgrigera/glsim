@@ -140,24 +140,22 @@ LDSimulation::LDSimulation(LDEnvironment& e,OLconfiguration &c,Interactions *i) 
 	c0l=1 - xidt + xidt*xidt/2 - xidt*xidt*xidt/6;
 	c1=1 - xidt/2 + xidt*xidt/6 - xidt*xidt*xidt/24;
 	c2=0.5 - xidt/6 + xidt*xidt/24;
+	rho=sqrt(3.)*(0.5-xidt/16.-(17./1280.)*xidt*xidt
+		     +(17./6144)*xidt*xidt*xidt);
       } else {
 	c0l=exi;
 	c1=(1-c0l)/xidt;
         c2=(1-c1)/xidt;
+	rho=(1-exi)*(1-exi)/sqrt( (1-exi*exi)*(3*xidt-3+4*exi-exi*exi) );
       }
       sv=(env.temperature/inter->mass(conf.type[i]))*(1-exi*exi);
       sv=sqrt(sv);
-      if (env.eta<1e-3 || xi<1e-4) {
+      if (env.eta<1e-3) {
 	sx=env.temperature*Dt*Dt*Dt*env.eta*(2./3.-0.5*xidt)/(mass*mass);
-	sx=sqrt(sx);
-	rho=sqrt(3.)*(0.5-xidt/16.-(17./1280.)*xidt*xidt
-		     +(17./6144)*xidt*xidt*xidt);
       } else {
 	sx=(env.temperature/env.eta)*(2*Dt-(3-4*exi+exi*exi)/xi);
-	sx=sqrt(sx);
-	double sxv=(env.temperature/env.eta)*(1-exi)*(1-exi);
-	rho=sxv/(sx*sv);
       }
+      sx=sqrt(sx);
       	
       c0[conf.type[i]]=c0l;
       c1dt[conf.type[i]]=Dt*c1;
