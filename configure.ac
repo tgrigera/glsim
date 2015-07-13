@@ -142,6 +142,7 @@ AC_FUNC_STRFTIME
 # Generates files
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile
+		 analysis/Makefile
 	         blib/Makefile
                  lattice/Makefile
 		 offlattice/Makefile
