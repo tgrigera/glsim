@@ -42,14 +42,14 @@ libglsim_ol_la_SOURCES = h5md.cc olconfiguration.cc interactions.cc	\
 
 LDADD=$(top_builddir)/blib/libglsim.la libglsim_ol.la
 
-bin_PROGRAMS = GS_olconf_cat GS_olconf_create GS_ljld GS_ljmc GS_ljmd GS_traj2h5md
+bin_PROGRAMS = gs_olconf_cat gs_olconf_create gs_ljld gs_ljmc gs_ljmd gs_traj2h5md
 
-GS_olconf_cat_SOURCES = olconf_cat.cc
-GS_olconf_create_SOURCES = olconf_create.cc
-GS_ljld_SOURCES = ljld.cc
-GS_ljmc_SOURCES = ljmc.cc
-GS_ljmd_SOURCES = ljmd.cc
-GS_traj2h5md_SOURCES = traj2h5md.cc
+gs_olconf_cat_SOURCES = olconf_cat.cc
+gs_olconf_create_SOURCES = olconf_create.cc
+gs_ljld_SOURCES = ljld.cc
+gs_ljmc_SOURCES = ljmc.cc
+gs_ljmd_SOURCES = ljmd.cc
+gs_traj2h5md_SOURCES = traj2h5md.cc
 
 #
 # Test programs
