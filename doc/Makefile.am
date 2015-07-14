@@ -51,7 +51,7 @@ man_directory = $(top_builddir)/doc/man/man3
 ##$(directory)/man_page_1.3: doxyfile.stamp
 ##$(directory)/man_page_2.3: doxyfile.stamp
 
-doxyfile.stamp: $(top_srcdir)/blib $(top_srcdir)/lattice $(top_srcdir)/doc $(top_srcdir)/offlattice
+doxyfile.stamp: $(top_srcdir)/analysis $(top_srcdir)/blib $(top_srcdir)/lattice $(top_srcdir)/doc $(top_srcdir)/offlattice
 	$(DOXYGEN) doxy.conf
 	echo Timestamp > doxyfile.stamp
 

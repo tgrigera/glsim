@@ -15,6 +15,7 @@
 #
 
 include $(top_srcdir)/Makefile-common
+AM_CPPFLAGS = -I$(top_srcdir)/blib
 
 #
 # binaries
@@ -22,3 +23,8 @@ include $(top_srcdir)/Makefile-common
 
 bin_SCRIPTS = gs_columnave.awk
 
+bin_PROGRAMS = gs_avesd
+
+LDADD=$(top_builddir)/blib/libglsim.la
+
+gs_avesd_SOURCES = avesd.cc
