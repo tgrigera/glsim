@@ -72,7 +72,7 @@ public:
   void show_usage();
 } ;
 
-CLoptions::CLoptions() : UtilityCL("GS_olconf_create")
+CLoptions::CLoptions() : UtilityCL("gs_olconf_create")
 {
   command_line_options().add_options()
     ("traj_file",po::value<std::string>(&options.traj_file)->required(),"input trajectory file")

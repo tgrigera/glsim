@@ -284,8 +284,9 @@ UtilityCL::UtilityCL(const char* name,const char *scope) :
 {
   command_line_options().add_options()
     ("help,h",po::bool_switch(),"help with usage")
-    ("verbose,V",po::bool_switch(),"be verbose")
-    ("terse,T",po::bool_switch(),"be terse: print as little as possible (e.g. omit headers)")
+    ("verbose,V",po::bool_switch()->default_value(false),"be verbose")
+    ("terse,T",po::bool_switch()->default_value(false),
+     "be terse: print as little as possible (e.g. omit headers)")
     ("version",po::bool_switch(),"print version and exit")
     ;
 }
