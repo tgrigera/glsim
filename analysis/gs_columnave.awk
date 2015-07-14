@@ -18,21 +18,24 @@ BEGIN {
 /^#/ {print $0; next;}
 
 {
-  for (i=1; i<=NF; i++) {
-    sum[i]+=$i;
-    sumsq[i]+=$i*$i;
-  }
-  N++;
+    for (i=1; i<=NF; i++) {
+	Q=$i-ave[i];
+	R=Q/(N+1);
+	ave[i]+=R;
+	var[i]+=Q*R*N;
+    }
+    if (NF>0) N++;
 }
 
+
 END {
+  print "#\n# Nsamples =",N;
   if (sd) printf "ave: ";
-  for (i=1; i<=NF; i++) printf "%g ",sum[i]/N;
+  for (i=1; i<=NF; i++) printf "%.10g ",ave[i];
   print "";
   if (sd) {
-    printf "sd: "
-      for (i=1; i<=NF; i++) printf "%g ", sqrt(sumsq[i]/N-sum[i]*sum[i]/(N*N));
-    print "";
+      printf "sd: "
+      for (i=1; i<=NF; i++) printf "%.10g ", sqrt(var[i]/(N-1));
+      print "";
   }
-    
 }
