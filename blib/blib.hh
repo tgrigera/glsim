@@ -160,6 +160,8 @@ manipulated.  There is also a class (HDF_record_file) that makes it
 easy to create and read a file with a simple record structure (a
 header plus a table-like structure).
 
+\defgroup FILE File manipulation
+
 @}
 
 
