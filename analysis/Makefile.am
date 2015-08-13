@@ -18,13 +18,24 @@ include $(top_srcdir)/Makefile-common
 AM_CPPFLAGS = -I$(top_srcdir)/blib
 
 #
+# library
+#
+
+lib_LTLIBRARIES = libglsim_an.la
+libglsim_an_la_LDFLAGS = -version-info @LIBGLSIM_VERSION@
+libglsim_an_la_SOURCES = geoave.cc
+
+#
 # binaries
 #
 
 bin_SCRIPTS = gs_columnave.awk
 
-bin_PROGRAMS = gs_avesd
+bin_PROGRAMS = gs_avesd gs_gav
 
-LDADD=$(top_builddir)/blib/libglsim.la
+LDADD=libglsim_an.la $(top_builddir)/blib/libglsim.la
 
 gs_avesd_SOURCES = avesd.cc
+
+gs_gav_SOURCES = gav.cc
+
