@@ -37,30 +37,46 @@
 #ifndef AVEVAR_HH
 #define AVEVAR_HH
 
+#include <limits>
+
 namespace glsim {
 
 /** \class AveVar
     \ingroup Analysis
     \brief Compute average and variance using West recurrence
 */
+template <bool maxmin=true>
 class AveVar {
 public:
-  AveVar();
+  AveVar() {clear();};
   AveVar& push(double);
+  AveVar& clear();
   double  ave() const {return ave_;}
   double  var() const {return var_/(N_-1);}
   long    N() const {return N_;}
-
+  double  max() const {return max_;}
+  double  min() const {return min_;}
+  
 private:
   double ave_,var_;
   long   N_;
+  double max_,min_;
+
 } ;
 
-inline AveVar::AveVar() :
-  ave_(0), var_(0), N_(0)
-{}
+template <bool maxmin>
+inline AveVar<maxmin>& AveVar<maxmin>::clear()
+{
+  ave_=0;
+  var_=0;
+  N_=0;
+  max_=std::numeric_limits<double>::min();
+  min_=std::numeric_limits<double>::max();
+}
+  
 
-inline AveVar& AveVar::push(double x)
+template <bool maxmin>
+inline AveVar<maxmin>& AveVar<maxmin>::push(double x)
 {
   double Q,R;
 
@@ -69,6 +85,12 @@ inline AveVar& AveVar::push(double x)
   R=Q/N_;
   ave_+=R;
   var_+=Q*R*(N_-1);
+
+  if (maxmin) {
+    if (x<min_) min_=x;
+    if (x>max_) max_=x;
+  }
+
   return *this;
 }
 
