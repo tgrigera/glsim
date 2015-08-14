@@ -18,6 +18,12 @@ include $(top_srcdir)/Makefile-common
 AM_CPPFLAGS = -I$(top_srcdir)/blib
 
 #
+# Headers
+#
+
+pkginclude_HEADERS = avevar.hh geoave.hh
+
+#
 # library
 #
 
