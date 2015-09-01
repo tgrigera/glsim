@@ -35,7 +35,7 @@ libglsim_an_la_SOURCES = geoave.cc
 # binaries
 #
 
-bin_SCRIPTS = gs_columnave.awk
+bin_SCRIPTS = gs_columnave.awk gs_fileave.awk
 
 bin_PROGRAMS = gs_avesd gs_gav
 
