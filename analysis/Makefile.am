@@ -21,7 +21,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/blib
 # Headers
 #
 
-pkginclude_HEADERS = avevar.hh geoave.hh
+pkginclude_HEADERS = avevar.hh geoave.hh histogram.hh
 
 #
 # library
