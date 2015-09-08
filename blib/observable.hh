@@ -50,7 +50,7 @@ namespace glsim {
 template <typename ITYP>
 class Observable : public Environment {
 public:
-  Observable(SimEnvironment &);
+  Observable(SimEnvironment &e,const char* scope=0);
   virtual ~Observable();
   void observe_first();
 
@@ -78,8 +78,8 @@ private:
 } ;
 
 template <typename ITYP>
-Observable<ITYP>::Observable(SimEnvironment &e) :
-  Environment(e.scope()),
+Observable<ITYP>::Observable(SimEnvironment &e,const char* scope) :
+  Environment(scope ? scope : e.scope()),
   of(0),
   obs_file_prefix("obs"),
   obs_fname("[AUTO]"),
@@ -147,11 +147,13 @@ void Observable<ITYP>::observe_first()
 /** \class SBObservable
     \brief Step-based observable
     \ingroup Observable
+
+    \param scope scope name, if null pointer, use senv_ scope
 */
 class SBObservable : public Observable<int> {
 public:
-  SBObservable(SimEnvironment& senv_) : Observable(senv_),
-					senv(senv_) {}
+  SBObservable(SimEnvironment& senv_,const char* scope=0) :
+    Observable(senv_,scope), senv(senv_) {}
 protected:
   void step_local();
 
@@ -168,10 +170,12 @@ private:
 /** \class KMCObservable
     \brief Real-time-based observable (as for Kinetic MC)
     \ingroup Observable
+
+    \param scope scope name, if null pointer, use senv_ scope
 */
 class KMCObservable : public Observable<double> {
 public:
-  KMCObservable(SimEnvironment& env_);
+  KMCObservable(SimEnvironment& env_,const char* scope=0);
 
 protected:
   void   step_local();
@@ -190,8 +194,8 @@ private:
   virtual void vserial(oarchive_t &ar) {ar << *this;}
 } ;
 
-inline KMCObservable::KMCObservable(SimEnvironment& env_) :
-  Observable(env_),
+inline KMCObservable::KMCObservable(SimEnvironment& env_,const char* scope) :
+  Observable(env_,scope),
   obs_time(0.),
   env(env_)
 {}
