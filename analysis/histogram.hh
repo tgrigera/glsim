@@ -139,7 +139,7 @@ inline double Histogram::area()
 }
 
 /// Print histogram (two columns)
-std::ostream &operator<<(std::ostream &os,Histogram &h)
+inline std::ostream &operator<<(std::ostream &os,Histogram &h)
 {
   if (h.normalized_) {
     double fac=1./(h.ndata*h.delta_);
