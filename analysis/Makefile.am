@@ -15,13 +15,13 @@
 #
 
 include $(top_srcdir)/Makefile-common
-AM_CPPFLAGS = -I$(top_srcdir)/blib
+AM_CPPFLAGS = -I$(top_srcdir)/blib -I$(top_srcdir)/offlattice
 
 #
 # Headers
 #
 
-pkginclude_HEADERS = avevar.hh geoave.hh histogram.hh
+pkginclude_HEADERS = avevar.hh geoave.hh histogram.hh Sk.hh
 
 #
 # library
@@ -29,7 +29,7 @@ pkginclude_HEADERS = avevar.hh geoave.hh histogram.hh
 
 lib_LTLIBRARIES = libglsim_an.la
 libglsim_an_la_LDFLAGS = -version-info @LIBGLSIM_VERSION@
-libglsim_an_la_SOURCES = geoave.cc
+libglsim_an_la_SOURCES = geoave.cc Sk.cc
 
 #
 # binaries

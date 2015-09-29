@@ -34,7 +34,17 @@
  *
  */
 
-/** \defgroup Analysis
+/** @{
+    \defgroup Analysis
     \brief Library and programs to analyse simulation data
+
+    @{    
+
+    \defgroup Structure
+     \brief    Utilities and classes to compute structural properties of off-lattice systems
+
+
+    @}
+    @}
 */
 
