@@ -469,5 +469,49 @@ void HDF_record_file::read_record(hsize_t recnum)
 }
 
 
+/******************************************************************************
+ *
+ * H5_multi_file
+ *
+ */
+
+void H5_multi_file::open_first()
+{
+  curfile=0;
+  currec=0;
+  filep->open_ro(files[curfile].c_str());
+  filep->read_header();
+}
+
+bool H5_multi_file::open_next()
+{
+  if (curfile==files.size()-1) return false;
+  ++curfile;
+  currec=0;
+  filep->open_ro(files[curfile].c_str());
+  filep->read_header();
+  return true;
+}
+
+/// note that there may be files with pure header and no record
+/// data, but these must be counted has having one record anyway
+/// because the header data may change from file to file, anda
+/// fields that are record fields in some files may be header fields
+/// in other files
+bool H5_multi_file::read()
+{
+  if (eof()) return false;
+  if (currec<filep->size())
+    filep->read_record(currec);
+  ++currec;
+  return true;
+}
+
+bool H5_multi_file::eof()
+{
+  if (currec<filep->size() || currec==0) return false;
+  return !open_next();
+}
+
 } /* namespace */
 

@@ -38,6 +38,7 @@
 #define HDF_FILE_HH
 
 #include <list>
+#include <vector>
 
 #include "exception.hh"
 #include "cerrors.h"
@@ -465,14 +466,10 @@ public:
   /// \name Constructor/destructor and open/close
   /// @{
   HDF_record_file(long version);   ///< Create a file object with given version
-  virtual ~HDF_record_file() {close();}
-  void               open(const char *fname,const mode& m,
-   			  const char *tit="untitled",
-			  version_require vr=version_any,long minver=0);
-  void               open(hid_t groupid,const mode& m,
-   			  const char *tit="untitled",
-			  version_require vr=version_any,long minver=0);
-  void               close();
+  virtual      ~HDF_record_file() {close();}
+  virtual void open(const char* fname)=0; ///< Open for read/write with default version and title
+  virtual void open_ro(const char *fname)=0; ///< Open read only with default version 
+  void         close();
 
   /// @}
   /// \name File information (available while file is open)
@@ -500,6 +497,10 @@ public:
 
 protected:
 
+  void open(const char *fname,const mode& m, const char *tit="untitled",
+			  version_require vr=version_any,long minver=0);
+  void open(hid_t groupid,const mode& m, const char *tit="untitled",
+			  version_require vr=version_any,long minver=0);
   /// This function must declare al header fields by successive calls
   /// of declare_field().  It is called when opening or creating the
   /// file.  The file opening mode is passed as argument so that
@@ -687,7 +688,48 @@ template <> inline HDF_record_file::read_functionT
 HDF_record_file::read_function<std::string>(std::string *field)
 {return read_for_string;}
 
+
+/******************************************************************************
+ *
+ * H5_multi_file
+ *
+ */
+
+class H5_multi_file {
+public:
+  H5_multi_file(std::vector<std::string> filelist,
+		HDF_record_file &fileob);  ///< Create object and open first file
+  /// reads and returns true if there is more data
+  bool          read();
+  /// returns true if last read operation exhausted all data
+  bool          eof();
+
+private:
+  /// Returns true if opened new file, false if currently open file is the last one
+  bool            open_next();
+  void            open_first();
+
+  bool            own_ptr;
+  HDF_record_file *filep;
+
+  std::vector<std::string> files;
+  int             curfile;
+  hsize_t         currec;
+
+} ;
+
+inline H5_multi_file::H5_multi_file(std::vector<std::string> filelist,HDF_record_file &fileob) :
+  own_ptr(false),
+  filep(&fileob),
+  files(filelist),
+  curfile(0),
+  currec(0)
+{
+  open_first();
+}
+
+
+
 } /* namespace */
 
 #endif /* HDF_FILE_HH */
-

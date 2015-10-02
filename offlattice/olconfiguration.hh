@@ -165,12 +165,13 @@ inline double OLconfiguration::distancesq(int i,int j) const
 class OLconfig_file : public HDF_record_file {
 public:
   struct options;
-  OLconfig_file(const char *fname,OLconfiguration *buffer=0,
+  OLconfig_file(OLconfiguration *buffer=0,
 		OLconfig_file::options o=OLconfig_file::options());
   ~OLconfig_file();
   
-  void create();
-  void open();
+  void create(const char* fname);
+  void open(const char* fname);
+  void open_ro(const char* fname);
 
 struct options {
   bool time_frame_;

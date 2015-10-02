@@ -83,8 +83,8 @@ void Trajectory::observe_first()
       iconf->v=conf.v;
     if (par.value("trajectory.record_a").as<bool>())
       iconf->a=conf.a;
-    of=new OLconfig_file(traj_fname.c_str(),iconf,file_opt);
-    of->create();
+    of=new OLconfig_file(iconf,file_opt);
+    of->create(traj_fname.c_str());
     of->write_header();
   }
   if (first_observed) return;

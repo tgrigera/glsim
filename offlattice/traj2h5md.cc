@@ -109,8 +109,8 @@ void wmain(int argc,char *argv[])
   opt.parse_command_line(argc,argv);
 
   OLconfiguration conf;
-  OLconfig_file cfile(options.traj_file.c_str(),&conf);
-  cfile.open();
+  OLconfig_file cfile(&conf);
+  cfile.open(options.traj_file.c_str());
   cfile.read_header();
   cfile.read_record(0);
 

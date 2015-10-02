@@ -138,16 +138,16 @@ This reads from a file than can contain one or many configurations, in
 the latter case reads only the first.
 */
 void OLconfiguration::load(const char* s) {
-  OLconfig_file f(s,this);
-  f.open();
+  OLconfig_file f(this);
+  f.open(s);
   f.read_header();
   f.read_record(0);
 }
 
 void OLconfiguration::save(const char* s)
 {
-  OLconfig_file f(s,this);  // Default argument makes all fields header
-  f.create();
+  OLconfig_file f(this);  // Default argument makes all fields header
+  f.create(s);
   f.write_header();
 }
 
@@ -191,11 +191,10 @@ size_t OLconfiguration::NTypes() const
  *
  */
 
-OLconfig_file::OLconfig_file(const char *f,OLconfiguration *buffer,
+OLconfig_file::OLconfig_file(OLconfiguration *buffer,
 			     OLconfig_file::options o) :
   HDF_record_file(1),
   version(1),
-  fname(f),
   cbuffer(buffer),
   opt(o)
 {
@@ -211,15 +210,24 @@ OLconfig_file::~OLconfig_file()
   if (own_buffer) delete cbuffer;
 }
 
-void OLconfig_file::create()
+void OLconfig_file::create(const char* f)
 {
+  fname=f;
   HDF_record_file::open(fname.c_str(),f_replace,"OLconfig_file",version_exact,
 			version);
 }
 
-void OLconfig_file::open()
+void OLconfig_file::open(const char *f)
 {
+  fname=f;
   HDF_record_file::open(fname.c_str(),f_append,"OLconfig_file",version_exact,
+			version);
+}
+
+void OLconfig_file::open_ro(const char *f)
+{
+  fname=f;
+  HDF_record_file::open(fname.c_str(),f_readonly,"OLconfig_file",version_exact,
 			version);
 }
 

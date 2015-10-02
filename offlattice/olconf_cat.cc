@@ -1,5 +1,5 @@
 /*
- * olconf_cp.cc -- copy configurations
+ * olconf_cat.cc -- copy configurations
  *
  * This file is part of glsim, a numerical simulation class library and
  * helper programs.
