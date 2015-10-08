@@ -43,6 +43,7 @@
 #include <errno.h>
 #include <string.h>
 
+#include <gsl/gsl_errno.h>
 #include "scontext.hh"
 
 namespace glsim {
@@ -159,6 +160,21 @@ public:
     Runtime_error(std::string("C library error: ") + strerror(errno), c)
     {}
 } ;
+
+/** Runtime_error children
+    \class GSL_error
+    \ingroup Exceptions
+*/
+class GSL_error : public Runtime_error {
+private:
+  std::string m;
+public:
+  explicit GSL_error(const int gsl_ecode,
+		     const Source_context &c=Source_context()) : 
+    Runtime_error(std::string("GSL error: ") + gsl_strerror(gsl_ecode))
+  {}
+} ;
+
 
 /** \class Early_stop
     \ingroup Exceptions
