@@ -56,6 +56,15 @@ struct record {
 class RFtest : public glsim::HDF_record_file {
 public:
   RFtest(bool old=false);
+  void open(const char *fname)
+  {HDF_record_file::open(fname,glsim::HDF_record_file::f_replace,"HDF_record_file test");}
+
+  void open_ro(const char *fname)
+  {HDF_record_file::open(fname,glsim::HDF_record_file::f_readonly,"HDF_record_file test");}
+
+  void open(const char *fname,const mode& m, const char *tit,
+			  version_require vr=version_any,long minver=0)
+  {HDF_record_file::open(fname,m,tit,vr,minver);}
 
   header hbuffer;
   record rbuffer;
@@ -87,8 +96,7 @@ void RFtest::declare_record_fields(mode m)
 void create_file()
 {
   RFtest file;
-  file.open("HDFrectest.dat",glsim::HDF_record_file::f_replace,
-	    "HDF_record_file test");
+  file.open("HDFrectest.dat");
   file.write_header();
   file.write_record(0);
   file.rbuffer.time=1.;
@@ -100,14 +108,13 @@ void create_file()
 void create_file_old_version()
 {
   RFtest file(true);
-  file.open("HDFrectest_old.dat",glsim::HDF_record_file::f_replace,
-	    "HDF_record_file test");
+  file.open("HDFrectest_old.dat");
 }
 
 void read_file()
 {
   RFtest file;
-  file.open("HDFrectest.dat",glsim::HDF_record_file::f_readonly);
+  file.open_ro("HDFrectest.dat");
   file.hbuffer.a=file.hbuffer.i=0;
   file.read_header();
   std::cout << "Read header:\n"
