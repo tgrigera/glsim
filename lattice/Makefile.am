@@ -22,7 +22,7 @@ LDADD=$(top_builddir)/blib/libglsim.la
 #
 
 pkginclude_HEADERS = graph.hh bethe.hh lattice1D.hh lattice2D.hh	\
-                     lattice3D.hh test_exception.hh graph_test.hh
+                     lattice3D.hh graph_test.hh
 
 #
 # binaries

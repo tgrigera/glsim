@@ -125,6 +125,20 @@ AC_LINK_IFELSE(
 AC_CHECK_LIB([hdf5], H5Fcreate,,exit)
 AC_CHECK_LIB([hdf5_hl], H5LTset_attribute_short,,exit)
 
+# FFTW3
+AC_ARG_WITH([fftw3],AS_HELP_STRING([--without-fftw3],[do not use the FFTW3 library even if installed]),,with_fftw3=yes)
+AS_IF([test x"$with_fftw3" = xyes],
+   [ AC_CHECK_LIB([fftw3], fftw_execute,,
+     [echo "**** WARNING"
+      echo "**** FFTW3 library not found"
+      echo "**** FFT calls will will use the GSL FFT routines, but"
+      echo "**** will fail unless the number of data points is a power of 2"]) ]
+)
+#AS_IF([test x"$ac_cv_lib_fftw3_fftw_execute" = xyes],AC_DEFINE([TSIM_HAVE_LIBFFTW3],[1],[libfftw3]))
+
+
+###############################################################################
+#
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
 AC_C_CONST
@@ -139,7 +153,10 @@ AC_FUNC_MALLOC
 AC_FUNC_STAT
 AC_FUNC_STRFTIME
 
+###############################################################################
+#
 # Generates files
+#
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile
 		 analysis/Makefile
@@ -148,5 +165,4 @@ AC_CONFIG_FILES([Makefile
 		 offlattice/Makefile
 		 doc/Makefile
 		 doc/version.tex])
-#AC_CONFIG_FILES([doc/version.tex])
 AC_OUTPUT

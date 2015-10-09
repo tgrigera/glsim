@@ -20,10 +20,11 @@ include $(top_srcdir)/Makefile-common
 # Headers
 #
 
-pkginclude_HEADERS = cerrors.h exception.hh log.hh parameters.hh	\
-                     scontext.hh random.hh configuration.hh		\
-                     environment.hh simulation.hh observable.hh		\
-                     stochastic.hh mfile.hh hdf_file.hh
+pkginclude_HEADERS = cerrors.h exception.hh fft.hh log.hh		\
+                     parameters.hh scontext.hh random.hh		\
+                     configuration.hh environment.hh simulation.hh	\
+                     observable.hh stochastic.hh mfile.hh hdf_file.hh	\
+                     test_exception.hh
 
 #
 # Doc-only headers
@@ -45,7 +46,8 @@ lib_LTLIBRARIES = libglsim.la
 libglsim_la_LDFLAGS = -version-info @LIBGLSIM_VERSION@
 libglsim_la_SOURCES = scontext.cc cerrors.c log.cc random.cc		\
                       parameters.cc environment.cc simulation.cc	\
-                      stochastic.cc observable.cc mfile.cc hdf_file.cc
+                      stochastic.cc observable.cc mfile.cc		\
+                      hdf_file.cc fft.cc
 
 #
 # Test programs
