@@ -34,7 +34,7 @@
  *
  */
 
-/** \defgroup Offlattice
+/** \defgroup Offlattice Off-lattice
     \brief Off-lattice library and utilities
 
 @{

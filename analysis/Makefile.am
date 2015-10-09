@@ -21,7 +21,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/blib -I$(top_srcdir)/offlattice
 # Headers
 #
 
-pkginclude_HEADERS = avevar.hh geoave.hh histogram.hh Sk.hh
+pkginclude_HEADERS = avevar.hh geoave.hh histogram.hh Sk.hh timecorr.hh
 
 #
 # library
@@ -29,7 +29,7 @@ pkginclude_HEADERS = avevar.hh geoave.hh histogram.hh Sk.hh
 
 lib_LTLIBRARIES = libglsim_an.la
 libglsim_an_la_LDFLAGS = -version-info @LIBGLSIM_VERSION@
-libglsim_an_la_SOURCES = geoave.cc Sk.cc
+libglsim_an_la_SOURCES = geoave.cc Sk.cc timecorr.cc
 
 #
 # binaries
@@ -37,7 +37,7 @@ libglsim_an_la_SOURCES = geoave.cc Sk.cc
 
 bin_SCRIPTS = gs_columnave.awk gs_fileave.awk
 
-bin_PROGRAMS = gs_avesd gs_gav gs_histogram
+bin_PROGRAMS = gs_avesd gs_gav gs_histogram gs_tcorr
 
 LDADD=libglsim_an.la $(top_builddir)/blib/libglsim.la
 
@@ -46,3 +46,5 @@ gs_avesd_SOURCES = avesd.cc
 gs_gav_SOURCES = gav.cc
 
 gs_histogram_SOURCES = histocl.cc
+
+gs_tcorr_SOURCES = tcorr.cc

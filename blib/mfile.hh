@@ -62,14 +62,14 @@ namespace glsim {
 
     For example, a simple 'cat' would be something like
 
-    ~~~~~.cc
+    ~~~~~{.cc}
     MFILE mf(flist);
     while (!mf.eof()) {
       char buff[200];
       fgets(buff,200,mf);
       std::cout << buff;
     }
-    ~~~~~~
+    ~~~~~
 
     You don't need a second read at the end to trigger eof().
 

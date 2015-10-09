@@ -35,16 +35,33 @@
  */
 
 /** @{
-    \defgroup Analysis
+    \defgroup Analysis Analysis
     \brief Library and programs to analyse simulation data
 
     @{    
 
-    \defgroup Structure
+    \defgroup Structure Structure
      \brief    Utilities and classes to compute structural properties of off-lattice systems
 
 
     @}
+
+    @{
+    \defgroup TCorr Time correlations
+
+     The programs and routines in this module compute a discretized
+     two-point time correlation function. Assuming time-traslation
+     invariance (i.e.\ independence of the time origin), the
+     correlation can be computed as
+
+     \f[  C(t) = \sum_{t_0} A(t+t_0)  A^*(t_0) \mbox{NORMALIZATION MISSING}.\f]
+
+     The connected correlation is defined as
+
+     \f[$ C_c(t) = C(t) - \langle A     \rangle^2. \f]
+
+    @}
+
     @}
 */
 

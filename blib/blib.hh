@@ -270,7 +270,7 @@ Environment and how the saving and restoring of environments can be
 controlled.
 
 
-\defgroup Simulation 
+\defgroup Simulation Simulation
 \brief The base simulation classes
 
 Currently there is only one class here (Simulation), which must be the
@@ -293,7 +293,7 @@ IMPORTANT: step() must decide when the sim is finished (set
 run_completed), and compute time and tolerance when applicable.
 
 
-\defgroup Observable
+\defgroup Observable Observable
 	   \brief Observables
 
 These are notes for an observable.
