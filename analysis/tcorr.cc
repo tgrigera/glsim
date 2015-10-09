@@ -192,8 +192,8 @@ void read_data(glsim::MFILE &f,std::vector<double>& a)
     while ( !f.eof() ) {
       fgets(buf,200,f);
       if (*buf=='#') continue;
-      sscanf(buf,"%lg %lg",&t,&at);
-      if (errno) throw glsim::Clib_error(HERE);
+      if (sscanf(buf,"%lg %lg",&t,&at)!=2)
+          throw glsim::Clib_error(HERE);
       if (options.t0set && t<options.t0) continue;
       a.push_back(at);
       if (n==0) options.deltat=t;
@@ -258,8 +258,6 @@ void wmain(int argc,char *argv[])
 
   CLoptions opt;
   opt.parse_command_line(argc,argv);
-  // options.header=!opt.value("terse").as<bool>();
-
 
   glsim::MFILE fin(options.ifiles);
   if (options.complex_data)
