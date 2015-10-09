@@ -38,6 +38,7 @@
 #define AVEVAR_HH
 
 #include <limits>
+#include <vector>
 
 namespace glsim {
 
@@ -50,7 +51,9 @@ class AveVar {
 public:
   AveVar() {clear();};
   AveVar& push(double);
+  AveVar& push(std::vector<double> v) {for (auto d : v) push(d);}
   AveVar& clear();
+
   double  ave() const {return ave_;}
   double  var() const {return var_/(N_-1);}
   long    N() const {return N_;}
@@ -94,6 +97,37 @@ inline AveVar<maxmin>& AveVar<maxmin>::push(double x)
   return *this;
 }
 
+/*****************************************************************************
+ *
+ * AveVar_vector
+ *
+ */
+
+typedef std::vector<double> dvector;
+
+/** \class AveVar_vector
+    \ingroup Analysis
+    \brief  Element-to-element average of vectors
+
+Often one needs to average several vectos on an element-to-element
+basis. This class does just that, using the recurrence algorithm.
+
+*/
+class AveVar_vector {
+public:
+  AveVar_vector() : av() {clear();}
+  AveVar_vector& push(dvector&);
+  AveVar_vector& push(double*,int);
+  AveVar_vector& clear() {av.clear();}
+
+  double ave(int n) const {return av[n].ave();}
+  double var(int n) const {return av[n].var();}
+  double N(int n) const {return av[n].N();}
+  std::size_t size() const {return av.size();}
+
+private:
+  std::vector<class AveVar<false> > av;
+} ;
 
 } /* namespace */
 

@@ -29,7 +29,7 @@ pkginclude_HEADERS = avevar.hh geoave.hh histogram.hh Sk.hh timecorr.hh
 
 lib_LTLIBRARIES = libglsim_an.la
 libglsim_an_la_LDFLAGS = -version-info @LIBGLSIM_VERSION@
-libglsim_an_la_SOURCES = geoave.cc Sk.cc timecorr.cc
+libglsim_an_la_SOURCES = avevar.cc geoave.cc Sk.cc timecorr.cc
 
 #
 # binaries
