@@ -165,6 +165,12 @@ void tau_jacknife(corr_list_t &corr,double deltat)
   double tauave=tau_nsamp(corr,options.alpha,deltat);
   int n=corr.size();
 
+  if (n==1) { /* can't do jacknife */
+    if (options.header) std::cout << "# tau [no error estimate with single sample]\n";
+    std::cout << tauave  << '\n';
+    return;
+  }
+
   std::vector<double> tau;
   for (int i=0; i<n; i++) {
     corr_t *c=corr.front();
@@ -173,11 +179,12 @@ void tau_jacknife(corr_list_t &corr,double deltat)
     corr.push_back(c);
   }
 
-  /* ccompute ave sd */
-  glsim::AveVar<false> av;
-  av.push(tau);
-  double v=av.var();
-  v*=tau.size()-2+1./tau.size();
+  /* compute jacknife variance estimator */
+  double v=0;
+  for (auto vi : tau)
+    v+=(vi-tauave)*(vi-tauave);
+  v*=(tau.size()-1.)/tau.size();
+
   if (options.header) std::cout << "# tau dtau\n";
   std::cout << tauave << "  " << sqrt(v) << '\n';
 }
@@ -219,13 +226,13 @@ void read_data(const char *fname,std::vector<double>& a,double &deltat)
   double t,at;
 
   FILE *f=fopen(fname,"r");
-  if (!f) SYSERROR_EXIT("Read failed",1);
+  if (!f) throw glsim::Clib_error(HERE);
   int n=0;
   while ( ungetc(fgetc(f),f)!=EOF ) {
     fgets(buf,200,f);
     if (*buf=='#') continue;
-    sscanf(buf,"%lg %lg",&t,&at);
-    if (errno) SYSERROR_EXIT("Read failed",1);
+    if (sscanf(buf,"%lg %lg",&t,&at)!=2)
+      throw glsim::Clib_error(HERE);
     a.push_back(at);
     if (n==0) deltat=t;
     if (n==1) deltat=t-deltat;
