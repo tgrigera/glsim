@@ -5,7 +5,7 @@ The glsim project aims to provide a C++ class library to build
 numerical simulation software.  The basic library consists of classes
 that handle the cumbersome but essential administrative tasks that a
 simulation program must perform.  There are also numerical routines
-and basic analysis programs.
+and analysis programs.
 
 A couple of complete, full-working simulation programs are
 distributed, but, although perhaps useful in themselves, they are
@@ -25,6 +25,66 @@ following paper:
 There have been some interface and several implementation changes
 since this publication leading to version 1.0, but it still remains a
 valid reference.
+
+* Contents
+
+The package contains libraries, utilities and simulations, divided in
+three thematic groups.
+
+** Basic library
+
+Includes classes for
+
+  - error handling
+  - interfacing to other basic libraries that provide useful services
+    for simulations (random numbers, file manipulation, files in HDF5
+    format, fast Fourier transform)
+  - the main simulations abstractions as defined by glsim (parameters,
+    environment, configuration, simulation, observables)
+
+** Lattices and graphs
+
+Provides template classes to represent various graphs and lattices
+used in graph- or lattice- based simulations.
+
+** Offlatice simulations
+
+This library includes classes that provide:
+
+ - representation off-lattice configurations and to save them (as
+   single configurations or trajectories) in HDF5 files
+ - computation of interactions of pairwise potentials
+ - off-lattice simulations of particle systems:
+   - Metropolis Monte Carlo
+   - microcanonical (constant energy) Molecular Dynamics
+
+Utilities:
+
+ - creation and dumping of configurations in HDF5 format
+
+Simulations:
+
+ - canonical Molecular Dynamics of repulsive Lennard-Jones particles
+ - Metropolis Monte Carlo of repulsive Lennard-Jones particles
+
+** Analysis
+
+This includes classes and utilities to perform various kinds of
+analysis of simulation data.
+
+Classes for:
+
+ - Average and variance (with numerically accurate recurrence
+   algorithm)
+ - Histogram building
+ - Time correlations with FFT
+
+Utilities:
+
+ - Average and variance
+ - Geometric-window averaging of time series
+ - Histogram building
+ - Time correlations and relaxation time calculation
 
 
 * Installation
