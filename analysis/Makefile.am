@@ -21,7 +21,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/blib -I$(top_srcdir)/offlattice
 # Headers
 #
 
-pkginclude_HEADERS = avevar.hh geoave.hh histogram.hh Sk.hh timecorr.hh
+pkginclude_HEADERS = avevar.hh geoave.hh histogram.hh iscatt.hh Sk.hh	\
+                     timecorr.hh
 
 #
 # library
@@ -29,7 +30,8 @@ pkginclude_HEADERS = avevar.hh geoave.hh histogram.hh Sk.hh timecorr.hh
 
 lib_LTLIBRARIES = libglsim_an.la
 libglsim_an_la_LDFLAGS = -version-info @LIBGLSIM_VERSION@
-libglsim_an_la_SOURCES = avevar.cc geoave.cc Sk.cc timecorr.cc
+libglsim_an_la_SOURCES = avevar.cc geoave.cc Sk.cc timecorr.cc	\
+                         iscatt.cc
 
 #
 # binaries
