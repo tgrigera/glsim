@@ -39,7 +39,7 @@ libglsim_an_la_SOURCES = avevar.cc geoave.cc Sk.cc timecorr.cc	\
 
 bin_SCRIPTS = gs_columnave.awk gs_fileave.awk
 
-bin_PROGRAMS = gs_avesd gs_gav gs_histogram gs_tcorr gs_tau
+bin_PROGRAMS = gs_avesd gs_gav gs_histogram gs_tcorr gs_tau gs_Fk
 
 LDADD=libglsim_an.la $(top_builddir)/blib/libglsim.la
 
@@ -52,3 +52,7 @@ gs_histogram_SOURCES = histocl.cc
 gs_tcorr_SOURCES = tcorr.cc
 
 gs_tau_SOURCES = tau.cc
+
+gs_Fk_SOURCES = Fk.cc
+gs_Fk_LDADD=$(top_builddir)/offlattice/libglsim_ol.la libglsim_an.la	\
+            $(top_builddir)/blib/libglsim.la
