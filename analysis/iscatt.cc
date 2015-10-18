@@ -101,7 +101,8 @@ std::ostream& operator<<(std::ostream& o,const Fk& Fk_)
 {
   o << "# time   Fk'   Fk''\n";
   for (int i=0; i<Fk_.Fk_.size(); i++)
-    o << i*Fk_.deltat << "  " << Fk_.Fk_[i].real() << "  " << Fk_.Fk_[i].imag();
+    o << i*Fk_.deltat << "  " << Fk_.Fk_[i].real()
+      << "  " << Fk_.Fk_[i].imag() << '\n';
 }
 
 /*****************************************************************************
@@ -154,7 +155,7 @@ std::ostream& operator<<(std::ostream& o,const Fsk& Fsk_)
   o << "# time   F_s'(k)   F_s''(k)\n";
   for (int i=0; i<Fsk_.Fsk_.size(); i++)
     o << i*Fsk_.deltat << "  " << Fsk_.Fsk_[i].real()
-      << "  " << Fsk_.Fsk_[i].imag();
+      << "  " << Fsk_.Fsk_[i].imag() << '\n';
 }
 
 } /* namespace */
