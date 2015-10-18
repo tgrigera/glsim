@@ -695,14 +695,20 @@ HDF_record_file::read_function<std::string>(std::string *field)
  *
  */
 
+/** \class H5_multi_file
+    \ingroup HDF
+    \brief Read-only access to a colleciton of H5_record_files
+*/
 class H5_multi_file {
 public:
   H5_multi_file(std::vector<std::string> filelist,
 		HDF_record_file &fileob);  ///< Create object and open first file
-  /// reads and returns true if there is more data
+  /// Reads and returns true if there is more data
   bool          read();
-  /// returns true if last read operation exhausted all data
+  /// Returns true if last read operation exhausted all data
   bool          eof();
+  /// Reset position so that next read returns the first record of the first file
+  H5_multi_file& rewind();
 
 private:
   /// Returns true if opened new file, false if currently open file is the last one
