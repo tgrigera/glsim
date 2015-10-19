@@ -61,9 +61,6 @@ all-local: doxyfile.stamp
 
 all-local: html
 
-clean-local:
-	rm -rf $(top_srcdir)/docs/man
-
 EXTRA_DIST = doxy.conf.in
 
 #
@@ -76,4 +73,4 @@ DISTCLEANFILES = version.tex
 MAINTAINERCLEANFILES = *.tex *.def
 
 clean-local:
-	rm -rf html man
+	rm -rf html man latex

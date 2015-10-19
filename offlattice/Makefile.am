@@ -22,8 +22,9 @@ AM_CPPFLAGS = -I$(top_srcdir)/blib
 #
 
 pkginclude_HEADERS = h5md.hh olconfiguration.hh interactions.hh ld.hh	\
-		     lj.hh mc.hh mdenvironment.hh mdobservable.hh	\
-		     md.hh nneighbours.hh trajectory.hh
+		     lj.hh mc.hh mcobservable.hh mdenvironment.hh	\
+		     mdobservable.hh md.hh nneighbours.hh		\
+		     trajectory.hh
 
 #
 # Offlattice library
