@@ -57,7 +57,8 @@ class NearestNeighbours {
 public:
   struct Pair {int first,second; Pair(int i,int j) : first(i),second(j) {} } ;
 
-  NearestNeighbours(double rc_) : rc(rc_) {}
+  NearestNeighbours(double rc_) : topological(false), rc(rc_) {}
+  NearestNeighbours(int Nnearest_) : topological(true), Nnearest(Nnearest_) {}
   virtual ~NearestNeighbours() {}
   virtual void rebuild(OLconfiguration&,double rc=-1)=0;  ///< Build lists from scratch for given conf
   virtual void rebuild(OLconfiguration&,int n)=0; ///< Build list from scratch for n neighbour case, does not build pair list since it has no meaning in this case
@@ -69,6 +70,8 @@ public:
   virtual std::vector<int>::iterator neighbours_end(int i)=0;
 
 protected:
+  bool   topological;
+  int    Nnearest,
   double rc;
 } ;
 
@@ -87,7 +90,6 @@ class NeighbourList_naive : public NearestNeighbours {
 public:
   NeighbourList_naive(double rc,double delta_r=-1);
   void rebuild(OLconfiguration&,double rc=-1);
-  void rebuild(OLconfiguration&,int n);
   void update(OLconfiguration&,double maxdisp);
 
   std::vector<Pair>::iterator pair_begin() {return pairs.begin();}
@@ -99,10 +101,39 @@ private:
   std::vector<Pair> pairs;
   std::vector<std::vector<int>>  neighbours;
 
-  bool   topological;
-  int    Nnearest;
   double rdsq,delta_r;
   double accum_maxdisp;
+} ;
+
+/** \class TopologicalNeighbours_naive
+    \ingroup OfflatticeINT
+
+    This produces pairs of nearests neighbours, found with the usual
+    Euclidean distance, but for each particle finds exactly N nearest
+    neighbours, thus leading to potentially non-symmetric interaction
+    matrices.  Implementation is naive (linear search of neighbours
+    for each particle).  It is rather slow and meant mainly as a check
+    for implementations with better algorithms.
+*/
+class TopologicalNeighbours_naive : public NearestNeighbours {
+public:
+  TopologicalNeighbours_naive(int Nnearest) :
+    NearestNeighbours(Nnearest) {};
+  void rebuild(OLconfiguration&,int Nnearest=-1);
+  void update(OLconfiguration&,double maxdisp);
+
+  std::vector<Pair>::iterator pair_begin() {return pairs.begin();}
+  std::vector<Pair>::iterator pair_end() {return pairs.end();}
+  std::vector<int>::iterator neighbours_begin(int i) {return neighbours[i].begin();}
+  std::vector<int>::iterator neighbours_end(int i) {return neighbours[i].end();}
+
+private:
+  struct ndist {int n; double dsq;};
+  std::vector<Pair> pairs;
+  //  std::vector<std::vector<int>>  neighbours;
+  std::vector<std::vector<int>>  neighbours;
+
+  int Nnearest;
 } ;
 
 
