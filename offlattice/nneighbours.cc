@@ -34,6 +34,7 @@
  *
  */
 
+#include <queue>
 #include "nneighbours.hh"
 
 namespace glsim {
@@ -45,7 +46,7 @@ namespace glsim {
  */
 
 NeighbourList_naive::NeighbourList_naive(double rc_,double delta_r_) :
-  NearestNeighbours(rc_),
+  MetricNearestNeighbours(rc_),
   delta_r(delta_r_),
   accum_maxdisp(0.)
 {
@@ -92,19 +93,17 @@ void NeighbourList_naive::update(OLconfiguration& conf,double maxdisp)
 void TopologicalNeighbours_naive::rebuild(OLconfiguration& conf,int Nnearest_)
 {
   if (Nnearest_>0) Nnearest=Nnearest_;
-}
 
-vu()
-{
+  struct comp {
+    bool operator()(ndist& a,ndist& b) {return a.dsq<b.dsq;}
+  } ;
+
   neighbours.clear();
   neighbours.resize(conf.N);
-  pairs.clear();
 
-
-  std::priority_queue<ndist,std::vector<ndist>,comp> candidates;
+  std::priority_queue<ndist,std::vector<ndist>,comp>  candidates;
 
   for (size_t i=0; i<conf.N; ++i) {
-    candidates.clear();
     for (size_t j=0; j<conf.N; ++j) {
       if (i==j) continue;
       double dsq=conf.distancesq(i,j);
@@ -115,16 +114,13 @@ vu()
 	candidates.push(ndist(j,dsq));
       }
     }
+    while (!candidates.empty()) {
+      neighbours[i].push_back(candidates.top().n);
+      candidates.pop();
+    }
   }
-	
-
-// 	pairs.push_back(Pair(i,j));
-// 	neighbours[i].push_back(j);
-// 	neighbours[j].push_back(i);
-//       }
-// }
-
 }
+
 
 #ifdef UFA
 class TopologicalNeighbours_naive::neighbour_iterator :

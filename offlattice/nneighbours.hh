@@ -34,6 +34,7 @@
  *
  */
 
+#include <utility>
 #include <vector>
 
 #include "olconfiguration.hh"
@@ -43,26 +44,36 @@
 
 namespace glsim {
 
-/** \class NearestNeighbours
+/*****************************************************************************
+ *
+ * Metric nearest neighbours
+ *
+ */
+
+/** \class MetricNearestNeighbours
     \ingroup OfflatticeINT
 
-    NearestNeighbours is an abstract base class that serves as front
-end to different implementations of nearest-neighbour search.  It
-supports rebuilding on demand or updates (which may imply complete
-rebuilding) controlled by the maximum modulus of particle
-displacements.
+    MetricNearestNeighbours is an abstract base class that serves as
+front end to different implementations of metric nearest-neighbour
+search (i.e. neighbours defined as those lying at a distance less than
+some value, contrast with TopologicalNearestNeighbours).  It supports
+rebuilding on demand or updates (which may imply complete rebuilding)
+controlled by the maximum modulus of particle displacements.
 
 */
-class NearestNeighbours {
+class MetricNearestNeighbours {
 public:
-  struct Pair {int first,second; Pair(int i,int j) : first(i),second(j) {} } ;
+  typedef std::pair<int,int> Pair;
+  
+  MetricNearestNeighbours(double rc_) : rc(rc_) {}
+  virtual ~MetricNearestNeighbours() {}
 
-  NearestNeighbours(double rc_) : topological(false), rc(rc_) {}
-  NearestNeighbours(int Nnearest_) : topological(true), Nnearest(Nnearest_) {}
-  virtual ~NearestNeighbours() {}
-  virtual void rebuild(OLconfiguration&,double rc=-1)=0;  ///< Build lists from scratch for given conf
-  virtual void rebuild(OLconfiguration&,int n)=0; ///< Build list from scratch for n neighbour case, does not build pair list since it has no meaning in this case
-  virtual void update(OLconfiguration&,double)=0; ///< Inform of change in configuration, will try to update lists assuming particles have not moved much, may rebuild everything from scratch
+  /// Build lists from scratch for given conf
+  virtual void rebuild(OLconfiguration&,double rc=-1)=0;
+ /// Inform of change in configuration, will try to update lists
+ /// assuming particles have not moved much, may rebuild everything
+ /// from scratch
+  virtual void update(OLconfiguration&,double)=0;
 
   virtual std::vector<Pair>::iterator pair_begin()=0;
   virtual std::vector<Pair>::iterator pair_end()=0;
@@ -70,11 +81,8 @@ public:
   virtual std::vector<int>::iterator neighbours_end(int i)=0;
 
 protected:
-  bool   topological;
-  int    Nnearest,
   double rc;
 } ;
-
 
 /** \class NeighbourList_naive
     \ingroup OfflatticeINT
@@ -86,7 +94,7 @@ protected:
     than 200 particles, at least for potentials with relatively short
     cut-offs (such as the repulsive Lennard-Jones).
 */
-class NeighbourList_naive : public NearestNeighbours {
+class NeighbourList_naive : public MetricNearestNeighbours {
 public:
   NeighbourList_naive(double rc,double delta_r=-1);
   void rebuild(OLconfiguration&,double rc=-1);
@@ -105,35 +113,69 @@ private:
   double accum_maxdisp;
 } ;
 
+
+/*****************************************************************************
+ *
+ * Topological nearest neighbours
+ *
+ */
+
+/** \class TopologicalNearestNeighbours
+    \ingroup OfflatticeINT
+
+    TopologicalNearestneighbours is an abstract base class that serves
+as front end to different implementations of topological
+nearest-neighbour search (i.e. neighbourhoods with a fixed number of
+nearest neighbours, contrast with MetricNearestNeighbours), thus
+leading to potentially non-symmetric interaction matrices.  It
+supports rebuilding on demand or updates (which may imply complete
+rebuilding) controlled by the maximum modulus of particle
+displacements.
+*/
+class TopologicalNearestNeighbours {
+public:
+  TopologicalNearestNeighbours(int Nnearest_) : Nnearest(Nnearest_) {}
+  virtual ~TopologicalNearestNeighbours() {}
+
+  /// Build list from scratch (depending on the actual algorithm, this
+  /// may not actually build a list, but will reinitialize everything
+  /// for a new configuration).
+  virtual void rebuild(OLconfiguration&,int n)=0;
+  /// Inform of change in configuration, will try to update lists
+  /// assuming particles have not moved much, may rebuild everything
+  /// from scratch
+  virtual void update(OLconfiguration&,double)=0;
+
+  virtual std::vector<int>::iterator neighbours_begin(int i)=0;
+  virtual std::vector<int>::iterator neighbours_end(int i)=0;
+
+protected:
+  int    Nnearest;
+} ;
+
 /** \class TopologicalNeighbours_naive
     \ingroup OfflatticeINT
 
     This produces pairs of nearests neighbours, found with the usual
     Euclidean distance, but for each particle finds exactly N nearest
-    neighbours, thus leading to potentially non-symmetric interaction
-    matrices.  Implementation is naive (linear search of neighbours
+    neighbours,  Implementation is naive (linear search of neighbours
     for each particle).  It is rather slow and meant mainly as a check
     for implementations with better algorithms.
 */
-class TopologicalNeighbours_naive : public NearestNeighbours {
+class TopologicalNeighbours_naive : public TopologicalNearestNeighbours {
 public:
   TopologicalNeighbours_naive(int Nnearest) :
-    NearestNeighbours(Nnearest) {};
+    TopologicalNearestNeighbours(Nnearest) {};
   void rebuild(OLconfiguration&,int Nnearest=-1);
-  void update(OLconfiguration&,double maxdisp);
+  // maybe this makes no sense:
+  void update(OLconfiguration& c,double maxdisp) {rebuild(c);}
 
-  std::vector<Pair>::iterator pair_begin() {return pairs.begin();}
-  std::vector<Pair>::iterator pair_end() {return pairs.end();}
   std::vector<int>::iterator neighbours_begin(int i) {return neighbours[i].begin();}
   std::vector<int>::iterator neighbours_end(int i) {return neighbours[i].end();}
 
 private:
-  struct ndist {int n; double dsq;};
-  std::vector<Pair> pairs;
-  //  std::vector<std::vector<int>>  neighbours;
+  struct ndist {int n; double dsq; ndist(int n_,double d_) : n(n_), dsq(d_){} };
   std::vector<std::vector<int>>  neighbours;
-
-  int Nnearest;
 } ;
 
 
