@@ -35,6 +35,7 @@
  */
 
 #include <fstream>
+#include <float.h>
 
 #include "environment.hh"
 

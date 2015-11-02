@@ -174,13 +174,15 @@ potential_energy(OLconfiguration& conf)
   double E;
 
   E=0;
-  for (n=0; n<conf.N-1; n++) {
+  for (n=0; n<conf.N; n++) {
     double rn[3];
     rn[0]=conf.r[n][0];
     rn[1]=conf.r[n][1];
     rn[2]=conf.r[n][2];
     int    typen=conf.type[n];
-    E+=PP.external_field(rn,typen);
+
+    if (PP.has_efield())
+      E+=PP.external_field(rn,typen);
     
     for (m=n+1; m<conf.N; m++) {
       int    typem=conf.type[m];
@@ -205,7 +207,7 @@ force_and_potential_energy(OLconfiguration &conf)
   double vpr,Et,E=0,force[3];
   memset(conf.a,0,3*conf.N*sizeof(double));
 
-  for (int n=0; n<conf.N-1; n++) { 
+  for (int n=0; n<conf.N; n++) { 
     double rn[3];
     memcpy(rn,conf.r[n],3*sizeof(double));
     int typen=conf.type[n];
@@ -437,7 +439,7 @@ find the particles within the cut-off distance.
 template <typename potential>
 class Interactions_isotropic_pairwise : public Interactions {
 public:
-  Interactions_isotropic_pairwise(potential &P,OLconfiguration&,NearestNeighbours *NN=0);
+  Interactions_isotropic_pairwise(potential &P,OLconfiguration&,MetricNearestNeighbours *NN=0);
   ~Interactions_isotropic_pairwise();
   const  char *name() const;
   double mass(short type) const {return PP.mass(type);}
@@ -452,8 +454,8 @@ public:
 private:
   potential& PP;
 
-  bool               own_NN;
-  NearestNeighbours* NN;
+  bool                     own_NN;
+  MetricNearestNeighbours* NN;
 } ;
 
 template <typename potential> inline void Interactions_isotropic_pairwise<potential>::
@@ -472,7 +474,7 @@ The last argument is a pointer to a NearestNeighbour objetc.  If null
 */
 template <typename potential> inline
 Interactions_isotropic_pairwise<potential>::
-Interactions_isotropic_pairwise(potential &p,OLconfiguration& c,NearestNeighbours *n) :
+Interactions_isotropic_pairwise(potential &p,OLconfiguration& c,MetricNearestNeighbours *n) :
   Interactions(), PP(p)
 {
   PP.init(c);
@@ -507,10 +509,9 @@ potential_energy(OLconfiguration& conf)
   double E;
 
   E=0;
-  if (PP.has_efield()) {
-    for (n=0; n<conf.N-1; n++)
+  if (PP.has_efield())
+    for (n=0; n<conf.N; n++)
       E+=PP.external_field(conf.r[n],conf.type[n]);
-  }
 
   for (auto p = NN->pair_begin(); p!=NN->pair_end(); ++p) {
       int    typen=conf.type[p->first];
@@ -536,7 +537,7 @@ force_and_potential_energy(OLconfiguration &conf)
   memset(conf.a,0,3*conf.N*sizeof(double));
 
   if (PP.has_efield()) {
-    for (int n=0; n<conf.N-1; n++) { 
+    for (int n=0; n<conf.N; n++) { 
       E+=PP.external_field(conf.r[n],conf.type[n],force);
       conf.a[n][0]+=force[0];
       conf.a[n][1]+=force[1];
@@ -573,7 +574,7 @@ acceleration_and_potential_energy(OLconfiguration &conf)
   memset(conf.a,0,3*conf.N*sizeof(double));
 
   if (PP.has_efield()) {
-    for (int n=0; n<conf.N-1; n++) { 
+    for (int n=0; n<conf.N; n++) { 
       E+=PP.external_field(conf.r[n],conf.type[n],force);
       conf.a[n][0]+=force[0]/PP.mass(conf.type[n]);
       conf.a[n][1]+=force[1]/PP.mass(conf.type[n]);
