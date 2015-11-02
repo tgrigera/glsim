@@ -58,8 +58,9 @@ gs_traj2h5md_SOURCES = traj2h5md.cc
 # Test programs
 #
 
-check_PROGRAMS = pseudo-md
+check_PROGRAMS =  neighbour_test pseudo-md
 
+neighbour_test_SOURCES = neighbour_test.cc
 pseudo_md_SOURCES = pseudo-md.cc
 
 

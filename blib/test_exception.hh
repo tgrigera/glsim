@@ -37,7 +37,7 @@
 #ifndef TEST_EXCEPTION_HH
 #define TEST_EXCEPTION_HH
 
-#include "../blib/exception.hh"
+#include "exception.hh"
 
 class Test_failure : public glsim::Logic_error {
 public:
