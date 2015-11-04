@@ -35,7 +35,7 @@
  */
 
 #include <string.h>
-#include <math.h>
+#include <cmath>
 #include <utility>
 #include <unordered_map>
 
@@ -64,6 +64,7 @@ OLconfiguration::~OLconfiguration()
   delete[] r;
   delete[] v;
   delete[] a;
+  delete[] reference_r;
   N=0;
 }
 
@@ -72,7 +73,8 @@ OLconfiguration::OLconfiguration(const OLconfiguration& o) :
   N(o.N),
   time(o.time),
   step(o.step),
-  id(0), type(0), flags(0), r(0), v(0), a(0)
+  id(0), type(0), flags(0), r(0), v(0), a(0),
+  reference_N(o.reference_N), reference_r(0)
 {
   memcpy(box_length,o.box_length,3*sizeof(double));
   memcpy(box_angles,o.box_angles,3*sizeof(double));
@@ -82,6 +84,8 @@ OLconfiguration::OLconfiguration(const OLconfiguration& o) :
   if (o.r) {r=new double[N][3]; memcpy(r,o.r,3*N*sizeof(double));}
   if (o.v) {v=new double[N][3]; memcpy(v,o.v,3*N*sizeof(double));}
   if (o.a) {a=new double[N][3]; memcpy(a,o.a,3*N*sizeof(double));}
+  if (o.reference_r) {reference_r=new double[N][3];
+    memcpy(reference_r,o.reference_r,3*N*sizeof(double));}
 }
 
 OLconfiguration& OLconfiguration::operator=(const OLconfiguration& c)
@@ -93,12 +97,14 @@ OLconfiguration& OLconfiguration::operator=(const OLconfiguration& c)
   step=c.step;
   memcpy(box_length,c.box_length,3*sizeof(double));
   memcpy(box_angles,c.box_angles,3*sizeof(double));
+  reference_N=0;
   delete[] id; id=0;
   delete[] type; type=0;
   delete[] flags; flags=0;
   delete[] r; r=0;
   delete[] v; v=0;
   delete[] a; a=0;
+  delete[] reference_r; reference_r=0;
   if (c.id) {id=new short[N]; memcpy(id,c.id,N*sizeof(short));}
   if (c.type) {type=new short[N]; memcpy(type,c.type,N*sizeof(short));}
   if (c.flags) {flags=new short[N]; memcpy(flags,c.flags,N*sizeof(short));}
@@ -170,6 +176,57 @@ void OLconfiguration::fold_coordinates()
   x[0]-=box_length[0]*floor(x[0]/box_length[0]);
   x[1]-=box_length[1]*floor(x[1]/box_length[1]);
   x[2]-=box_length[2]*floor(x[2]/box_length[2]);
+}
+
+/** 
+  Unfold all coordinates using an internal reference.  On the first
+  call, positions are not changed but a private copy of them is made
+  to use as reference on the next call.  On successive calls, the
+  current positions are unfolded (calling unfold_coordinates(r)) wrt
+  the private reference, and the private reference is updated to the
+  new positions.  In this way, an unfolded trajectory can be
+  reconstructed by successively reading and unfolding.  Of course this
+  will fail if the trajectory contains snapshots recorded too far
+  apart, or if the simulation involves nonlocal moves.
+
+  The stored private reference is copied upon copy construction, but
+  invalidated on assingment.
+ */
+void OLconfiguration::unfold_coordinates()
+{
+  if (reference_r!=0 && reference_N==N)
+    // We have a valid private reference, unfold wrt to it
+    unfold_coordinates(reference_r);
+  else {
+    // No valid private reference, initialize it
+    reference_N=N;
+    delete[] reference_r;
+    reference_r=new double[N][3];
+  }
+  
+  // Update private reference
+  memcpy(reference_r,r,3*N*sizeof(double));
+}
+
+/**
+ Call this function to unfold all coordinates (i.e. undo previous
+ folding into the periodic box done with fold_coordinates()).  This
+ works by assuming the new configuration has been obtained by
+ displacing the given reference positions by a small amount (e.g. by
+ doing a few molecular dynamic steps).  It won't work if the reference
+ positions are too far apart (in simulation time) from the current
+ configuration, or if the simulation does nonlocal moves.
+
+ \param[in]  ref  Pointer to reference positions.
+
+ */
+void OLconfiguration::unfold_coordinates(double (*ref)[3])
+{
+  for (int i=0; i<N; i++) {
+    r[i][0] = ref[i][0] + ddiff(r[i][0],ref[i][0],box_length[0]);
+    r[i][1] = ref[i][1] + ddiff(r[i][1],ref[i][1],box_length[1]);
+    r[i][2] = ref[i][2] + ddiff(r[i][2],ref[i][2],box_length[2]);
+  }
 }
 
 /*

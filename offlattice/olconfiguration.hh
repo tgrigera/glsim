@@ -86,6 +86,8 @@ public:
 
   /// @}@{ \name Periodic boundary conditions
   void fold_coordinates();     ///< Move all particles inside the primary box (shifting by a multiple of the box length)
+  void unfold_coordinates(double (*ref)[3]); ///< Undo periodic folding, using a proided reference configuration
+  void unfold_coordinates(); ///< Undo periodic folding, using internal reference configuration
   void fold_one(double x[]);   ///< Apply PBCs to one particle
   /// @}
 
@@ -101,6 +103,9 @@ public:
 
   // void ApplyCubicSymmetry(OLconfiguration&,int n);
 
+private:
+  int       reference_N;
+  double    (*reference_r)[3];
 } ;
 
 inline OLconfiguration::OLconfiguration() :
@@ -108,7 +113,8 @@ inline OLconfiguration::OLconfiguration() :
   N(0),
   time(0),
   step(0),
-  id(0), type(0), flags(0), r(0), v(0), a(0)
+  id(0), type(0), flags(0), r(0), v(0), a(0),
+  reference_N(0), reference_r(0)
 {
   box_length[0]=box_length[1]=box_length[2]=0;
   box_angles[0]=box_angles[1]=box_angles[2]=0;
@@ -119,7 +125,8 @@ inline OLconfiguration::OLconfiguration(const std::string &title) :
   N(0),
   time(0),
   step(0),
-  id(0), type(0), flags(0), r(0), v(0)
+  id(0), type(0), flags(0), r(0), v(0),
+  reference_N(0), reference_r(0)
 {
   box_length[0]=box_length[1]=box_length[2]=0;
   box_angles[0]=box_angles[1]=box_angles[2]=0;
