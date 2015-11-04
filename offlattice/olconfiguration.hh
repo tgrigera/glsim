@@ -37,7 +37,7 @@
 #ifndef OLCONFIGURATION_HH
 #define OLCONFIGURATION_HH
 
-#include <math.h>
+#include <cmath>
 
 #include "configuration.hh"
 #include "exception.hh"
@@ -130,14 +130,13 @@ inline OLconfiguration::OLconfiguration(const std::string &title) :
  *
  */
 
-
 /** Returns a-b shifted by periodic images as necessary so that |a-b|<box/2
  */
 inline double OLconfiguration::ddiff(const double a,const double b,
 				     const double box_length) const
 {
   double temp=a-b;
-  return temp-box_length*rint(temp/box_length);
+  return temp-box_length*round(temp/box_length);
 }
 
 inline double OLconfiguration::distancesq(const double x[],
