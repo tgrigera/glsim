@@ -62,14 +62,21 @@ for an isotropic system. Its definition is
 
 On construction the user sets the modulus of the wavevector, $k$, and
 the class will choose a user-specified number of random directions and
-average over them.  The calculatio uses the FFT-based time correlation
-functions.
+average over them.  The calculation uses the FFT-based time
+correlation functions.
 
 The way to use this class is to create an object, then push() the
 desired configurations (assumed sequential and uniformly separated in
 time) and finally call compute_Fk() to obtain the scattering function.
 Data can be accessed through Fk_data() or printed in table form with
 the overload of operator<<().
+
+Remember to unfold coordinates (see
+OLConfiguration::unfold_coordinates()) before pushing if using a
+periodic simulation box.
+
+Note that a random number generator (glsim::Random_number_generator)
+must be created before creating this object.
 */
 class Fk {
 public:
@@ -108,6 +115,14 @@ desired configurations (assumed sequential and uniformly separated in
 time) and finally call compute_Fsk() to obtain the desired function.
 Data can be accessed through Fsk_data() or printed in table form with
 the overload of operator<<().
+
+Remember to unfold coordinates (see
+OLConfiguration::unfold_coordinates()) before pushing if using a
+periodic simulation box.
+
+Note that a random number generator (glsim::Random_number_generator)
+must be created before creating this object.  It is used to generate
+on random direction for the wavevector.
 */
 class Fsk {
 public:

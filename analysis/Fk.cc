@@ -85,9 +85,9 @@ void CLoptions::show_usage()
     << " Options:\n"
     << "   --self,-s    compute only the self part F_s(k) (default is the full F(k,t)\n"
     << "   --nave,-n nn do nn averages over random directions of the wavevector\n"
-    << "                (does not apply to -S, where the average is over particles),\n"
+    << "                (does not apply for -s, where average is over particles),\n"
     << "                default 10\n"
-    << "   --seed,S n   random number seed\n"
+    << "   --seed,S n   random number seed (with -s used only to generate one random directio)\n"
     << "   --help,-h    show this help\n"
     << "\n";
 }
@@ -121,12 +121,18 @@ void wmain(int argc,char *argv[])
   double deltat=get_deltat(ifs,conf);
   if (options.self_part) {
     glsim::Fsk F(options.k,deltat);
-    while (ifs.read()) F.push_config(conf.r,conf.N);
+    while (ifs.read()) {
+      conf.unfold_coordinates(),
+      F.push_config(conf.r,conf.N);
+    }
     F.compute_Fsk();
     std::cout << F;
   } else {
     glsim::Fk F(options.k,deltat,options.nave);
-    while (ifs.read()) F.push_config(conf.r,conf.N);
+    while (ifs.read()) {
+      conf.unfold_coordinates(),
+      F.push_config(conf.r,conf.N);
+    }
     F.compute_Fk();
     std::cout << F;
   }
