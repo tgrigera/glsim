@@ -125,7 +125,7 @@ void CLoptions::show_usage()
     << "  -a,--alpha arg       Set alpha=arg. Output will be tau with\n"
     << "                       jacknife error.\n"
     << "  -i,--integral-test   Do integral test\n"
-    << "  -t,--alpha-test arg  Do alpha test with alpha=10, 20, ..., arg\n"
+    << "  -t,--alpha-test arg  Do alpha test with alpha=1,2,..., arg\n"
     << "  -T,--terse           Be terse, suppress header\n"
     << "  -h,--help            Show this help\n"
     << '\n';
@@ -192,7 +192,7 @@ void tau_jacknife(corr_list_t &corr,double deltat)
 void tau_alphatest(corr_list_t &corr,double alphamax,double deltat)
 {
   std::cout << "# alpha tau\n";
-  for (double alpha=1; alpha<=alphamax; alpha+=2.) {
+  for (double alpha=1; alpha<=alphamax; alpha+=1.) {
     double tau=tau_nsamp(corr,alpha,deltat);
     std:: cout << alpha << "  " << tau << '\n';
   }
