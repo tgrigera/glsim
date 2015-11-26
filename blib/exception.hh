@@ -173,6 +173,7 @@ public:
 		     const Source_context &c=Source_context()) : 
     Runtime_error(std::string("GSL error: ") + gsl_strerror(gsl_ecode))
   {}
+  ~GSL_error() throw() {}
 } ;
 
 
