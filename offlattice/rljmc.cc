@@ -1,5 +1,5 @@
 /*
- * ljmc.cc -- Simple Metropolis Monte Carlo of Lennard-Jones particles
+ * rljmc.cc -- Simple Metropolis Monte Carlo of Lennard-Jones particles
  *
  * This file is part of glsim, a numerical simulation class library and
  * helper programs.
@@ -34,9 +34,9 @@
  *
  */
 
-/** \file ljmc.cc
+/** \file rljmc.cc
     \ingroup Offlattice
-    \brief Metropolis Monte Carlo of Lennard-Jones particles
+    \brief Metropolis Monte Carlo of repulsive Lennard-Jones particles
 */
 
 #include "olconfiguration.hh"
@@ -49,15 +49,15 @@ void wmain(int argc, char *argv[])
 {
   glsim::MCEnvironment  env;
   glsim::OLconfiguration conf;
-  glsim::LennardJones LJ(env.scope());
+  glsim::RepulsiveLennardJones LJ(env.scope());
   glsim::MCObservable obs(env,conf);
-  glsim::SimulationCL CL("GS_ljmd","(C) 2015 Tomas S. Grigera",env.scope());
+  glsim::SimulationCL CL("GS_rljmd","(C) 2015 Tomas S. Grigera",env.scope());
   glsim::Trajectory traj(env,conf,glsim::OLconfig_file::options().r_frame());
 
   CL.parse_command_line(argc,argv);
   glsim::prepare(CL,env,conf);
 
-  glsim::Interactions_isotropic_pairwise<glsim::LennardJones>
+  glsim::Interactions_isotropic_pairwise<glsim::RepulsiveLennardJones>
     inter(LJ,conf);
   glsim::MC sim(env,conf,&inter);
   traj.observe_first();  // This is mandatory!

@@ -36,7 +36,7 @@
 
 /** \file ljmd.cc
     \ingroup Offlattice
-    \brief Molecular dynamics of repulsive Lennard-Jones particles
+    \brief Molecular dynamics of Lennard-Jones particles
 */
 
 #include "olconfiguration.hh"
@@ -50,7 +50,7 @@ void wmain(int argc, char *argv[])
 {
   glsim::MDEnvironment  env;
   glsim::OLconfiguration conf;
-  glsim::RepulsiveLennardJones LJ(env.scope());
+  glsim::LennardJones LJ(env.scope());
   glsim::MDObservable obs(env,conf);
   glsim::SimulationCL CL("GS_ljmd","(C) 2015 Tomas S. Grigera",env.scope());
   glsim::Trajectory traj(env,conf,glsim::OLconfig_file::options().r_frame());
@@ -58,7 +58,7 @@ void wmain(int argc, char *argv[])
   CL.parse_command_line(argc,argv);
   glsim::prepare(CL,env,conf);
 
-  glsim::Interactions_isotropic_pairwise<glsim::RepulsiveLennardJones>
+  glsim::Interactions_isotropic_pairwise<glsim::LennardJones>
     inter(LJ,conf);
   glsim::VVerletMD sim(env,conf,&inter);
   obs.observe_first();   // This is optional
