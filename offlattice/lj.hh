@@ -140,7 +140,7 @@ serialize(Archive &ar,const unsigned int version)
 */
 class RepulsiveLennardJones {
 public:
-  RepulsiveLennardJones(const char *scope);
+  RepulsiveLennardJones(const char *scope=Parameters::default_scope);
   void init(OLconfiguration &c);
   const char* name() const {return "Purely repulsive Lennard-Jones particles";}
   bool within_cutoff(double dsq,int ta,int tb)
@@ -360,7 +360,7 @@ serialize(Archive &ar,const unsigned int version)
 */
 class LennardJones {
 public:
-  LennardJones(const char *scope);
+  LennardJones(const char *scope=Parameters::default_scope);
   void init(OLconfiguration &c);
   const char* name() const {return "Standard Lennard-Jones particles";}
   bool within_cutoff(double dsq,int ta,int tb)
