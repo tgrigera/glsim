@@ -67,7 +67,7 @@ void CLoptions::show_usage()
 {
   std::cerr
     << "usage: " << progname << "ifile [ifile ....]\n\n"
-    << "Copy configurations from ifile to ofile\n"
+    << "Dump information about configurations\n"
     << "\n";
 }
 
