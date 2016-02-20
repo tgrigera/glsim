@@ -34,8 +34,8 @@
  *
  */
 
-#ifndef LJ_JH
-#define LJ_JH
+#ifndef LJ_HH
+#define LJ_HH
 
 #include <math.h>
 
@@ -491,4 +491,4 @@ BOOST_CLASS_VERSION(glsim::RepulsiveLennardJones_environment,
 BOOST_CLASS_VERSION(glsim::LennardJones_environment,
 		    glsim::LennardJones_environment::class_version);
 
-#endif /* LJ_JH */
+#endif /* LJ_HH */

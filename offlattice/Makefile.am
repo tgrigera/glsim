@@ -43,12 +43,14 @@ libglsim_ol_la_SOURCES = h5md.cc olconfiguration.cc interactions.cc	\
 
 LDADD=$(top_builddir)/blib/libglsim.la libglsim_ol.la
 
-bin_PROGRAMS = gs_olconf_cat gs_olconf_create gs_olconf_dump gs_ljld	\
-               gs_ljmc gs_ljmd gs_rljmc gs_rljmd gs_traj2h5md
+bin_PROGRAMS = gs_olconf_cat gs_olconf_create gs_olconf_dump	\
+	gs_ljenergy gs_ljld gs_ljmc gs_ljmd gs_rljmc gs_rljmd	\
+	gs_traj2h5md
 
 gs_olconf_cat_SOURCES = olconf_cat.cc
 gs_olconf_create_SOURCES = olconf_create.cc
 gs_olconf_dump_SOURCES = olconf_dump.cc
+gs_ljenergy_SOURCES = ljenergy.cc
 gs_ljld_SOURCES = ljld.cc
 gs_ljmc_SOURCES = ljmc.cc
 gs_ljmd_SOURCES = ljmd.cc
