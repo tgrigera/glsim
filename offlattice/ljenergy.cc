@@ -80,9 +80,12 @@ void CLoptions::show_usage()
 {
   std::cerr
     << "\nusage: " << progname << " [options] ifile [..]\n\n"
+    << "Computes the energy of the given configurations.\n"
     << "Input files can be trajectory or configuration files.\n"
-    << "\nOptions:\n"
-    << "\n";
+    << "\nOptions:\n";
+  show_parameters(std::cerr);
+  show_base_utility_parameters(std::cerr);
+  std::cerr  << "\n";
 }
 
 /*****************************************************************************

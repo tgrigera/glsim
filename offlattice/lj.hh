@@ -63,9 +63,9 @@ RepulsiveLennardJones_parameters(const char* scope) :
   Parameters(scope)
 {
   parameter_file_options().add_options()
-    ("RLJ.sigma",po::value<double>(),"LJ length scale")
-    ("RLJ.epsilon",po::value<double>(),"LJ energy scale")
-    ("RLJ.mass",po::value<double>(),"particle mass")
+    ("RLJ.sigma",po::value<double>()->default_value(1),"LJ length scale")
+    ("RLJ.epsilon",po::value<double>()->default_value(1),"LJ energy scale")
+    ("RLJ.mass",po::value<double>()->default_value(1),"particle mass")
     ;
 }
 
@@ -90,6 +90,7 @@ private:
   template <typename Archive>
   void serialize(Archive &ar,const unsigned int version);
   friend class boost::serialization::access;
+  friend class RepulsiveLennardJones;
 
 public:
   static const int class_version=1;
@@ -177,6 +178,8 @@ RepulsiveLennardJones(const char *scope) :
 inline void RepulsiveLennardJones::
 init(OLconfiguration &c)
 {
+  if (env.initialized!=Environment::deflt) env.init_local();
+
   sigmasq=env.sigma*env.sigma;
   foureps=4.*env.epsilon;
   derivpf=48.*env.epsilon/sigmasq;
@@ -263,12 +266,12 @@ inline LennardJones_parameters::LennardJones_parameters(const char* scope) :
   Parameters(scope)
 {
   parameter_file_options().add_options()
-    ("LJ.sigma",po::value<double>(),"LJ length scale")
-    ("LJ.epsilon",po::value<double>(),"LJ energy scale")
-    ("LJ.rc",po::value<double>(),"LJ cutoff (in units of sigma)")
+    ("LJ.sigma",po::value<double>()->default_value(1),"LJ length scale")
+    ("LJ.epsilon",po::value<double>()->default_value(1),"LJ energy scale")
+    ("LJ.rc",po::value<double>()->default_value(3),"LJ cutoff (in units of sigma)")
     ("LJ.shift",po::bool_switch(),"If true, shift potential to 0 at cut-off")
     ("LJ.SFcutoff",po::bool_switch(),"If true, use Stoddard-Ford (quadratic) smooth cutoff, implies shift")
-    ("LJ.mass",po::value<double>(),"particle mass")
+    ("LJ.mass",po::value<double>()->default_value(1),"particle mass")
     ;
 }
 
@@ -294,6 +297,7 @@ private:
   void vserial(iarchive_t &ar) {ar >> *this;}
   template <typename Archive>
   void serialize(Archive &ar,const unsigned int version);
+  friend class LennardJones;
   friend class boost::serialization::access;
 
 public:
@@ -414,6 +418,7 @@ void LennardJones::init_constants()
 
 inline void LennardJones::init(OLconfiguration &c)
 {
+  if (env.initialized==Environment::deflt) env.init_local();
   init_constants();
 
   logs(info) << "Lennard-Jones parameters from environment are:\n"
