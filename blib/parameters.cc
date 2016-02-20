@@ -293,7 +293,7 @@ UtilityCL::UtilityCL(const char* name,const char *scope) :
 
 /**
 Parses the command line (through CLParameters::parse_comand_line())
-and act upon the help options (`--help` and `--version`),
+and acts upon the help options (`--help` and `--version`),
 displaying the requested help and throwing an
 exception to request an early stop.
 
@@ -343,6 +343,15 @@ void UtilityCL::show_version()
 {
   std::cerr << name_and_ver << " (part of glsim " << VERSION << ")\n";
   std::cerr << "Copyright (C) 2009-2015 Tomas S. Grigera <tgrigera@iflysib.unlp.edu.ar>\n";
+}
+
+void UtilityCL::show_base_utility_parameters(std::ostream& o)
+{
+  o
+    << "  -V,--verbose \t\tbe verbose\n"
+    << "  -T,--terse   \t\tbe terse, print as little as possible\n"
+    << "  --version    \t\tprint version and exit\n"
+    << "  -h,--help    \t\tshow usage message\n";
 }
 
 int StandardEC(int argc,char *argv[],void (*wmain)(int,char**))

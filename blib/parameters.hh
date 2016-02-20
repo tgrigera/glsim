@@ -286,6 +286,7 @@ class UtilityCL : public CLParameters {
 public:
   UtilityCL(const char* name,const char *scope=Parameters::default_scope);
   virtual void parse_command_line(int argc,char *argv[]);
+  void    show_base_utility_parameters(std::ostream&);  /// print help for base options (--help, etc)
 
 private:
   std::string name_and_ver;
