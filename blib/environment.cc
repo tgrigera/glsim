@@ -53,6 +53,7 @@ namespace glsim {
 Environment::scopemap_t  Environment::scopes;
 
 Environment::Environment(const char* scope) : 
+  initialized(deflt),
   scope_name(scope),
   ini_infix("+++"),
   fin_infix("xxx"),
@@ -86,9 +87,19 @@ Environment::~Environment()
 // If you do not wish to use the filename creation functions just
 // ignore them, it is not an error if the infixes are not declared.
 
-void Environment::warm_init_local() {Environment::init_local();}
+void Environment::warm_init_local()
+{
+  initialized=warm;
+  Environment::init_common();
+}
 
 void Environment::init_local()
+{
+  initialized=cold;
+  Environment::init_common();
+}
+
+void Environment::init_common()
 {
   if (par.count("initial_infix")>0)
       ini_infix=par.value("initial_infix").as<std::string>();

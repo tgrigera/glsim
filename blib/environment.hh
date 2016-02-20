@@ -77,6 +77,8 @@ but for instance, in a Monte Carlo simulation warm initialization
 would _not_ initialize the random number generator, while it _would_
 initialize the requested number of steps.
 
+The variable initialized is records the initialization method used.
+
 The user of the library will derive at least one class from
 BaseEnvironment below: that class has the full interface for loading
 and saving complete scopes, and will be typically manged from the
@@ -115,6 +117,7 @@ protected:
   /// Build final filename from arguments
   void final_filename(std::string& name,const std::string& prefix);
 
+  enum {deflt,warm,cold}  initialized;  /// Initialization method used
   std::string scope_name;
   std::string ini_infix,fin_infix,extension;
 
@@ -129,6 +132,8 @@ private:
   virtual void vserial(iarchive_t &ar);
   virtual void vserial(oarchive_t &ar);
   friend class boost::serialization::access;
+
+  void    init_common();
   template <typename Archive>
   void serialize(Archive &ar,const unsigned int version);
 
