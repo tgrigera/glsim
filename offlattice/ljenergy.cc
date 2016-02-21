@@ -34,84 +34,36 @@
  *
  */
 
-#include "../config.h"
-#include "parameters.hh"
-#include "random.hh"
-#include "cerrors.h"
-#include "olconfiguration.hh"
-#include "interactions.hh"
-#include "lj.hh"
-
-using namespace glsim;
-
 /** \file ljenergy.cc
 
 Compute energy of a set of configurations, with the LJ potential.
 
 */
 
-/*****************************************************************************
- *
- * options
- *
- */
+#include "olconfiguration.hh"
+#include "interactions.hh"
+#include "lj.hh"
 
-static struct ooptions {
-  std::vector<std::string>   ifiles;
+static glsim::LennardJones *LJ;
 
-} options;
-
-class CLoptions : public glsim::UtilityCL {
-public:
-  CLoptions();
-  void show_usage();
-} ;
-
-CLoptions::CLoptions() : UtilityCL("gs_ljenergy")
+// wmain will call this to create and return pointer to interactions
+// object ownership is taken by wmain
+glsim::Interactions* Interactions_object(glsim::OLconfiguration &conf)
 {
-  command_line_options().add_options()
-    ("ifiles",po::value<std::vector<std::string> >(&options.ifiles)->required(),"input files")
-    ;
-
-  positional_options().add("ifiles",-1);
+  return new
+    glsim::Interactions_isotropic_pairwise<glsim::LennardJones>(*LJ,conf);
 }
 
-void CLoptions::show_usage()
-{
-  std::cerr
-    << "\nusage: " << progname << " [options] ifile [..]\n\n"
-    << "Computes the energy of the given configurations.\n"
-    << "Input files can be trajectory or configuration files.\n"
-    << "\nOptions:\n";
-  show_parameters(std::cerr);
-  show_base_utility_parameters(std::cerr);
-  std::cerr  << "\n";
-}
 
-/*****************************************************************************
- *
- * main
- *
- */
+// main must call wmain through glsim::StandardEC, can create extra
+// objects needed for the interactions object
 
-void wmain(int argc,char *argv[])
-{
-  CLoptions    opt;
-  LennardJones LJ;
-  opt.parse_command_line(argc,argv);
-
-  OLconfiguration conf;
-  OLconfig_file cfile(&conf);
-  H5_multi_file ifs(options.ifiles,cfile);
-
-  while (ifs.read()) {
-    Interactions_isotropic_pairwise<LennardJones> inter(LJ,conf);
-    printf("%7ld %g %g %d\n",conf.step,conf.time,inter.potential_energy(conf), conf.N);
-  }
-}
+extern void wmain(int argc,char *argv[]);
 
 int main(int argc, char *argv[])
 {
-  return glsim::StandardEC(argc,argv,wmain);
+  LJ=new glsim::LennardJones;
+  int ret=glsim::StandardEC(argc,argv,wmain);
+  delete LJ;
+  return ret;
 }
-
