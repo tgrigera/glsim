@@ -190,10 +190,15 @@ public:
   {}
   /// Call the Boost parser
   virtual void parse_command_line(int argc,char *argv[],bool merge_options=true);
+  /// print help for (non hidden) parameters defined for the command line
+  virtual void show_command_line_options(std::ostream&) const;
+  virtual void show_usage() const =0;
 
 protected:
   /// Get object to define command line options
   po::options_description&            command_line_options();
+  /// Get object to define hidden command line options
+  po::options_description&            hidden_command_line_options();
   /// Get object to define positional options
   po::positional_options_description& positional_options();
   /// Call Boost::program_options() notify
@@ -202,7 +207,7 @@ protected:
   std::string                               progname;
 
 private:  
-  static po::options_description            CLoptions;
+  static po::options_description            CLoptions,hidden_CLoptions,all_CLoptions;
   static po::positional_options_description Poptions;
 } ;			      
 
@@ -216,6 +221,17 @@ inline po::options_description& CLParameters::command_line_options()
   return CLoptions;
 }
 
+/**
+Call this function from the children's constructor to define hidden
+command line parameters (use is the same as command_line_options()).
+Options defined through the object returned by this function won't
+show up in help message.  This is useful for positional options.
+*/
+inline po::options_description& CLParameters::hidden_command_line_options()
+{
+  return hidden_CLoptions;
+}
+  
 /**
 To define positional options call this function and operate through
 the returned `po:positional_options_description` object.
@@ -257,7 +273,7 @@ class SimulationCL : public CLParameters {
 public:
   SimulationCL(const char* name,const char* copyright,const char *scope=Parameters::default_scope);
   void parse_command_line(int argc,char *argv[]);
-  virtual void show_usage();
+  void show_usage() const;
 
 private:
   std::string name_and_ver,copyr;
@@ -286,13 +302,11 @@ class UtilityCL : public CLParameters {
 public:
   UtilityCL(const char* name,const char *scope=Parameters::default_scope);
   virtual void parse_command_line(int argc,char *argv[]);
-  void    show_base_utility_parameters(std::ostream&);  /// print help for base options (--help, etc)
 
 private:
   std::string name_and_ver;
 
   void show_version();
-  virtual void show_usage()=0;
 } ;
 
 /** \brief Catch exceptions thrown by glsim

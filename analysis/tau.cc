@@ -78,7 +78,7 @@ public:
 class CLoptions : public glsim::UtilityCL {
 public:
   CLoptions();
-  void show_usage();
+  void show_usage() const;
 
 private:
   static void handle_alpha(double),handle_alphatest(double);
@@ -88,12 +88,16 @@ private:
 CLoptions::CLoptions() : UtilityCL("gs_tcorr")
 {
   command_line_options().add_options()
-    ("input-file",po::value<std::vector<std::string> >(&options.files),
-     "input files")
-    ("alpha,a",po::value<double>(&options.alpha)->notifier(handle_alpha),"")
-    ("alpha-test,t",po::value<double>(&options.alpha)->notifier(handle_alphatest))
-    ("integral-test,i",po::bool_switch()->notifier(handle_integraltest))
+    ("alpha,a",po::value<double>(&options.alpha)->notifier(handle_alpha),
+     "Set aplha.  Output will be tau with jacknife error")
+    ("alpha-test,t",po::value<double>(&options.alpha)->notifier(handle_alphatest),
+     "Do alpha test with aplpha=1,2,...,arg")
+    ("integral-test,i",po::bool_switch()->notifier(handle_integraltest),
+     "Do integral test")
     ;
+  hidden_command_line_options().add_options()
+    ("input-file",po::value<std::vector<std::string> >(&options.files),
+     "input files");
   positional_options().add("input-file",-1);
 }
 
@@ -114,21 +118,15 @@ void CLoptions::handle_integraltest(bool i)
     throw glsim::Runtime_error("Must give -i or -a or -t with positive argument\n");
 }
 
-void CLoptions::show_usage()
+void CLoptions::show_usage() const
 {
   std::cerr 
     << "\nusage: " << progname << "[options] file [...]\n\n"
     << "Computes the relaxation time with Sokal's method. Input files must\n"
     << "be different samples of a connected, normalized correlation function\n"
     << "(two-column data as written by tcorr)\n\n"
-    << "Options:\n"
-    << "  -a,--alpha arg       Set alpha=arg. Output will be tau with\n"
-    << "                       jacknife error.\n"
-    << "  -i,--integral-test   Do integral test\n"
-    << "  -t,--alpha-test arg  Do alpha test with alpha=1,2,..., arg\n"
-    << "  -T,--terse           Be terse, suppress header\n"
-    << "  -h,--help            Show this help\n"
-    << '\n';
+    << "Options:\n";
+  show_command_line_options(std::cerr);
 }
 
 /*****************************************************************************

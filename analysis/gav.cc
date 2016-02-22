@@ -55,25 +55,27 @@ struct {
 class CLoptions : public glsim::UtilityCL {
 public:
   CLoptions();
-  void show_usage();
+  void show_usage() const;
 } ;
 
 CLoptions::CLoptions() : UtilityCL("gs_gav")
 {
   command_line_options().add_options()
+    ("base,b",po::value<double>(&options.base)->default_value(1.),
+     "set base window length")
+    ("t0,t",po::value<double>(&options.t0)->default_value(0.),
+     "set time origin")
+    ("wfactor,w",po::value<double>(&options.wfactor)->default_value(1.5),
+     "set wfactor")
+    ;
+  hidden_command_line_options().add_options()
     ("input-file",po::value<std::vector<std::string> >(&options.files),
      "input file")
-    ("base,b",po::value<double>(&options.base)->default_value(1.),
-     "base window length")
-    ("t0,t",po::value<double>(&options.t0)->default_value(0.),
-     "time origin")
-    ("wfactor,w",po::value<double>(&options.wfactor)->default_value(1.5),
-     "time origin")
     ;
   positional_options().add("input-file",-1);
 }
 
-void CLoptions::show_usage()
+void CLoptions::show_usage() const
 {
   std::cerr
     << "\nusage: " << progname << " [options] [file ... ]\n\n"
@@ -90,13 +92,8 @@ void CLoptions::show_usage()
     << "supported and handled as a special case, yielding windows of fixed\n"
     << "width equal to base. wfactor<1 is not recommended.\n\n"
     << "If no files are given, stdin is used.\n"
-    << "\nOptions:\n"
-    << "   -h, --help        Show this help\n"
-    << "   -T, --terse       Be terse, suppress header\n"
-    << "   -b x, --base x    Set base to x (default 1)\n"
-    << "   -t x, --t0 x      Set t_0 to x (default 0)\n"
-    << "   -w x, --wfactor x Set wfactor to x (default 1.5)\n"
-    << '\n';
+    << "\nOptions:\n";
+  show_command_line_options(std::cerr);
 }
 
 /*****************************************************************************

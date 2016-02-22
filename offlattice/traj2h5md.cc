@@ -69,32 +69,30 @@ static struct ooptions {
 class CLoptions : public glsim::UtilityCL {
 public:
   CLoptions();
-  void show_usage();
+  void show_usage() const;
 } ;
 
 CLoptions::CLoptions() : UtilityCL("gs_traj2h5md")
 {
   command_line_options().add_options()
-    ("traj_file",po::value<std::string>(&options.traj_file)->required(),"input trajectory file")
-    ("h5md_file,o",po::value<std::string>(&options.h5md_file)->required(),"output file in h5md format")
-    ("author",po::value<std::string>(&options.author)->required(),"author name")
-    ("email",po::value<std::string>(&options.email),"author email")
+    ("h5md_file,o",po::value<std::string>(&options.h5md_file)->required(),"Output file (in h5md format) [REQUIRED]")
+    ("author",po::value<std::string>(&options.author)->required(),"Author name [REQUIRED]")
+    ("email",po::value<std::string>(&options.email),"Author email")
     ;
+  hidden_command_line_options().add_options()
+    ("traj_file",po::value<std::string>(&options.traj_file)->required(),"input trajectory file");
   positional_options().add("traj_file",1);
 }
 
-void CLoptions::show_usage()
+void CLoptions::show_usage() const
 {
   std::cerr
     << "\nusage: " << progname << " [options] trajfile [..]\n\n"
     << "Reads from trajfiles or configuration files (in glsim OLconfig_file format)\n"
     << "and writes a trajectory file in H5MD format.\n"
     << "So far is very primitive, writing only positions vs time, and does not support\nevolving box size, types etc.\n"
-    << "\nOptions:\n"
-    << "  -o h5mdfile      Output file [REQUIRED]\n"
-    << "  --author string  Author name [REQUIRED]\n"
-    << "  --email  string  Author email\n"
-    << "\n";
+    << "\nOptions:\n";
+  show_command_line_options(std::cerr);
 }
 
 /*****************************************************************************

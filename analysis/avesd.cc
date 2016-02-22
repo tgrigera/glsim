@@ -73,36 +73,33 @@ struct opt {
 class CLoptions : public glsim::UtilityCL {
 public:
   CLoptions();
-  void show_usage();
+  void show_usage() const;
 } ;
 
 CLoptions::CLoptions() : UtilityCL("gs_avesd")
 {
   command_line_options().add_options()
-    ("input-file",po::value<std::vector<std::string> >(&options.files),
-     "input file")
     ("binary,b",po::bool_switch(&options.binary)->default_value(false),
      "binary input")
     ("single,s",po::bool_switch(&options.single_precision),
-     "read binary input as single precision")
+     "if binary input, read input as single precision")
+    ;
+  hidden_command_line_options().add_options()
+    ("input-file",po::value<std::vector<std::string> >(&options.files),
+     "input file")
     ;
   positional_options().add("input-file",-1);
 }
 
-void CLoptions::show_usage()
+void CLoptions::show_usage() const
 {
   std::cerr
     << "\nusage: " << progname << " [options] [file ... ]\n\n"
     << "Writes average, variance and standard deviation to stdout, computed\n"
     << "using West's recurrence formula.  Reads from stdin if called without\n"
     << "files.\n"
-    << "\nOptions:\n"
-    << "   -b, --binary Binary input\n"
-    << "   -s, --single If binary input, read as single precision (float)\n"
-    << "                otherwise assume double precision\n"
-    << "   -h, --help   Show this help\n"
-    << "   -T, --terse  Be terse, suppress header\n"
-    << '\n';
+    << "\nOptions:\n";
+    show_command_line_options(std::cerr);
 }
 
 

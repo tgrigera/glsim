@@ -100,7 +100,7 @@ struct o {
 class CLoptions : public glsim::UtilityCL {
 public:
   CLoptions();
-  void show_usage();
+  void show_usage() const;
 
 private:
   static void handle_deltat(double),handle_t0(double),handle_w(bool);
@@ -152,7 +152,7 @@ void CLoptions::handle_w(bool fixed)
     throw glsim::Runtime_error("cannot give -w with FFT method (-f)");
 }
 
-void CLoptions::show_usage()
+void CLoptions::show_usage() const
 {
   std::cerr 
     << "\nusage: " << progname << "[options] [file ...]\n\n"

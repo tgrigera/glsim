@@ -60,36 +60,33 @@ public:
 class CLoptions : public glsim::UtilityCL {
 public:
   CLoptions();
-  void show_usage();
+  void show_usage() const;
 } ;
 
 CLoptions::CLoptions() : glsim::UtilityCL("GS_olconf_dump")
 {
-  command_line_options().add_options()
+  hidden_command_line_options().add_options()
     ("k",po::value<double>(&options.k)->required(),"wavevector")
-    ("self,s",po::bool_switch(&options.self_part)->default_value(false),"compute self part")
-    ("nave,n",po::value<int>(&options.nave)->default_value(10),"number of averages")
-    ("seed,S",po::value<long>(&options.seed)->default_value(1L),"seed")
     ("ifiles",po::value<std::vector<std::string> >(&options.ifiles)->required(),"input files")
     ;
+  command_line_options().add_options()
+    ("self,s",po::bool_switch(&options.self_part)->default_value(false),"compute only the self part F_s(k) [default is the full F(k,t)]")
+    ("nave,n",po::value<int>(&options.nave)->default_value(10),"do arg averages over random directions of the wavevector")
+    ("seed,S",po::value<long>(&options.seed)->default_value(1L),"random number seed (with -s used to generate only one random direction)")
+    ;
+
   positional_options().add("k",1).add("ifiles",-1);
 }
 
-void CLoptions::show_usage()
+void CLoptions::show_usage() const
 {
   std::cerr
     << "usage: " << progname << "[options] k ifile [ifile ....]\n\n"
     << "Computes the (self part of) the intermediate scattering function,"
     << "at the given wavevector and from the given trajectory files.\n"
     << "\n"
-    << " Options:\n"
-    << "   --self,-s    compute only the self part F_s(k) (default is the full F(k,t)\n"
-    << "   --nave,-n nn do nn averages over random directions of the wavevector\n"
-    << "                (does not apply for -s, where average is over particles),\n"
-    << "                default 10\n"
-    << "   --seed,S n   random number seed (with -s used only to generate one random directio)\n"
-    << "   --help,-h    show this help\n"
-    << "\n";
+    << " Options:\n";
+  show_command_line_options(std::cerr);
 }
 
 

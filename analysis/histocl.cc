@@ -77,7 +77,7 @@ struct opt {
 class CLoptions : public glsim::UtilityCL {
 public:
   CLoptions();
-  void show_usage();
+  void show_usage() const;
 } ;
 
 CLoptions::CLoptions() : UtilityCL("gs_avesd")
@@ -98,7 +98,7 @@ CLoptions::CLoptions() : UtilityCL("gs_avesd")
   positional_options().add("nbins",1).add("min",1).add("max",1).add("input-file",-1);
 }
 
-void CLoptions::show_usage()
+void CLoptions::show_usage() const
 {
   std::cerr
     << "\nusage: " << progname << " [options] nbins min max [file ... ]\n\n"

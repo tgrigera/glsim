@@ -99,7 +99,9 @@ void Parameters::show_parameters(std::ostream& o) const
  *
  */
 
-po::options_description            CLParameters::CLoptions;
+po::options_description            CLParameters::CLoptions,
+                                   CLParameters::hidden_CLoptions,
+                                   CLParameters::all_CLoptions;
 po::positional_options_description CLParameters::Poptions;
 /**
 
@@ -125,12 +127,18 @@ void CLParameters::parse_command_line(int argc,char *argv[],
 				      bool merge_options)
 {
   progname=basename(argv[0]);
+  all_CLoptions.add(CLoptions).add(hidden_CLoptions);
   if (merge_options)
-    CLoptions.add(parameter_file_options());
+    all_CLoptions.add(parameter_file_options());
 
-  po::store(po::command_line_parser(argc,argv).options(CLoptions).
+  po::store(po::command_line_parser(argc,argv).options(all_CLoptions).
 	    positional(Poptions).run(),variables[scope]);
   if (!merge_options) po::notify(variables[scope]);
+}
+
+void CLParameters::show_command_line_options(std::ostream& o) const
+{
+  std::cerr << CLoptions;
 }
 
 /*****************************************************************************
@@ -233,7 +241,7 @@ This is automatically called bye parse_command_line() on detecting a
 the `--help` option.  You can call it explicitly on catching a
 Usage_error excpetion.  Override if the help messega does not apply.
 */
-void SimulationCL::show_usage()
+void SimulationCL::show_usage() const
 {
   std::cerr << "usage: " << progname << " [options] parameter_file initial_infix final_infix\n\n"
     << "parameter_file is an ASCII file (.ini style) with the definition of the\n"
@@ -283,11 +291,11 @@ UtilityCL::UtilityCL(const char* name,const char *scope) :
 
 {
   command_line_options().add_options()
-    ("help,h",po::bool_switch(),"help with usage")
-    ("verbose,V",po::bool_switch()->default_value(false),"be verbose")
+    ("verbose,V",po::bool_switch()->default_value(false),"Be verbose")
     ("terse,T",po::bool_switch()->default_value(false),
-     "be terse: print as little as possible (e.g. omit headers)")
-    ("version",po::bool_switch(),"print version and exit")
+     "Be terse: print as little as possible (e.g. omit headers)")
+    ("version",po::bool_switch(),"Print version and exit")
+    ("help,h",po::bool_switch(),"Print usage help and exit")
     ;
 }
 
@@ -343,15 +351,6 @@ void UtilityCL::show_version()
 {
   std::cerr << name_and_ver << " (part of glsim " << VERSION << ")\n";
   std::cerr << "Copyright (C) 2009-2015 Tomas S. Grigera <tgrigera@iflysib.unlp.edu.ar>\n";
-}
-
-void UtilityCL::show_base_utility_parameters(std::ostream& o)
-{
-  o
-    << "  -V,--verbose \t\tbe verbose\n"
-    << "  -T,--terse   \t\tbe terse, print as little as possible\n"
-    << "  --version    \t\tprint version and exit\n"
-    << "  -h,--help    \t\tshow usage message\n";
 }
 
 int StandardEC(int argc,char *argv[],void (*wmain)(int,char**))

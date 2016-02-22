@@ -52,19 +52,19 @@ static struct {
 class CLoptions : public glsim::UtilityCL {
 public:
   CLoptions();
-  void show_usage();
+  void show_usage() const;
 } ;
 
 CLoptions::CLoptions() : glsim::UtilityCL("GS_olconf_cat")
 {
-  command_line_options().add_options()
+  hidden_command_line_options().add_options()
     ("ifile",po::value<std::string>(&options.ifile)->required(),"input file")
     ("ofile",po::value<std::string>(&options.ofile)->required(),"output file")
     ;
   positional_options().add("ifile",1).add("ofile",1);
 }
 
-void CLoptions::show_usage()
+void CLoptions::show_usage() const
 {
   std::cerr
     << "usage: " << progname << "ifile ofile\n\n"

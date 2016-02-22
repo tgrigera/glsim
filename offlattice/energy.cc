@@ -67,27 +67,28 @@ static struct ooptions {
 class CLoptions : public glsim::UtilityCL {
 public:
   CLoptions();
-  void show_usage();
+  void show_usage() const;
 } ;
 
 CLoptions::CLoptions() : UtilityCL("gs_ljenergy")
 {
-  command_line_options().add_options()
+  hidden_command_line_options().add_options()
     ("ifiles",po::value<std::vector<std::string> >(&options.ifiles)->required(),"input files")
     ;
 
   positional_options().add("ifiles",-1);
 }
 
-void CLoptions::show_usage()
+void CLoptions::show_usage() const
 {
   std::cerr
     << "\nusage: " << progname << " [options] ifile [..]\n\n"
     << "Computes the energy of the given configurations.\n"
     << "Input files can be trajectory or configuration files.\n"
     << "\nOptions:\n";
+  show_command_line_options(std::cerr);
+  std::cerr  << "\n";
   show_parameters(std::cerr);
-  show_base_utility_parameters(std::cerr);
   std::cerr  << "\n";
 }
 

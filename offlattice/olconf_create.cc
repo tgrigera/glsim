@@ -122,34 +122,31 @@ static struct {
 class CLoptions : public glsim::UtilityCL {
 public:
   CLoptions();
-  void show_usage();
+  void show_usage() const;
 } ;
 
-CLoptions::CLoptions() : UtilityCL("GS_olconf_create")
+CLoptions::CLoptions() : UtilityCL("gs_olconf_create")
 {
   command_line_options().add_options()
+    ("density,d",po::value<double>(&options.density)->default_value(1.),"Average density")
+    ("seed,S",po::value<unsigned long>(&options.seed)->default_value(0),"Random number seed")
+    ("mass,m",po::value<double>(&options.mass)->default_value(1.),"Particle mass")
+    ("velocities,v",po::value<double>(&options.vtemp)->default_value(0.),
+     "Generate Maxwellian velocities with kT=arg (if not given, velocities are not written)")
+    ;
+  hidden_command_line_options().add_options()
     ("out_file",po::value<std::string>(&options.ofile)->required(),"output file")
     ("Nparts",po::value<int>(&options.N)->required(),"total number of particles")
-    ("seed,S",po::value<unsigned long>(&options.seed)->default_value(0),"random number seed")
-    ("density,d",po::value<double>(&options.density)->default_value(1.),"average density")
-    ("velocities,v",po::value<double>(&options.vtemp)->default_value(0.),
-     "Maxwellian velocities with kT=arg")
-    ("mass,m",po::value<double>(&options.mass)->default_value(1.),"mass")
     ;
   positional_options().add("Nparts",1).add("out_file",1);
 }
 
-void CLoptions::show_usage()
+void CLoptions::show_usage() const
 {
   std::cerr
     << "usage: " << progname << " Nparts outfile\n\n"
-    << "Create an off-lattice configuration with Nparts total particles and save to outfile.  Options:\n\n"
-    << " --density,-d arg    Average density\n"
-    << " --seed,-S arg       Specify seed for random number generator\n"
-    << " --velociites,-v arg Generate Maxwellian velocities with kT=arg (if not given,\n"
-    << "                     velocities are not written).  Unit mass is assumed.\n"
-    << " --mass,-m arg       Particle mass\n"
-    << "\n";
+    << "Create an off-lattice configuration with Nparts total particles and save to outfile.  Options:\n\n";
+  show_command_line_options(std::cerr);
 }
 
 void wmain(int argc,char *argv[])
