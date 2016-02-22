@@ -116,10 +116,12 @@ void wmain(int argc,char *argv[])
 
   printf("#                  |---- E n e r g y   p e r   p a r t i c l e --|\n");
   printf("#  Step       Time |     Potential         Kinetic          Total|\n");
+  double ekin,epot;
   do {
     double P[3];
-    double epot=inter->potential_energy(conf)/conf.N;
-    double ekin=inter->kinetic_energy_and_momentum(conf,P)/conf.N;
+    inter->fold_coordinates(conf);
+    epot=inter->potential_energy(conf)/conf.N;
+    ekin=conf.v ? inter->kinetic_energy_and_momentum(conf,P)/conf.N : 0;
     printf("%7ld %10g %15.8e %15.8e %15.8e\n",conf.step,conf.time,epot,ekin,ekin+epot);
   } while (ifs.read());
 
