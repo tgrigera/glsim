@@ -315,12 +315,18 @@ void OLconfig_file::declare_header_fields(mode fmode)
     if (!opt.a_frame_)
       create_if_present("a","has_a",cbuffer->a,f_header);
   } else {
-    open_if_present("id","has_id",cbuffer->id);
-    open_if_present("type","has_type",cbuffer->type);
-    open_if_present("flags","has_flags",cbuffer->flags);
-    open_if_present("r","has_r",cbuffer->r);
-    open_if_present("v","has_v",cbuffer->v);
-    open_if_present("a","has_a",cbuffer->a);
+    if (!opt.id_frame_)
+      open_if_present("id","has_id",cbuffer->id);
+    if (!opt.id_frame_)
+      open_if_present("type","has_type",cbuffer->type);
+    if (!opt.id_frame_)
+      open_if_present("flags","has_flags",cbuffer->flags);
+    if (!opt.id_frame_)
+      open_if_present("r","has_r",cbuffer->r);
+    if (!opt.id_frame_)
+      open_if_present("v","has_v",cbuffer->v);
+    if (!opt.id_frame_)
+      open_if_present("a","has_a",cbuffer->a);
   }
 }
 

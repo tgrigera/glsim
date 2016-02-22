@@ -37,7 +37,7 @@
 /** \file olconf_create.cc
     \ingroup Offlattice
 
-  GS_olconf_create can be used to create an off-lattice configuration
+  gs_olconf_create can be used to create an off-lattice configuration
   and save it in the format (HDF5) used by OLconfiguration_file.
 
   BUG: All particles have the same mass --- this must be fixed.
@@ -90,6 +90,29 @@ void create_random(glsim::OLconfiguration &conf,scomp &SC)
   }
 }
 
+void create_given_coordinates(glsim::OLconfiguration &conf,scomp &SC)
+{
+  conf.N=0;
+  for (int c=0; c<SC.Nt; ++c) conf.N+=SC.N[c];
+  conf.step=0;
+  conf.time=0;
+  conf.box_angles[0]=conf.box_angles[1]=conf.box_angles[2]=90.;
+  memcpy(conf.box_length,SC.boxl,3*sizeof(double));
+
+  int i;
+  conf.id=new short[conf.N];
+  conf.type = new short[conf.N];
+  for (i=0; i<conf.N; conf.id[i]=i++) ;
+  i=0;
+  for (int c=0; c<SC.Nt; ++c)
+    for (int j=0; j<SC.N[c]; ++j)
+      conf.type[i++]=c;
+  conf.r=new double[conf.N][3];
+  for (i=0; i<conf.N; ++i) {
+    std::cin >> conf.r[i][0] >> conf.r[i][1] >> conf.r[i][2];
+  }
+}
+
 void set_velocities(glsim::OLconfiguration &conf,double kT,double mass)
 {
   delete[] conf.v;
@@ -110,13 +133,21 @@ void set_velocities(glsim::OLconfiguration &conf,double kT,double mass)
  *
  */
 
-static struct {
+static struct oops {
   std::string   ofile;
+  bool          from_given_coordinates;
+
   unsigned long seed;
   int           N;
   double        density;
+  double        boxx,boxy,boxz;
   double        vtemp;
   double        mass;
+
+  oops() :
+    N(0),
+    density(-1)
+  {}
 } options;
 
 class CLoptions : public glsim::UtilityCL {
@@ -128,7 +159,14 @@ public:
 CLoptions::CLoptions() : UtilityCL("gs_olconf_create")
 {
   command_line_options().add_options()
-    ("density,d",po::value<double>(&options.density)->default_value(1.),"Average density")
+    ("boxx",po::value<double>(&options.boxx)->default_value(-1.),
+     "Box length in the X direction")
+    ("boxy",po::value<double>(&options.boxy)->default_value(-1.),
+     "Box length in the Y direction, -1 means use --boxx")
+    ("boxz",po::value<double>(&options.boxz)->default_value(-1.),
+     "Box length in the Z direction; -1 means use --boxx")
+    ("density,d",po::value<double>(&options.density),"Average density.  If given --boxx etc are ignored")
+    ("coordinates-from-stdin",po::bool_switch(&options.from_given_coordinates)->default_value(false),"Read coordinates from stdin")
     ("seed,S",po::value<unsigned long>(&options.seed)->default_value(0),"Random number seed")
     ("mass,m",po::value<double>(&options.mass)->default_value(1.),"Particle mass")
     ("velocities,v",po::value<double>(&options.vtemp)->default_value(0.),
@@ -158,20 +196,30 @@ void wmain(int argc,char *argv[])
 
   scomp SC;
   
-  // SC.Nt=2;
-  // SC.N=new int[2];
-  // SC.N[0]=SC.N[1]=10;
-  // SC.boxl[0]=0.7;
-  // SC.boxl[1]=SC.boxl[2]=0.5;
   SC.Nt=1;
   SC.N=new int[1];
   SC.N[0]=options.N;
-  double volume=options.N/options.density;
-  SC.boxl[0]=pow(volume,1./3.);
-  SC.boxl[2]=SC.boxl[1]=SC.boxl[0];
+  if (options.density>0) {
+    double volume=options.N/options.density;
+    SC.boxl[0]=pow(volume,1./3.);
+    SC.boxl[2]=SC.boxl[1]=SC.boxl[0];
+  } else {
+    if (options.boxx<0) {
+      std::cerr << "Must give -d or -boxx\n";
+      throw glsim::Usage_error();
+    }
+    SC.boxl[0]=options.boxx;
+    SC.boxl[1]= options.boxy>0 ? options.boxy : options.boxx;
+    SC.boxl[2]= options.boxz>0 ? options.boxz : options.boxx;
+  }
 
   glsim::Random_number_generator RNG(glsim::gsl_rng_mt19937,options.seed);
-  create_random(conf,SC);
+
+  if (options.from_given_coordinates)
+    create_given_coordinates(conf,SC);
+  else 
+    create_random(conf,SC);
+
   conf.name="Created by olconf_create";
   if (options.vtemp>0)
     set_velocities(conf,options.vtemp,options.mass);
