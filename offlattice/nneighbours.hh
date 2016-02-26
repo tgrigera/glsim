@@ -298,9 +298,10 @@ operator==(const Subcells::NeighbourIterator& ni) const
 
 class System_too_small : public Runtime_error {
 public:
-  explicit System_too_small(const std::string& dir,
+  explicit System_too_small(const std::string& dir,double actual,double min,
 			    const Source_context &c=Source_context()) :
-    Runtime_error("Linear size in " + dir + " direction too small to use subcells",
+    Runtime_error("Linear size in " + dir + " direction too small ("
+		  + std::to_string(actual) + ", minimum "+std::to_string(min) +")",
 		  c)
   {}
 } ;
