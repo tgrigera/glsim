@@ -232,6 +232,55 @@ Subcells::PairIterator& Subcells::PairIterator::operator++()
   return *this;
 };
 
+
+/*****************************************************************************
+ *
+ * NeighbourList_subcells
+ *
+ */
+
+NeighbourList_subcells::NeighbourList_subcells(double rc_,double delta_r_) :
+  rc(rc_),
+  delta_r(delta_r_),
+  accum_maxdisp(0.),
+  SUBC(rc_+delta_r_,0)
+{
+  if (delta_r<0)
+    delta_r=rc*0.3;
+  rdsq=rc+delta_r;
+  rdsq*=rdsq;
+}
+
+void NeighbourList_subcells::rebuild(OLconfiguration& conf,double rc_)
+{
+  if (rc_>0) {
+    rc=rc_;
+    rdsq=rc+delta_r;
+    rdsq*=rdsq;
+  }
+  
+  neighbours.clear();
+  neighbours.resize(conf.N);
+  pairs.clear();
+  SUBC.rebuild(conf,rc);
+  for (auto pp=SUBC.pairs_begin(), end=SUBC.pairs_end(); pp!=end; ++pp) {
+      if (conf.distancesq(pp->first,pp->second) <= rdsq) {
+	pairs.push_back(*pp);
+	neighbours[pp->first].push_back(pp->second);
+	neighbours[pp->second].push_back(pp->first);
+      }
+  }
+  accum_maxdisp=0.;
+}
+
+void NeighbourList_subcells::update(OLconfiguration& conf,double maxdisp)
+{
+  accum_maxdisp+=maxdisp;
+  if (accum_maxdisp>=delta_r/2.)
+    rebuild(conf);
+}
+
+
 /*****************************************************************************
  *
  * TopologicalNeighbours_naive

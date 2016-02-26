@@ -386,6 +386,39 @@ inline Subcells::PairIterator Subcells::pairs_end()
   return PairIterator(*this,true);
 }
 
+/** \class NeighbourList_subcells
+    \ingroup OfflatticeINT
+
+    This class provides metric nearest neighbour candidates through a
+    pair list.  The pair list is built using subcells (class
+    Subcells).  The provided candidates will be separated by a
+    distance at most rc + delta_r.
+*/
+class NeighbourList_subcells {
+public:
+  typedef std::pair<int,int> Pair;
+
+  NeighbourList_subcells(double rc,double delta_r=-1);
+  void rebuild(OLconfiguration&,double rc=-1);
+  void update(OLconfiguration&,double maxdisp);
+
+  std::vector<Pair>::iterator pairs_begin() {return pairs.begin();}
+  std::vector<Pair>::iterator pairs_end() {return pairs.end();}
+  std::vector<int>::iterator neighbours_begin(int i) {return neighbours[i].begin();}
+  std::vector<int>::iterator neighbours_end(int i) {return neighbours[i].end();}
+
+private:
+  std::vector<Pair> pairs;
+  std::vector<std::vector<int>>  neighbours;
+
+  double    rc,rdsq,delta_r;
+  double    accum_maxdisp;
+
+  Subcells  SUBC;
+} ;
+
+
+
 /*****************************************************************************
  *
  * Topological nearest neighbours

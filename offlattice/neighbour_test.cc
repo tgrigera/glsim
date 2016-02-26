@@ -50,8 +50,6 @@
 
 void test_metric_naive(glsim::OLconfiguration &conf)
 {
-  boost::timer::auto_cpu_timer t;
-  
   std::cout << "Testing NeighbourList_naive...";
   std::cout.flush();
 
@@ -180,6 +178,32 @@ void test_metric(glsim::OLconfiguration &conf,std::string name)
 
 }
 
+template <typename NeighbourAlgo>
+void time_metric(glsim::OLconfiguration &conf,std::string name)
+{
+  double rc=conf.box_length[0]/4;
+  std::cout << "Timing " << name << " algorithm with " << conf.N << " particles: ";
+
+  boost::timer::auto_cpu_timer t;
+
+  std::cout << "building... ";
+  std::cout.flush();
+  NeighbourAlgo TNN(rc);
+  TNN.rebuild(conf);
+
+  std::cout << "walking through neighbours (twice)\n";
+  double rcsq=rc*rc;
+  register int s;
+  for (auto pp=TNN.pairs_begin(), end=TNN.pairs_end(); pp!=end; ++pp) {
+    if (conf.distancesq(pp->first,pp->second) <= rcsq)
+      s=pp->first;
+  }
+  for (auto pp=TNN.pairs_begin(), end=TNN.pairs_end(); pp!=end; ++pp) {
+    if (conf.distancesq(pp->first,pp->second) <= rcsq)
+      s=pp->second;
+  }
+}
+
 /*
  * Tests for topological routines
  *
@@ -240,11 +264,17 @@ void run_tests()
 
   test_metric_naive(conf);
   test_metric<glsim::Subcells>(conf,"subcell algorithm");
+  test_metric<glsim::NeighbourList_subcells>(conf,"pair list with subcells");
+
   test_topological_naive(conf);
 
   create_random(conf,5000,10);
-  test_metric_naive(conf);
-  test_metric<glsim::Subcells>(conf,"subcell algorithm");
+  // test_metric_naive(conf);
+  // test_metric<glsim::Subcells>(conf,"subcell algorithm");
+
+  time_metric<glsim::NeighbourList_naive>(conf,"naive neighbour list");
+  time_metric<glsim::Subcells>(conf,"subcell");
+  time_metric<glsim::NeighbourList_subcells>(conf,"neighbour list with subcells");
 }
 
 #define TEST_SUCCESS 0
