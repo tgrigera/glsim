@@ -36,11 +36,17 @@
 
 #include <algorithm>
 #include <boost/timer/timer.hpp>
+#include <iostream>
 
 #include "olconfiguration.hh"
 #include "random.hh"
 #include "nneighbours.hh"
 #include "test_exception.hh"
+
+/*
+ * Tests for metric routines
+ *
+ */
 
 void test_metric_naive(glsim::OLconfiguration &conf)
 {
@@ -52,13 +58,132 @@ void test_metric_naive(glsim::OLconfiguration &conf)
   glsim::NeighbourList_naive TNN(conf.box_length[0]/4);
   TNN.rebuild(conf);
   for (int i=0; i<conf.N; ++i) {
-    for (auto pj=TNN.neighbours_begin(i); pj!=TNN.neighbours_end(i); ++pj)
-      if (std::find(TNN.neighbours_begin(*pj),TNN.neighbours_end(*pj),i) == TNN.neighbours_end(*pj))
+    for (auto pj=TNN.neighbours_begin(i), end=TNN.neighbours_end(i); pj!=end; ++pj)
+      if (std::find(TNN.neighbours_begin(*pj),TNN.neighbours_end(*pj),i) ==
+	  TNN.neighbours_end(*pj))
 	throw Test_failure(std::to_string(i)+" and "+std::to_string(*pj)+
 			   " to be mutual neighbours","they are not");
   }
   std::cout << "OK\n";
 }
+
+
+// print pair in order
+std::ostream &operator<<(std::ostream& o,const glsim::Subcells::Pair& p)
+{
+  if (p.first<=p.second)
+    o << '(' << p.first << ',' << p.second << ')';
+  else
+    o << '(' << p.second << ',' << p.first << ')';
+  return o;
+}
+
+//
+// Test generig NeighbourAlgo against NeighbourList_naive
+//
+template <typename NeighbourAlgo>
+void test_metric(glsim::OLconfiguration &conf,std::string name)
+{
+  double rc=conf.box_length[0]/4;
+  double rcsq=rc*rc;
+
+  std::cout << "Testing " << name << "...";
+  std::cout.flush();
+
+  NeighbourAlgo NEW(rc);
+  NEW.rebuild(conf);
+
+  std::cout << "building naive...";
+  std::cout.flush();
+  glsim::NeighbourList_naive TNN(rc,0);
+  TNN.rebuild(conf);
+  
+  std::cout << "comparing...";
+  std::cout.flush();
+
+  // std::cout << '\n';
+  // for (auto pj=NEW.pairs_begin(), end=NEW.pairs_end(); pj!=end; ++pj) {
+  //   double dsq=conf.distancesq(pj->first,pj->second);
+  //   if (dsq<=rcsq) std::cout << "NEW: " << *pj << ' ' << sqrt(dsq) << '\n';
+  // }
+  // std::cout << "\n\n";
+  // for (auto pj=TNN.pairs_begin(), end=TNN.pairs_end(); pj!=end; ++pj) {
+  //   double dsq=conf.distancesq(pj->first,pj->second);
+  //   if (dsq<=rcsq) std::cout << "NAIVE: " << *pj << ' ' << sqrt(dsq) << '\n';
+  // }
+
+  // Test particle-based
+  std::cout  << "\n  Total pairs " << conf.N*(conf.N-1)/2 << '\n';
+  for (int i=0; i<conf.N; ++i) {
+    int np=0;
+    for (auto pj=NEW.neighbours_begin(i), end=NEW.neighbours_end(i); pj!=end; ++pj) {
+      np++;
+      if (conf.distancesq(i,*pj)<=rcsq) {
+	
+	if (std::find(TNN.neighbours_begin(i),TNN.neighbours_end(i),*pj) ==
+	    TNN.neighbours_end(i))
+	  throw Test_failure(std::to_string(i)+" and "+ std::to_string(*pj)+
+			     " neighbours in both lists",
+			     "missing in naive algorithm");
+      }
+      for (auto pj=TNN.neighbours_begin(i), end=TNN.neighbours_end(i); pj!=end; ++pj) {
+	if (std::find(NEW.neighbours_begin(i),NEW.neighbours_end(i),*pj) ==
+	    NEW.neighbours_end(i) )
+	  throw Test_failure(std::to_string(i)+" and "+ std::to_string(*pj)+
+			     " neighbours in both lists",
+			     "missing in "+name);
+      }
+      if (np%1000==0) std::cout << " (tested " << np << " candidates \n";
+    }
+  }
+
+  // Test pair-based
+  double dsq;
+  int np=0;
+  for (auto pp=NEW.pairs_begin(), end=NEW.pairs_end(); pp!=end; ++pp) {
+    dsq=conf.distancesq(pp->first,pp->second);
+    if (dsq<=rcsq) {
+      glsim::NeighbourList_naive::Pair p1(pp->first,pp->second);
+      glsim::NeighbourList_naive::Pair p2(pp->second,pp->first);
+      bool foundp1 =
+	std::find(TNN.pairs_begin(),TNN.pairs_end(),p1) != TNN.pairs_end();
+      bool foundp2 =
+	std::find(TNN.pairs_begin(),TNN.pairs_end(),p2) != TNN.pairs_end();
+      if (!foundp1 && !foundp2) 
+	throw Test_failure("pair ("+std::to_string(pp->first)+","
+			   +std::to_string(pp->second)+") present in both lists",
+			   "missing in naive algorithm");
+    }
+    np++;
+    if (np%1000==0) std::cout << " (tested " << np << " candidate pairs)\n";
+  }
+  for (auto pp=TNN.pairs_begin(), end=TNN.pairs_end(); pp!=end; ++pp) {
+    dsq=conf.distancesq(pp->first,pp->second);
+    if (dsq<=rcsq) {
+      glsim::NeighbourList_naive::Pair p1(pp->first,pp->second);
+      glsim::NeighbourList_naive::Pair p2(pp->second,pp->first);
+      bool foundp1 =
+	std::find(NEW.pairs_begin(),NEW.pairs_end(),p1) != NEW.pairs_end();
+      bool foundp2 =
+	std::find(NEW.pairs_begin(),NEW.pairs_end(),p2) != NEW.pairs_end();
+      if (!foundp1 && !foundp2) 
+	  throw Test_failure("pair ("+std::to_string(pp->first)+","
+			     +std::to_string(pp->second)+") present in both lists",
+			     "missing in new algorithm");
+    }
+    np++;
+    if (np%1000==0) std::cout << " (tested " << np << " candidate pairs)\n";
+  }
+
+  std::cout << "OK\n";
+
+
+}
+
+/*
+ * Tests for topological routines
+ *
+ */
 
 void test_topological_naive(glsim::OLconfiguration &conf)
 {
@@ -111,10 +236,15 @@ void run_tests()
   glsim::OLconfiguration conf;
   glsim::Random_number_generator RNG(glsim::gsl_rng_mt19937,382930);
   
-  create_random(conf,5000,10);
+  create_random(conf,100,10);
 
   test_metric_naive(conf);
+  test_metric<glsim::Subcells>(conf,"subcell algorithm");
   test_topological_naive(conf);
+
+  create_random(conf,5000,10);
+  test_metric_naive(conf);
+  test_metric<glsim::Subcells>(conf,"subcell algorithm");
 }
 
 #define TEST_SUCCESS 0

@@ -47,6 +47,8 @@ bin_PROGRAMS = gs_olconf_cat gs_olconf_create gs_olconf_dump	\
 	gs_ljenergy gs_ljld gs_ljmc gs_ljmd gs_rljmc gs_rljmd	\
 	gs_traj2h5md
 
+# Binary dependencies
+
 gs_olconf_cat_SOURCES = olconf_cat.cc
 gs_olconf_create_SOURCES = olconf_create.cc
 gs_olconf_dump_SOURCES = olconf_dump.cc
@@ -67,4 +69,5 @@ check_PROGRAMS =  neighbour_test pseudo-md
 neighbour_test_SOURCES = neighbour_test.cc
 pseudo_md_SOURCES = pseudo-md.cc
 
+TESTS = neighbour_test
 

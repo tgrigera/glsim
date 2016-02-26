@@ -135,10 +135,10 @@ used in simulations of very small systems.
 inserting the actual pair potential.
 
 */
-template <typename potential>
+template <typename PotentialT>
 class Interactions_isotropic_pairwise_naive : public Interactions {
 public:
-  Interactions_isotropic_pairwise_naive(potential &P,OLconfiguration&);
+  Interactions_isotropic_pairwise_naive(PotentialT &P,OLconfiguration&);
   const  char *name() const;
   double mass(short type) const {return PP.mass(type);}
   bool   conserve_P() const {return !PP.has_efield();}
@@ -149,25 +149,25 @@ public:
   void   tabulate_potential(std::ostream&,short t1,short t2);
 
 private:
-  potential& PP;
+  PotentialT& PP;
 } ;
 
-template <typename potential> inline
-Interactions_isotropic_pairwise_naive<potential>::
-Interactions_isotropic_pairwise_naive(potential &p,OLconfiguration& c) :
+template <typename PotentialT> inline
+Interactions_isotropic_pairwise_naive<PotentialT>::
+Interactions_isotropic_pairwise_naive(PotentialT &p,OLconfiguration& c) :
   Interactions(), PP(p)
 {
   p.init(c);
 }
 
-template <typename potential> inline
-const char *Interactions_isotropic_pairwise_naive<potential>::name() const
+template <typename PotentialT> inline
+const char *Interactions_isotropic_pairwise_naive<PotentialT>::name() const
 {
   return PP.name();
 }
 
-template <typename potential>
-double Interactions_isotropic_pairwise_naive<potential>::
+template <typename PotentialT>
+double Interactions_isotropic_pairwise_naive<PotentialT>::
 potential_energy(OLconfiguration& conf)
 {
   int    n,m;
@@ -199,8 +199,8 @@ potential_energy(OLconfiguration& conf)
    NOTE that we expect v'(r)/r rather than the derivative
 
 */
-template <typename potential>
-double Interactions_isotropic_pairwise_naive<potential>::
+template <typename PotentialT>
+double Interactions_isotropic_pairwise_naive<PotentialT>::
 force_and_potential_energy(OLconfiguration &conf)
 {
   int    n,m;
@@ -239,8 +239,8 @@ force_and_potential_energy(OLconfiguration &conf)
   return E;
 }
 
-template <typename potential>
-double Interactions_isotropic_pairwise_naive<potential>::
+template <typename PotentialT>
+double Interactions_isotropic_pairwise_naive<PotentialT>::
 acceleration_and_potential_energy(OLconfiguration &conf)
 {
   int    n,m;
@@ -281,30 +281,8 @@ acceleration_and_potential_energy(OLconfiguration &conf)
   return E;
 }
 
-// template <typename potential>
-// double Interactions_isotropic_pairwise_naive<potential>::
-// particle_energy(OLconfiguration &conf,int n)
-// {
-//   double rn[3];
-//   rn[0]=conf.r[n][0];
-//   rn[1]=conf.r[n][1];
-//   rn[2]=conf.r[n][2];
-//   int typen=conf.type[n];
-
-//   double PE=PP.EField(rn,typen);
-//   for (int m=0; m<conf.N; m++) {
-//     if (m==n) continue;
-//     int    typem=conf.type[m];
-//     double dsq=distance(rn,conf.r[m],conf.box_length);
-//     if (!PP.within_cutoff(dsq,typen,typem)) continue;
-//     PE+=PP.PairPotential(dsq,typen,typem);
-//   }
-
-//   return PE;
-// }
-
-template <typename potential>
-double Interactions_isotropic_pairwise_naive<potential>::
+template <typename PotentialT>
+double Interactions_isotropic_pairwise_naive<PotentialT>::
 delta_energy_particle_shift(OLconfiguration &conf,int n,double *rnew)
 {
   double rn[3];
@@ -326,87 +304,8 @@ delta_energy_particle_shift(OLconfiguration &conf,int n,double *rnew)
   return DE;
 }
 
-// template <typename potential>
-// double IsotropicPairwiseInteractions_naive<potential>::
-// pair_energy(OLconfiguration& conf,int a,int b)
-// {
-//   double rn[3],E;
-
-//   int n=a;
-//   rn[0]=conf.r[n][0];
-//   rn[1]=conf.r[n][1];
-//   rn[2]=conf.r[n][2];
-//   int typen=conf.type[n];
-//   E=PP.EField(rn,typen);
-//   for (int m=0; m<conf.N; m++) {
-//     if (m==n) continue;
-//     int    typem=conf.type[m];
-//     double dsq=distance(rn,conf.r[m],conf.box_length);
-//     if (!PP.within_cutoff(dsq,typen,typem)) continue;
-//     E+=PP.PairPotential(dsq,typen,typem);
-//   }
-
-//   n=b;
-//   rn[0]=conf.r[n][0];
-//   rn[1]=conf.r[n][1];
-//   rn[2]=conf.r[n][2];
-//   typen=conf.type[n];
-//   E+=PP.EField(rn,typen);
-//   for (int m=0; m<conf.N; m++) {
-//     if (m==n || m==a) continue;
-//     int    typem=conf.type[m];
-//     double dsq=distance(rn,conf.r[m],conf.box_length);
-//     if (!PP.within_cutoff(dsq,typen,typem)) continue;
-//     E+=PP.PairPotential(dsq,typen,typem);
-//   }
-
-//   return E;
-// }
-
-// template <typename potential>
-// double IsotropicPairwiseInteractions_naive<potential>::
-// delta_energy_particle_swap(OLconfiguration& conf,int a,int b)
-// {
-//   double rn[3],E0,E1;
-
-//   int typea=conf.type[a];
-//   int typeb=conf.type[b];
-//   rn[0]=conf.r[a][0];
-//   rn[1]=conf.r[a][1];
-//   rn[2]=conf.r[a][2];
-//   E0=PP.EField(rn,typea);
-//   E1=PP.EField(rn,typeb);
-//   for (int m=0; m<conf.N; m++) {
-//     if (m==a | m==b) continue;    // no int with itself; no difference in DE
-//                                   // by omitting the pair a-b from the loop
-//     int    typem=conf.type[m];
-//     double dsq=distance(rn,conf.r[m],conf.box_length);
-//     if (PP.within_cutoff(dsq,typea,typem))
-//       E0+=PP.PairPotential(dsq,typea,typem);
-//     if (PP.within_cutoff(dsq,typeb,typem))
-//       E1+=PP.PairPotential(dsq,typeb,typem);
-//   }
-
-//   rn[0]=conf.r[b][0];
-//   rn[1]=conf.r[b][1];
-//   rn[2]=conf.r[b][2];
-//   E0+=PP.EField(rn,typeb);
-//   E1+=PP.EField(rn,typea);
-//   for (int m=0; m<conf.N; m++) {
-//     if (m==a || m==b) continue;
-//     int    typem=conf.type[m];
-//     double dsq=distance(rn,conf.r[m],conf.box_length);
-//     if (PP.within_cutoff(dsq,typeb,typem))
-//       E0+=PP.PairPotential(dsq,typeb,typem);
-//     if (PP.within_cutoff(dsq,typea,typem))
-//       E1+=PP.PairPotential(dsq,typea,typem);
-//   }
-
-//   return E1-E0;
-// }
-
-template <typename potential>
-void Interactions_isotropic_pairwise_naive<potential>::tabulate_potential(std::ostream& o,
+template <typename PotentialT>
+void Interactions_isotropic_pairwise_naive<PotentialT>::tabulate_potential(std::ostream& o,
 									  short t1,short t2)
 {
   int    N=200;
@@ -436,10 +335,11 @@ template parameter.  It uses an object of type NearestNeighbours to
 find the particles within the cut-off distance.  
 
 */
-template <typename potential>
+template <typename PotentialT,typename NeighboursT=NeighbourList_naive>
 class Interactions_isotropic_pairwise : public Interactions {
 public:
-  Interactions_isotropic_pairwise(potential &P,OLconfiguration&,MetricNearestNeighbours *NN=0);
+  Interactions_isotropic_pairwise(PotentialT &P,OLconfiguration &c,
+				  NeighboursT *NN=0);
   ~Interactions_isotropic_pairwise();
   const  char *name() const;
   double mass(short type) const {return PP.mass(type);}
@@ -452,13 +352,13 @@ public:
   void   fold_coordinates(OLconfiguration& conf,double maxdisp=-1);
 
 private:
-  potential& PP;
-
-  bool                     own_NN;
-  MetricNearestNeighbours* NN;
+  PotentialT&  PP;
+  bool         own_NN;
+  NeighboursT* NN;
 } ;
 
-template <typename potential> inline void Interactions_isotropic_pairwise<potential>::
+template <typename PotentialT,typename NeighboursT> inline
+void Interactions_isotropic_pairwise<PotentialT,NeighboursT>::
 fold_coordinates(OLconfiguration& conf,double maxdisp)
 {
   conf.fold_coordinates();
@@ -469,12 +369,14 @@ fold_coordinates(OLconfiguration& conf,double maxdisp)
 }
 
 /**
-The last argument is a pointer to a NearestNeighbour objetc.  If null
-(default), a NeighbourList_naive object will be created and used.
+The last argument is a pointer to an Neighbour object (see
+nneighbours.hh).  If null (default), an object will be created passing
+only the cutoff as argument.
 */
-template <typename potential> inline
-Interactions_isotropic_pairwise<potential>::
-Interactions_isotropic_pairwise(potential &p,OLconfiguration& c,MetricNearestNeighbours *n) :
+template <typename PotentialT,typename NeighboursT> inline
+Interactions_isotropic_pairwise<PotentialT,NeighboursT>::
+Interactions_isotropic_pairwise(PotentialT &p,OLconfiguration& c,
+				NeighboursT *n) :
   Interactions(), PP(p)
 {
   PP.init(c);
@@ -482,27 +384,27 @@ Interactions_isotropic_pairwise(potential &p,OLconfiguration& c,MetricNearestNei
     NN=n;
     own_NN=false;
   } else {
-    NN=new NeighbourList_naive(PP.cutoff());
+    NN=new NeighboursT(PP.cutoff());
     own_NN=true;
   }
   NN->rebuild(c,PP.cutoff());
 }
 
-template <typename potential> inline
-Interactions_isotropic_pairwise<potential>::
+template <typename PotentialT,typename NeighboursT> inline
+Interactions_isotropic_pairwise<PotentialT,NeighboursT>::
 ~Interactions_isotropic_pairwise()
 {
   if (own_NN) delete NN;
 }
 
-template <typename potential> inline
-const char *Interactions_isotropic_pairwise<potential>::name() const
+template <typename PotentialT,typename NeighboursT> inline
+const char *Interactions_isotropic_pairwise<PotentialT,NeighboursT>::name() const
 {
   return PP.name();
 }
 
-template <typename potential>
-double Interactions_isotropic_pairwise<potential>::
+template <typename PotentialT,typename NeighboursT>
+double Interactions_isotropic_pairwise<PotentialT,NeighboursT>::
 potential_energy(OLconfiguration& conf)
 {
   int    n,m;
@@ -513,7 +415,7 @@ potential_energy(OLconfiguration& conf)
     for (n=0; n<conf.N; n++)
       E+=PP.external_field(conf.r[n],conf.type[n]);
 
-  for (auto p = NN->pair_begin(); p!=NN->pair_end(); ++p) {
+  for (auto p = NN->pairs_begin(); p!=NN->pairs_end(); ++p) {
       int    typen=conf.type[p->first];
       int    typem=conf.type[p->second];
       double dsq=conf.distancesq(conf.r[p->first],conf.r[p->second]);
@@ -528,8 +430,8 @@ potential_energy(OLconfiguration& conf)
    NOTE that we expect v'(r)/r rather than the derivative
 
 */
-template <typename potential>
-double Interactions_isotropic_pairwise<potential>::
+template <typename PotentialT,typename NeighboursT>
+double Interactions_isotropic_pairwise<PotentialT,NeighboursT>::
 force_and_potential_energy(OLconfiguration &conf)
 {
   int    n,m;
@@ -545,7 +447,7 @@ force_and_potential_energy(OLconfiguration &conf)
     }
   }
 
-  for (auto p = NN->pair_begin(); p!=NN->pair_end(); ++p) {
+  for (auto p = NN->pairs_begin(); p!=NN->pairs_end(); ++p) {
     int typen=conf.type[p->first];
     int typem=conf.type[p->second];
     double rxmn=conf.ddiff(conf.r[p->first][0],conf.r[p->second][0],conf.box_length[0]);
@@ -565,8 +467,8 @@ force_and_potential_energy(OLconfiguration &conf)
   return E;
 }
 
-template <typename potential>
-double Interactions_isotropic_pairwise<potential>::
+template <typename PotentialT,typename NeighboursT>
+double Interactions_isotropic_pairwise<PotentialT,NeighboursT>::
 acceleration_and_potential_energy(OLconfiguration &conf)
 {
   int    n,m;
@@ -582,7 +484,7 @@ acceleration_and_potential_energy(OLconfiguration &conf)
     }
   }
 
-  for (auto p = NN->pair_begin(); p!=NN->pair_end(); ++p) {
+  for (auto p = NN->pairs_begin(); p!=NN->pairs_end(); ++p) {
     int typen=conf.type[p->first];
     int typem=conf.type[p->second];
     double rxmn=conf.ddiff(conf.r[p->first][0],conf.r[p->second][0],conf.box_length[0]);
@@ -604,8 +506,8 @@ acceleration_and_potential_energy(OLconfiguration &conf)
   return E;
 }
 
-template <typename potential>
-double Interactions_isotropic_pairwise<potential>::
+template <typename PotentialT,typename NeighboursT>
+double Interactions_isotropic_pairwise<PotentialT,NeighboursT>::
 delta_energy_particle_shift(OLconfiguration &conf,int n,double *rnew)
 {
   double PE,PEshift,rn[3];

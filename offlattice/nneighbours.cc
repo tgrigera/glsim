@@ -46,7 +46,7 @@ namespace glsim {
  */
 
 NeighbourList_naive::NeighbourList_naive(double rc_,double delta_r_) :
-  MetricNearestNeighbours(rc_),
+  rc(rc_),
   delta_r(delta_r_),
   accum_maxdisp(0.)
 {
@@ -84,9 +84,157 @@ void NeighbourList_naive::update(OLconfiguration& conf,double maxdisp)
     rebuild(conf);
 }
 
+
+/******************************************************************************
+ *
+ * Subcells (metric nearest neighbours with subcell method)
+ *
+ */
+
+void Subcells::init_cells(int npart,double box_length[])
+{
+  nparticles=npart;
+  /* Initialization of subcell index */
+  /* The factor 1.001 is a "security factor", to provide for the case when
+     numerical precision makes a particle stay just outside the periodic box */
+  float sfac=1.001;
+  double scmin=rc+delta_r;
+  for (int i=0; i<3; i++) {
+    m[i]=(int) floor(box_length[i]/scmin);
+    boxl[i]=box_length[i];
+    if (m[i]<3) throw System_too_small(i==0 ? "x" : (i==1 ? "y" : "z"));
+    else scell[i]=sfac*box_length[i]/m[i]; 
+  }
+  nscell=m[0]*m[1]*m[2];
+
+  clear_lists();
+  subcell=new int[nscell+1];  // last subcell is an end marker (one-past-end)
+  subcell[nscell]=-1;
+  for (int i=0; i<nscell; i++) subcell[i]=-1;
+
+  llist=new int[nparticles];
+  WhichSubcell=new int[nparticles];
+  subcelln=new int[27*nscell];
+
+  /* Initialization of subcell neighbour list */
+  for (int ix=0; ix<m[0]; ix++)
+    for (int iy=0; iy<m[1]; iy++)
+      for (int iz=0; iz<m[2]; iz++) {
+	int i=icell(ix,iy,iz)*27;
+	subcelln[i]   = eicell(ix-1,iy+1,iz  );
+	subcelln[i+1] = eicell(ix  ,iy+1,iz  );
+	subcelln[i+2] = eicell(ix+1,iy+1,iz  );
+	subcelln[i+3] = eicell(ix+1,iy  ,iz  );
+	subcelln[i+4] = eicell(ix-1,iy+1,iz-1);
+	subcelln[i+5] = eicell(ix  ,iy+1,iz-1);
+	subcelln[i+6] = eicell(ix+1,iy+1,iz-1);
+	subcelln[i+7] = eicell(ix-1,iy  ,iz-1);
+	subcelln[i+8] = eicell(ix  ,iy  ,iz-1);
+	subcelln[i+9] = eicell(ix+1,iy  ,iz-1);
+	subcelln[i+10]= eicell(ix-1,iy-1,iz-1);
+	subcelln[i+11]= eicell(ix  ,iy-1,iz-1);
+	subcelln[i+12]= eicell(ix+1,iy-1,iz-1);
+        /* Neighbours 13 and up are only used in Monte Carlo or for
+           border subcells */
+	subcelln[i+13]= eicell(ix-1,iy-1,iz  );
+	subcelln[i+14]= eicell(ix  ,iy-1,iz  );
+	subcelln[i+15]= eicell(ix+1,iy-1,iz  );
+	subcelln[i+16]= eicell(ix-1,iy  ,iz  );
+	subcelln[i+17]= eicell(ix-1,iy+1,iz+1);
+	subcelln[i+18]= eicell(ix  ,iy+1,iz+1);
+	subcelln[i+19]= eicell(ix+1,iy+1,iz+1);
+	subcelln[i+20]= eicell(ix-1,iy  ,iz+1);
+	subcelln[i+21]= eicell(ix  ,iy  ,iz+1);
+	subcelln[i+22]= eicell(ix+1,iy  ,iz+1);
+	subcelln[i+23]= eicell(ix-1,iy-1,iz+1);
+	subcelln[i+24]= eicell(ix  ,iy-1,iz+1);
+	subcelln[i+25]= eicell(ix+1,iy-1,iz+1);
+	subcelln[i+26]= nscell;  // This is a one-past-end subcell for convinence in operator++
+  }
+}
+
+void Subcells::clear_lists()
+{
+  delete[] subcell; subcell=0;
+  delete[] llist; llist=0;
+  delete[] WhichSubcell; WhichSubcell=0;
+  delete[] subcelln; subcelln=0;
+}
+
+void Subcells::rebuild(OLconfiguration& conf,double rc_)
+{
+  if (rc_>0)
+    rc=rc_;
+
+  if (rc_>0 || nparticles!=conf.N || conf.box_length[0]!=boxl[0] ||
+      conf.box_length[1]!=boxl[1] || conf.box_length[2]!=boxl[2])
+    init_cells(conf.N,conf.box_length);
+
+  update(conf,delta_r);
+}
+
+void Subcells::update(OLconfiguration& conf,double maxdisp)
+{
+  int i,ix,iy,iz,ic;
+
+  accum_maxdisp+=maxdisp;
+  if (accum_maxdisp<delta_r/2.) return;
+  accum_maxdisp=0;
+
+  for (i=0; i<nscell; i++)
+    subcell[i]=-1;
+  for (i=0; i<conf.N; i++) {
+    ix=(int) floor(conf.r[i][0]/scell[0]);
+    iy=(int) floor(conf.r[i][1]/scell[1]);
+    iz=(int) floor(conf.r[i][2]/scell[2]);
+    ic=icell(ix,iy,iz);
+
+    llist[i]=subcell[ic];
+    subcell[ic]=i;
+    WhichSubcell[i]=ic;
+  }
+}
+
+Subcells::NeighbourIterator& Subcells::NeighbourIterator::operator++()
+{
+  n=scell.next_particle(n);
+  if (n==particle) n=scell.next_particle(n);
+  while (n<0 && ncell<26) {
+    ncell++;
+    n=scell.first_particle(scell.neighbour(icell,ncell));
+  }
+  return *this;
+};
+
+Subcells::PairIterator& Subcells::PairIterator::operator++()
+{
+  pair.second=scell.next_particle(pair.second);
+  while (pair.second<0 && ncell<13) {
+    ncell++;
+    pair.second=scell.first_particle(scell.neighbour(icell,ncell));
+  }
+  if (pair.second<0 || ncell>=13) {  // Neighbours of iparticle exhausted, get next iparticle
+    ncell=-1;
+    pair.first=scell.next_particle(pair.first);
+    while (pair.first<0 && icell<scell.num_subcells() ) {
+      icell++;
+      pair.first=scell.first_particle(icell);
+    }
+    if (pair.first>=0) {  // If iparticles not exhausted, get next jparticle
+      pair.second=scell.next_particle(pair.first);
+      while (pair.second<0 && ncell<13) {
+	ncell++;
+	pair.second=scell.first_particle(scell.neighbour(icell,ncell));
+      }
+      if (pair.second<0) pair.first=-1;  // Reached the end
+    } else pair.second=-1; // Reached the end
+  }
+  return *this;
+};
+
 /*****************************************************************************
  *
- * TopologialNeighbours_naive
+ * TopologicalNeighbours_naive
  *
  */
 
