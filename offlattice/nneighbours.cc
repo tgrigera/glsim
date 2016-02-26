@@ -167,10 +167,11 @@ void Subcells::clear_lists()
 
 void Subcells::rebuild(OLconfiguration& conf,double rc_)
 {
-  if (rc_>0)
+  bool rcchange = rc_>0 && rc_!=rc;
+  if (rcchange)
     rc=rc_;
 
-  if (rc_>0 || nparticles!=conf.N || conf.box_length[0]!=boxl[0] ||
+  if (rcchange || nparticles!=conf.N || conf.box_length[0]!=boxl[0] ||
       conf.box_length[1]!=boxl[1] || conf.box_length[2]!=boxl[2])
     init_cells(conf.N,conf.box_length);
 
