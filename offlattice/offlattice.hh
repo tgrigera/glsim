@@ -1,5 +1,5 @@
 /*
- * offlattice.hh -- offlattice doc
+ * offlattice.hh -- include all offlattice headers
  *
  * This file is part of glsim, a numerical simulation class library and
  * helper programs.
@@ -48,3 +48,21 @@
 @}
 
  */
+
+#ifndef OFFLATTICE_HH
+#define OFFLATTICE_HH
+
+#include "ld.hh"
+#include "mcobservable.hh"
+#include "mdobservable.hh"
+#include "lj.hh"
+#include "nneighbours.hh"
+#include "interactions.hh"
+#include "md.hh"
+#include "mc.hh"
+#include "olconfiguration.hh"
+#include "trajectory.hh"
+#include "mdenvironment.hh"
+#include "h5md.hh"
+
+#endif /* OFFLATTICE_HH */

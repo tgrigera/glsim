@@ -20,7 +20,7 @@ include $(top_srcdir)/Makefile-common
 # Headers
 #
 
-pkginclude_HEADERS = cerrors.h exception.hh fft.hh log.hh		\
+pkginclude_HEADERS = blib.hh cerrors.h exception.hh fft.hh log.hh	\
                      parameters.hh scontext.hh random.hh		\
                      configuration.hh environment.hh simulation.hh	\
                      observable.hh stochastic.hh mfile.hh hdf_file.hh	\
@@ -30,7 +30,7 @@ pkginclude_HEADERS = cerrors.h exception.hh fft.hh log.hh		\
 # Doc-only headers
 #
 
-EXTRA_DIST = blib.hh readbt.sh
+EXTRA_DIST = blib-doc.hh readbt.sh
 
 #
 # binaries
