@@ -89,6 +89,7 @@ public:
  /// from scratch
   virtual void update(OLconfiguration&,double)=0;
 
+  double  cutoff() const {return rc;}
   virtual std::vector<Pair>::iterator pairs_begin()=0;
   virtual std::vector<Pair>::iterator pairs_end()=0;
   virtual std::vector<int>::iterator neighbours_begin(int i)=0;
@@ -116,6 +117,7 @@ public:
   void rebuild(OLconfiguration&,double rc=-1);
   void update(OLconfiguration&,double maxdisp);
 
+  double  cutoff() const {return rc;}
   std::vector<Pair>::iterator pairs_begin() {return pairs.begin();}
   std::vector<Pair>::iterator pairs_end() {return pairs.end();}
   std::vector<int>::iterator neighbours_begin(int i) {return neighbours[i].begin();}
@@ -151,6 +153,8 @@ public:
   void update(OLconfiguration&,double maxdisp);
   ~Subcells()       {clear_lists();};
 
+  double cutoff() const {return rc;}
+
   class NeighbourIterator;
   NeighbourIterator neighbours_begin(int i);
   NeighbourIterator neighbours_end(int i);
@@ -158,6 +162,14 @@ public:
   class PairIterator;
   PairIterator      pairs_begin();
   PairIterator      pairs_end();
+
+  void  init_cells(int,double[]);
+  void  clear_lists();
+  int   num_subcells() const;
+  int   first_particle(int cell) const;
+  int   next_particle(int particle) const;
+  int   neighbour(int cell,int n) const;
+  int   which_subcell(int particle) const;
 
 private:
   double rc,delta_r;
@@ -173,13 +185,6 @@ private:
   int    *subcelln;              ///< Subcell neighbour list
   double  boxl[3];               ///< Box size used to build subcell structure
 
-  void  init_cells(int,double[]);
-  void  clear_lists();
-  int   num_subcells() const;
-  int   first_particle(int cell) const;
-  int   next_particle(int particle) const;
-  int   neighbour(int cell,int n) const;
-  int   which_subcell(int particle) const;
   int   icell(int ix,int iy,int iz);
   int   eicell(int ix,int iy,int iz);
 } ;
