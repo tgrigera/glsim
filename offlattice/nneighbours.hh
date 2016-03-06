@@ -53,7 +53,7 @@ namespace glsim {
 /** \class MetricNearestNeighbours
     \ingroup OfflatticeINT
 
-    NOTE!!!! Algorithms for nearest neighbours are to be thoght as
+NOTE!!!! Algorithms for nearest neighbours are to be thoght as
 providing __candidates__for NN.  For most algorithms here, pairs
 returned are not guaranteed to be within cutoff, the algorithms here
 mereley reduce the candidates list.  This is a feature, because in
@@ -61,18 +61,21 @@ this way the structure need not be rebuilt at every step (which may be
 costly).  Candidates are guaranteed to appear only once.  Check
 Interactions for use.
 
-    MetricNearestNeighbours is an abstract class that illustrates the
-interface of the classes that find the metric nearest neighbours
-(i.e. neighbours defined as those lying at a distance less than some
-value, contrast with TopologicalNearestNeighbours).  It is just an
-illustration because the different implementations of metric
-nearest-neighbour search do not derive from this.  Instead, they are
-inteded to be used in a template class like interactions, with a
-STL-container-like interface.  In particular the functions
-pairs_begin() etc return an appropriate iterator, but its exact type is
-not known here, so the implementations don't inherit from this.  Type
-erasure (http://www.artima.com/cppsource/type_erasure.html) could help
-here, but I'm not yet convinced it's worth the effort.
+MetricNearestNeighbours a class that illustrates the interface of the
+classes that find the metric nearest neighbours (i.e. neighbours
+defined as those lying at a distance less than some value, contrast
+with TopologicalNearestNeighbours).  It is just an illustration
+because the different implementations of metric nearest-neighbour
+search do not derive from this.  Instead, they are inteded to be used
+in a template class like interactions, with a STL-container-like
+interface.  In particular the functions pairs_begin() etc return an
+appropriate iterator, but its exact type is not known here, so the
+implementations don't inherit from this.  Type erasure
+(http://www.artima.com/cppsource/type_erasure.html) could help here,
+but I'm not yet convinced it's worth the effort.
+
+This class simply returns all pairs as candidates, serving only as
+interface illustration and for benchmarking.
 
 */
 class MetricNearestNeighbours {
@@ -83,21 +86,101 @@ public:
   virtual ~MetricNearestNeighbours() {}
 
   /// Build lists from scratch for given conf
-  virtual void rebuild(OLconfiguration&,double rc=-1)=0;
+  virtual void rebuild(OLconfiguration& c,double rc_=-1)
+  {nparticles=c.N; if (rc_>0) rc=rc_;}
  /// Inform of change in configuration, will try to update lists
  /// assuming particles have not moved much, may rebuild everything
  /// from scratch
-  virtual void update(OLconfiguration&,double)=0;
+  virtual void update(OLconfiguration& c,double a=0)
+  {nparticles=c.N; }
 
   double  cutoff() const {return rc;}
-  virtual std::vector<Pair>::iterator pairs_begin()=0;
-  virtual std::vector<Pair>::iterator pairs_end()=0;
-  virtual std::vector<int>::iterator neighbours_begin(int i)=0;
-  virtual std::vector<int>::iterator neighbours_end(int i)=0;
+
+  class NeighbourIterator;
+  NeighbourIterator neighbours_begin(int i);
+  int               neighbours_end(int i) {return -1;}
+
+  class PairIterator;
+  PairIterator      pairs_begin();
+  int               pairs_end() {return -1;}
 
 protected:
   double rc;
+  int    nparticles;
 } ;
+
+class MetricNearestNeighbours::NeighbourIterator :
+    public std::iterator<std::input_iterator_tag,int>
+{
+public:
+  NeighbourIterator(MetricNearestNeighbours& NN_,int particle_) :
+    NN(NN_),
+    particle(particle_)
+  { n = particle==0 ? 1 : 0; }
+
+  bool operator==(int i) const
+  {return particle>=NN.nparticles;}
+
+  bool operator!=(int) const
+  {return particle<NN.nparticles;}
+
+  const int& operator*() const {return n;}
+  int const * operator->() const {return &n;}
+
+  NeighbourIterator& operator++()
+  { while (++n==particle); }
+
+  NeighbourIterator operator++(int)
+  {NeighbourIterator c=*this; ++(*this); return c;}
+
+private:
+  MetricNearestNeighbours& NN;
+  int  particle;   ///< Which particle are we tracking neighbours to
+  int  n;          ///< Current neighbour
+} ;
+
+inline MetricNearestNeighbours::NeighbourIterator
+MetricNearestNeighbours::neighbours_begin(int i)
+{
+  return NeighbourIterator(*this,i);
+}
+
+class MetricNearestNeighbours::PairIterator :
+    public std::iterator<std::input_iterator_tag,int>
+{
+public:
+  PairIterator(MetricNearestNeighbours &NN_) :
+    NN(NN_), pair(0,1) {}
+
+  bool operator==(const PairIterator& ni) const
+  {return pair==ni.pair;}
+  bool operator!=(const PairIterator& ni) const
+  {return ! operator==(ni);}
+
+  bool operator==(int)  const
+  {return pair.first>=NN.nparticles;}
+  bool operator!=(int)  const
+  {return pair.first<NN.nparticles;}
+
+  const Pair& operator*() const {return pair;}
+  Pair const * operator->() const {return &pair;}
+
+  PairIterator& operator++()
+  {++pair.second; if (pair.second==NN.nparticles) {++pair.first; pair.second=pair.first+1;}}
+
+  PairIterator operator++(int)
+  {PairIterator c=*this; ++(*this); return c;}
+
+private:
+  MetricNearestNeighbours NN;
+  Pair                    pair;
+} ;
+
+inline MetricNearestNeighbours::PairIterator
+MetricNearestNeighbours::pairs_begin()
+{
+  return PairIterator(*this);
+}
 
 /** \class NeighbourList_naive
     \ingroup OfflatticeINT
