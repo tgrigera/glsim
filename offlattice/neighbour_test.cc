@@ -108,24 +108,13 @@ void test_metric(glsim::OLconfiguration &conf,std::string name)
   NeighbourAlgo NEW(rc);
   NEW.rebuild(conf);
 
-  std::cout << "building naive...";
+  std::cout << "building naive pair list...";
   std::cout.flush();
   glsim::NeighbourList_naive TNN(rc,0);
   TNN.rebuild(conf);
   
   std::cout << "comparing...";
   std::cout.flush();
-
-  // std::cout << '\n';
-  // for (auto pj=NEW.pairs_begin(), end=NEW.pairs_end(); pj!=end; ++pj) {
-  //   double dsq=conf.distancesq(pj->first,pj->second);
-  //   if (dsq<=rcsq) std::cout << "NEW: " << *pj << ' ' << sqrt(dsq) << '\n';
-  // }
-  // std::cout << "\n\n";
-  // for (auto pj=TNN.pairs_begin(), end=TNN.pairs_end(); pj!=end; ++pj) {
-  //   double dsq=conf.distancesq(pj->first,pj->second);
-  //   if (dsq<=rcsq) std::cout << "NAIVE: " << *pj << ' ' << sqrt(dsq) << '\n';
-  // }
 
   // Test particle-based
   for (int i=0; i<conf.N; ++i) {
@@ -138,7 +127,7 @@ void test_metric(glsim::OLconfiguration &conf,std::string name)
 	    TNN.neighbours_end(i))
 	  throw Test_failure(std::to_string(i)+" and "+ std::to_string(*pj)+
 			     " neighbours in both lists",
-			     "missing in naive algorithm");
+			     "missing in naive pair list");
       }
       for (auto pj=TNN.neighbours_begin(i), end=TNN.neighbours_end(i); pj!=end; ++pj) {
 	if (find(NEW.neighbours_begin(i),NEW.neighbours_end(i),*pj) ==
@@ -147,7 +136,6 @@ void test_metric(glsim::OLconfiguration &conf,std::string name)
 			     " neighbours in both lists",
 			     "missing in "+name);
       }
-      if (np%1000==0) std::cout << " (tested " << np << " candidates \n";
     }
   }
 
@@ -166,10 +154,9 @@ void test_metric(glsim::OLconfiguration &conf,std::string name)
       if (!foundp1 && !foundp2) 
 	throw Test_failure("pair ("+std::to_string(pp->first)+","
 			   +std::to_string(pp->second)+") present in both lists",
-			   "missing in naive algorithm");
+			   "missing in naive pair list");
     }
     np++;
-    if (np%1000==0) std::cout << " (tested " << np << " candidate pairs)\n";
   }
   for (auto pp=TNN.pairs_begin(), end=TNN.pairs_end(); pp!=end; ++pp) {
     dsq=conf.distancesq(pp->first,pp->second);
@@ -192,32 +179,6 @@ void test_metric(glsim::OLconfiguration &conf,std::string name)
   std::cout << "OK\n";
 
 
-}
-
-template <typename NeighbourAlgo>
-void time_metric(glsim::OLconfiguration &conf,std::string name)
-{
-  double rc=conf.box_length[0]/4;
-  std::cout << "Timing " << name << " algorithm with " << conf.N << " particles: ";
-
-  boost::timer::auto_cpu_timer t;
-
-  std::cout << "building... ";
-  std::cout.flush();
-  NeighbourAlgo TNN(rc);
-  TNN.rebuild(conf);
-
-  std::cout << "walking through neighbours (twice)\n";
-  double rcsq=rc*rc;
-  register int s;
-  for (auto pp=TNN.pairs_begin(), end=TNN.pairs_end(); pp!=end; ++pp) {
-    if (conf.distancesq(pp->first,pp->second) <= rcsq)
-      s=pp->first;
-  }
-  for (auto pp=TNN.pairs_begin(), end=TNN.pairs_end(); pp!=end; ++pp) {
-    if (conf.distancesq(pp->first,pp->second) <= rcsq)
-      s=pp->second;
-  }
 }
 
 /*
@@ -284,14 +245,6 @@ void run_tests()
   test_metric<glsim::NeighbourList_subcells>(conf,"pair list with subcells");
 
   test_topological_naive(conf);
-
-  create_random(conf,5000,10);
-  // test_metric_naive(conf);
-  // test_metric<glsim::Subcells>(conf,"subcell algorithm");
-
-  time_metric<glsim::NeighbourList_naive>(conf,"naive neighbour list");
-  time_metric<glsim::Subcells>(conf,"subcell");
-  time_metric<glsim::NeighbourList_subcells>(conf,"neighbour list with subcells");
 }
 
 #define TEST_SUCCESS 0

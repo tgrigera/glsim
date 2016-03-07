@@ -119,10 +119,10 @@ public:
   { n = particle==0 ? 1 : 0; }
 
   bool operator==(int i) const
-  {return particle>=NN.nparticles;}
+  {return n>=NN.nparticles;}
 
   bool operator!=(int) const
-  {return particle<NN.nparticles;}
+  {return n<NN.nparticles;}
 
   const int& operator*() const {return n;}
   int const * operator->() const {return &n;}
@@ -158,9 +158,9 @@ public:
   {return ! operator==(ni);}
 
   bool operator==(int)  const
-  {return pair.first>=NN.nparticles;}
+  {return pair.first>=NN.nparticles-1;}
   bool operator!=(int)  const
-  {return pair.first<NN.nparticles;}
+  {return pair.first<NN.nparticles-1;}
 
   const Pair& operator*() const {return pair;}
   Pair const * operator->() const {return &pair;}
