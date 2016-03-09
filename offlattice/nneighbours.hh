@@ -51,15 +51,7 @@ namespace glsim {
  */
 
 /** \class MetricNearestNeighbours
-    \ingroup OfflatticeINT
-
-NOTE!!!! Algorithms for nearest neighbours are to be thoght as
-providing __candidates__for NN.  For most algorithms here, pairs
-returned are not guaranteed to be within cutoff, the algorithms here
-mereley reduce the candidates list.  This is a feature, because in
-this way the structure need not be rebuilt at every step (which may be
-costly).  Candidates are guaranteed to appear only once.  Check
-Interactions for use.
+    \ingroup MetricNN
 
 MetricNearestNeighbours a class that illustrates the interface of the
 classes that find the metric nearest neighbours (i.e. neighbours
@@ -186,7 +178,7 @@ MetricNearestNeighbours::pairs_begin()
 }
 
 /** \class NeighbourList_naive
-    \ingroup OfflatticeINT
+    \ingroup MetricNN
 
     This provides a naive implementation of a neighbour list.
     Although the list is built by iterating through all possible
@@ -225,7 +217,7 @@ private:
 
 
 /** \class Subcells
-    \ingroup OfflatticeINT
+    \ingroup MetricNN
 
     This class implements neighbour lookup throug subcells [Allen].
 
@@ -491,7 +483,7 @@ inline Subcells::PairIterator Subcells::pairs_end()
 }
 
 /** \class NeighbourList_subcells
-    \ingroup OfflatticeINT
+    \ingroup MetricNN
 
     This class provides metric nearest neighbour candidates through a
     pair list.  The pair list is built using subcells (class
@@ -581,10 +573,25 @@ struct implement_for_each_pair<Function,glsim::Subcells> {
   }
 } ;
 
+/**  \ingroup MetricNN
+
+Applies a function to all pairs _within the specified cutoff_ of the
+neighbours described by the given class.  Candidates supplied by the
+class are screened to discard those whose distance is above cutoff.
+This template function is specialised for some nearest neighbour
+classes for improved perfomance.
+
+\param NN   The nearest neighbour class, appropriately initialized
+
+\param f The function to be applied.  Signature must be `anytype f(int
+            i,int j,double dsq)`.  It will receive two number (i and j)
+            describing the pair and the pair's squared distance (dsq).
+ 
+*/
 template <typename Function,typename NeighboursT>
 Function for_each_pair(NeighboursT& NN,Function f)
 {
-  implement_for_each_pair<Function,NeighboursT>::for_each_pair(NN,f);
+ return implement_for_each_pair<Function,NeighboursT>::for_each_pair(NN,f);
 }
 
 /*****************************************************************************

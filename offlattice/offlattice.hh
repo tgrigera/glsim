@@ -45,9 +45,25 @@
 
   \defgroup OfflatticeCONF Off-lattice configurations and trajectories
 
+\defgroup MetricNN Metric nearest neighbours
+
+This module includes classes to find nearest neighbours defined
+metrically (i.e. those at an euclidean distance less than a certain
+cutoff).
+
+The present algorithms for nearest neighbours are to be thoght as
+providing __candidates__ for NN.  For most algorithms here, pairs
+returned are not guaranteed to be within cutoff; the algorithms
+mereley reduce the candidates list.  In this way the support
+structures need not be rebuilt at every step (which may be costly).
+Candidates are guaranteed to appear only once.  For example use see
+Interactions or glsim-doc.  Also check the `for_each_pair` functions
+below; those will loop through all pairs and apply a given function
+_only_ to those below the cutoff (i.e. they screen candidates).
+
 @}
 
- */
+*/
 
 #ifndef OFFLATTICE_HH
 #define OFFLATTICE_HH
