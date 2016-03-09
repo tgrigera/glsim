@@ -53,24 +53,27 @@ NeighbourList_naive::NeighbourList_naive(double rc_,double delta_r_) :
 {
   if (delta_r<0)
     delta_r=rc*0.3;
+  rcsq=rc*rc;
   rdsq=rc+delta_r;
   rdsq*=rdsq;
 }
 
-void NeighbourList_naive::rebuild(OLconfiguration& conf,double rc_)
+void NeighbourList_naive::rebuild(OLconfiguration& conf_,double rc_)
 {
+  conf=&conf_;
   if (rc_>0) {
     rc=rc_;
+    rcsq=rc*rc;
     rdsq=rc+delta_r;
     rdsq*=rdsq;
   }
   
   neighbours.clear();
-  neighbours.resize(conf.N);
+  neighbours.resize(conf->N);
   pairs.clear();
-  for (size_t i=0; i<conf.N-1; ++i)
-    for (size_t j=i+1; j<conf.N; ++j)
-      if (conf.distancesq(i,j) <= rdsq) {
+  for (size_t i=0; i<conf->N-1; ++i)
+    for (size_t j=i+1; j<conf->N; ++j)
+      if (conf->distancesq(i,j) <= rdsq) {
 	pairs.push_back(Pair(i,j));
 	neighbours[i].push_back(j);
 	neighbours[j].push_back(i);
@@ -78,11 +81,11 @@ void NeighbourList_naive::rebuild(OLconfiguration& conf,double rc_)
   accum_maxdisp=0.;
 }
 
-void NeighbourList_naive::update(OLconfiguration& conf,double maxdisp)
+void NeighbourList_naive::update(double maxdisp)
 {
   accum_maxdisp+=maxdisp;
   if (accum_maxdisp>=delta_r/2.)
-    rebuild(conf);
+    rebuild(*conf);
 }
 
 
@@ -165,20 +168,23 @@ void Subcells::clear_lists()
   delete[] subcelln; subcelln=0;
 }
 
-void Subcells::rebuild(OLconfiguration& conf,double rc_)
+void Subcells::rebuild(OLconfiguration& conf_,double rc_)
 {
+  conf=&conf_;
   bool rcchange = rc_>0 && rc_!=rc;
-  if (rcchange)
+  if (rcchange) {
     rc=rc_;
+    rcsq=rc*rc;
+  }
 
-  if (rcchange || nparticles!=conf.N || conf.box_length[0]!=boxl[0] ||
-      conf.box_length[1]!=boxl[1] || conf.box_length[2]!=boxl[2])
-    init_cells(conf.N,conf.box_length);
+  if (rcchange || nparticles!=conf->N || conf->box_length[0]!=boxl[0] ||
+      conf->box_length[1]!=boxl[1] || conf->box_length[2]!=boxl[2])
+    init_cells(conf->N,conf->box_length);
 
-  update(conf,delta_r);
+  update(delta_r);
 }
 
-void Subcells::update(OLconfiguration& conf,double maxdisp)
+void Subcells::update(double maxdisp)
 {
   int i,ix,iy,iz,ic;
 
@@ -188,10 +194,10 @@ void Subcells::update(OLconfiguration& conf,double maxdisp)
 
   for (i=0; i<nscell; i++)
     subcell[i]=-1;
-  for (i=0; i<conf.N; i++) {
-    ix=(int) floor(conf.r[i][0]/scell[0]);
-    iy=(int) floor(conf.r[i][1]/scell[1]);
-    iz=(int) floor(conf.r[i][2]/scell[2]);
+  for (i=0; i<conf->N; i++) {
+    ix=(int) floor(conf->r[i][0]/scell[0]);
+    iy=(int) floor(conf->r[i][1]/scell[1]);
+    iz=(int) floor(conf->r[i][2]/scell[2]);
     ic=icell(ix,iy,iz);
 
     llist[i]=subcell[ic];
@@ -252,24 +258,27 @@ NeighbourList_subcells::NeighbourList_subcells(double rc_,double delta_r_) :
 {
   if (delta_r<0)
     delta_r=rc*0.3;
+  rcsq=rc*rc;
   rdsq=rc+delta_r;
   rdsq*=rdsq;
 }
 
-void NeighbourList_subcells::rebuild(OLconfiguration& conf,double rc_)
+void NeighbourList_subcells::rebuild(OLconfiguration& conf_,double rc_)
 {
+  conf=&conf_;
   if (rc_>0) {
     rc=rc_;
+    rcsq=rc*rc;
     rdsq=rc+delta_r;
     rdsq*=rdsq;
   }
   
   neighbours.clear();
-  neighbours.resize(conf.N);
+  neighbours.resize(conf->N);
   pairs.clear();
-  SUBC.rebuild(conf,rc);
+  SUBC.rebuild(*conf,rc);
   for (auto pp=SUBC.pairs_begin(), end=SUBC.pairs_end(); pp!=end; ++pp) {
-      if (conf.distancesq(pp->first,pp->second) <= rdsq) {
+      if (conf->distancesq(pp->first,pp->second) <= rdsq) {
 	pairs.push_back(*pp);
 	neighbours[pp->first].push_back(pp->second);
 	neighbours[pp->second].push_back(pp->first);
@@ -278,11 +287,11 @@ void NeighbourList_subcells::rebuild(OLconfiguration& conf,double rc_)
   accum_maxdisp=0.;
 }
 
-void NeighbourList_subcells::update(OLconfiguration& conf,double maxdisp)
+void NeighbourList_subcells::update(double maxdisp)
 {
   accum_maxdisp+=maxdisp;
   if (accum_maxdisp>=delta_r/2.)
-    rebuild(conf);
+    rebuild(*conf);
 }
 
 

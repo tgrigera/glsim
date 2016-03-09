@@ -82,19 +82,19 @@ class MetricNearestNeighbours {
 public:
   typedef std::pair<int,int> Pair;
   
-  MetricNearestNeighbours(double rc_) : rc(rc_) {}
+  MetricNearestNeighbours(double rc_) : rc(rc_) {rcsq=rc*rc;}
   virtual ~MetricNearestNeighbours() {}
 
   /// Build lists from scratch for given conf
   virtual void rebuild(OLconfiguration& c,double rc_=-1)
-  {nparticles=c.N; if (rc_>0) rc=rc_;}
- /// Inform of change in configuration, will try to update lists
- /// assuming particles have not moved much, may rebuild everything
- /// from scratch
-  virtual void update(OLconfiguration& c,double a=0)
-  {nparticles=c.N; }
+  {conf=&c; if (rc_>0) rc=rc_;}
+  /// Inform of change in configuration, will try to update lists
+  /// assuming particles have not moved much, may rebuild everything
+  /// from scratch
+  virtual void update(double a=0) {}
 
-  double  cutoff() const {return rc;}
+  double  cutoff()   const {return rc;}
+  double  cutoffsq() const {return rcsq;}
 
   class NeighbourIterator;
   NeighbourIterator neighbours_begin(int i);
@@ -104,9 +104,12 @@ public:
   PairIterator      pairs_begin();
   int               pairs_end() {return -1;}
 
-protected:
-  double rc;
-  int    nparticles;
+  template <typename Function,typename NeighboursT>
+  friend struct implement_for_each_pair;
+
+private:
+  OLconfiguration* conf;
+  double           rc,rcsq;
 } ;
 
 class MetricNearestNeighbours::NeighbourIterator :
@@ -119,10 +122,10 @@ public:
   { n = particle==0 ? 1 : 0; }
 
   bool operator==(int i) const
-  {return n>=NN.nparticles;}
+  {return n>=NN.conf->N;}
 
   bool operator!=(int) const
-  {return n<NN.nparticles;}
+  {return n<NN.conf->N;}
 
   const int& operator*() const {return n;}
   int const * operator->() const {return &n;}
@@ -158,15 +161,15 @@ public:
   {return ! operator==(ni);}
 
   bool operator==(int)  const
-  {return pair.first>=NN.nparticles-1;}
+  {return pair.first>=NN.conf->N-1;}
   bool operator!=(int)  const
-  {return pair.first<NN.nparticles-1;}
+  {return pair.first<NN.conf->N-1;}
 
   const Pair& operator*() const {return pair;}
   Pair const * operator->() const {return &pair;}
 
   PairIterator& operator++()
-  {++pair.second; if (pair.second==NN.nparticles) {++pair.first; pair.second=pair.first+1;}}
+  {++pair.second; if (pair.second==NN.conf->N) {++pair.first; pair.second=pair.first+1;}}
 
   PairIterator operator++(int)
   {PairIterator c=*this; ++(*this); return c;}
@@ -198,19 +201,25 @@ public:
 
   NeighbourList_naive(double rc,double delta_r=-1);
   void rebuild(OLconfiguration&,double rc=-1);
-  void update(OLconfiguration&,double maxdisp);
+  void update(double maxdisp);
 
   double  cutoff() const {return rc;}
+  double  cutoffsq() const {return rcsq;}
+
   std::vector<Pair>::iterator pairs_begin() {return pairs.begin();}
   std::vector<Pair>::iterator pairs_end() {return pairs.end();}
   std::vector<int>::iterator neighbours_begin(int i) {return neighbours[i].begin();}
   std::vector<int>::iterator neighbours_end(int i) {return neighbours[i].end();}
 
+  template <typename Function,typename NeighboursT>
+  friend struct implement_for_each_pair;
+
 private:
+  OLconfiguration*  conf;
   std::vector<Pair> pairs;
   std::vector<std::vector<int>>  neighbours;
 
-  double rc,rdsq,delta_r;
+  double rc,rcsq,rdsq,delta_r;
   double accum_maxdisp;
 } ;
 
@@ -233,10 +242,11 @@ public:
   /// assuming particles have not moved much, may rebuild everything
   /// from scratch.  Assumes number of particles and box size has not
   /// changed.
-  void update(OLconfiguration&,double maxdisp);
+  void update(double maxdisp);
   ~Subcells()       {clear_lists();};
 
   double cutoff() const {return rc;}
+  double cutoffsq() const {return rcsq;}
 
   class NeighbourIterator;
   NeighbourIterator neighbours_begin(int i);
@@ -254,8 +264,12 @@ public:
   int   neighbour(int cell,int n) const;
   int   which_subcell(int particle) const;
 
+  template <typename Function,typename NeighboursT>
+  friend struct implement_for_each_pair;
+
 private:
-  double rc,delta_r;
+  OLconfiguration* conf;
+  double rc,rcsq,delta_r;
   double accum_maxdisp;
 
   int    m[3];                   ///< Number of subcells in each axis
@@ -489,18 +503,25 @@ public:
 
   NeighbourList_subcells(double rc,double delta_r=-1);
   void rebuild(OLconfiguration&,double rc=-1);
-  void update(OLconfiguration&,double maxdisp);
+  void update(double maxdisp);
+
+  double cutoff() const {return rc;}
+  double cutoffsq() const {return rcsq;}
 
   std::vector<Pair>::iterator pairs_begin() {return pairs.begin();}
   std::vector<Pair>::iterator pairs_end() {return pairs.end();}
   std::vector<int>::iterator neighbours_begin(int i) {return neighbours[i].begin();}
   std::vector<int>::iterator neighbours_end(int i) {return neighbours[i].end();}
 
+  template <typename Function,typename NeighboursT>
+  friend struct implement_for_each_pair;
+
 private:
+  OLconfiguration   *conf;
   std::vector<Pair> pairs;
   std::vector<std::vector<int>>  neighbours;
 
-  double    rc,rdsq,delta_r;
+  double    rc,rcsq,rdsq,delta_r;
   double    accum_maxdisp;
 
   Subcells  SUBC;
@@ -538,7 +559,7 @@ public:
   /// Inform of change in configuration, will try to update lists
   /// assuming particles have not moved much, may rebuild everything
   /// from scratch
-  virtual void update(OLconfiguration&,double)=0;
+  virtual void update(double)=0;
 
   virtual std::vector<int>::iterator neighbours_begin(int i)=0;
   virtual std::vector<int>::iterator neighbours_end(int i)=0;
@@ -562,12 +583,13 @@ public:
     TopologicalNearestNeighbours(Nnearest) {};
   void rebuild(OLconfiguration&,int Nnearest=-1);
   // maybe this makes no sense:
-  void update(OLconfiguration& c,double maxdisp) {rebuild(c);}
+  void update(double maxdisp) {rebuild(*conf);}
 
   std::vector<int>::iterator neighbours_begin(int i) {return neighbours[i].begin();}
   std::vector<int>::iterator neighbours_end(int i) {return neighbours[i].end();}
 
 private:
+  OLconfiguration* conf;
   struct ndist {int n; double dsq; ndist(int n_,double d_) : n(n_), dsq(d_){} };
   std::vector<std::vector<int>>  neighbours;
 } ;

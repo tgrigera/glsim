@@ -365,7 +365,7 @@ fold_coordinates(OLconfiguration& conf,double maxdisp)
   if (maxdisp<0)
     NN->rebuild(conf,PP.cutoff());
   else
-    NN->update(conf,maxdisp);
+    NN->update(maxdisp);
 }
 
 /**
