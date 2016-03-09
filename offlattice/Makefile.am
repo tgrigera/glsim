@@ -44,8 +44,8 @@ libglsim_ol_la_SOURCES = h5md.cc olconfiguration.cc interactions.cc	\
 LDADD=$(top_builddir)/blib/libglsim.la libglsim_ol.la
 
 bin_PROGRAMS = gs_olconf_cat gs_olconf_create gs_olconf_dump	\
-	gs_ljenergy gs_ljld gs_ljmc gs_ljmd gs_rljmc gs_rljmd	\
-	gs_traj2h5md
+	gs_ljenergy gs_ljld gs_ljmc gs_ljmd gs_neighbour_time	\
+	gs_rljmc gs_rljmd gs_traj2h5md
 
 # Binary dependencies
 
@@ -56,6 +56,7 @@ gs_ljenergy_SOURCES = ljenergy.cc energy.cc
 gs_ljld_SOURCES = ljld.cc
 gs_ljmc_SOURCES = ljmc.cc
 gs_ljmd_SOURCES = ljmd.cc
+gs_neighbour_time_SOURCES = neighbour_time.cc
 gs_rljmc_SOURCES = rljmc.cc
 gs_rljmd_SOURCES = rljmd.cc
 gs_traj2h5md_SOURCES = traj2h5md.cc
