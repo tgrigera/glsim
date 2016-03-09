@@ -335,7 +335,7 @@ template parameter.  It uses an object of type NearestNeighbours to
 find the particles within the cut-off distance.  
 
 */
-template <typename PotentialT,typename NeighboursT=NeighbourList_naive>
+template <typename PotentialT,typename NeighboursT=NeighbourList_subcells>
 class Interactions_isotropic_pairwise : public Interactions {
 public:
   Interactions_isotropic_pairwise(PotentialT &P,OLconfiguration &c,
