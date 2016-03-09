@@ -237,7 +237,7 @@ public:
   Subcells(double rc,double delta_r=0);
   /// Build lists from scratch for given configuration. Will check for
   /// changes in box size and number of particles.
-  void rebuild(OLconfiguration&,double rc=-1);
+  void rebuild(OLconfiguration&,double rc=-1,double delta_r=-1);
   /// Inform of change in configuration, will try to update lists
   /// assuming particles have not moved much, may rebuild everything
   /// from scratch.  Assumes number of particles and box size has not
@@ -255,14 +255,6 @@ public:
   class PairIterator;
   PairIterator      pairs_begin();
   PairIterator      pairs_end();
-
-  void  init_cells(int,double[]);
-  void  clear_lists();
-  int   num_subcells() const;
-  int   first_particle(int cell) const;
-  int   next_particle(int particle) const;
-  int   neighbour(int cell,int n) const;
-  int   which_subcell(int particle) const;
 
   template <typename Function,typename NeighboursT>
   friend struct implement_for_each_pair;
@@ -284,6 +276,14 @@ private:
 
   int   icell(int ix,int iy,int iz);
   int   eicell(int ix,int iy,int iz);
+
+  void  init_cells(int,double[]);
+  void  clear_lists();
+  int   num_subcells() const;
+  int   first_particle(int cell) const;
+  int   next_particle(int particle) const;
+  int   neighbour(int cell,int n) const;
+  int   which_subcell(int particle) const;
 } ;
 
 
@@ -302,6 +302,7 @@ inline Subcells::Subcells(double rc_,double delta_r_) :
   subcelln(0)
 {
   m[0]=m[1]=m[2]=0;
+  rcsq=rc*rc;
 }
 
 inline int Subcells::icell(int ix,int iy,int iz)

@@ -139,7 +139,7 @@ std::ostream& operator<<(std::ostream& o,const boost::timer::cpu_times& times)
 }
 
 template <typename NearestT>
-double time_algo(NearestT NN,glsim::OLconfiguration& conf)
+double time_algo(NearestT& NN,glsim::OLconfiguration& conf)
 {
   boost::timer::cpu_timer     timer,total_timer;
   boost::timer::cpu_times     times;
@@ -223,7 +223,7 @@ void wmain(int argc,char *argv[])
   }
   if (options.time_list_naive) {
     std::cout << "#### Neighbour list (list built naively)\n";
-    glsim::NeighbourList_naive  NLN(rc);
+    glsim::NeighbourList_naive  NLN(rc,rc*0.2);
     time_algo(NLN,conf);
   }
   if (options.time_subcell) {
@@ -233,7 +233,7 @@ void wmain(int argc,char *argv[])
   }
   if (options.time_list_subcell) {
     std::cout << "#### Neighbour list (list build with subcells)\n";
-    glsim::NeighbourList_subcells  NLS(rc);
+    glsim::NeighbourList_subcells  NLS(rc,rc*0.2);
     time_algo(NLS,conf);
   }
 }

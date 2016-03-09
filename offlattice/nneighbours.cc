@@ -168,7 +168,7 @@ void Subcells::clear_lists()
   delete[] subcelln; subcelln=0;
 }
 
-void Subcells::rebuild(OLconfiguration& conf_,double rc_)
+void Subcells::rebuild(OLconfiguration& conf_,double rc_,double delta_rc_)
 {
   conf=&conf_;
   bool rcchange = rc_>0 && rc_!=rc;
@@ -176,6 +176,8 @@ void Subcells::rebuild(OLconfiguration& conf_,double rc_)
     rc=rc_;
     rcsq=rc*rc;
   }
+  rcchange = rcchange || (delta_rc_>0 && delta_rc_!=delta_r);
+  if (delta_rc_>0) delta_r=delta_rc_;
 
   if (rcchange || nparticles!=conf->N || conf->box_length[0]!=boxl[0] ||
       conf->box_length[1]!=boxl[1] || conf->box_length[2]!=boxl[2])
@@ -276,14 +278,14 @@ void NeighbourList_subcells::rebuild(OLconfiguration& conf_,double rc_)
   neighbours.clear();
   neighbours.resize(conf->N);
   pairs.clear();
-  SUBC.rebuild(*conf,rc);
-  for (auto pp=SUBC.pairs_begin(), end=SUBC.pairs_end(); pp!=end; ++pp) {
-      if (conf->distancesq(pp->first,pp->second) <= rdsq) {
-	pairs.push_back(*pp);
-	neighbours[pp->first].push_back(pp->second);
-	neighbours[pp->second].push_back(pp->first);
-      }
-  }
+  SUBC.rebuild(*conf,rc+delta_r,0);
+  for_each_pair(SUBC,
+		[this](int i,int j,double dsq){
+		  pairs.push_back(Pair(i,j));
+		  neighbours[i].push_back(j);
+		  neighbours[j].push_back(i);
+		}
+		);
   accum_maxdisp=0.;
 }
 
