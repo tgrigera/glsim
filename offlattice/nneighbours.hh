@@ -527,7 +527,64 @@ private:
   Subcells  SUBC;
 } ;
 
+/*****************************************************************************
+ *
+ * Functions to loop through all nearest neigbhours, with the static
+ * member function trick for partial specialization
+ *
+ */
+template <typename Function,typename NeighboursT>
+struct implement_for_each_pair {
+  static Function for_each_pair(NeighboursT& NN,Function f)
+  {
+    for (auto p = NN.pairs_begin(), end=NN.pairs_end(); p!=end; ++p) {
+      double dsq=NN.conf->distancesq(p->first,p->second);
+      if (dsq<=NN.cutoffsq()) f(p->first,p->second,dsq);
+    }
+    return f;
+  }
+} ;
 
+template <typename Function>
+struct implement_for_each_pair<Function,glsim::MetricNearestNeighbours> {
+  static Function for_each_pair(glsim::MetricNearestNeighbours& NN,Function f)
+  {
+    for (int i=0; i<NN.conf->N-1; ++i)
+      for (int j=i+1; j<NN.conf->N; ++j) {
+	double dsq=NN.conf->distancesq(i,j);
+	if (dsq<=NN.cutoffsq()) f(i,j,dsq);
+      }
+    return f;
+  }
+} ;
+
+template <typename Function>
+struct implement_for_each_pair<Function,glsim::Subcells> {
+  static Function for_each_pair(glsim::Subcells& NN,Function f)
+  {
+    for (int isc=0; isc<NN.num_subcells(); isc++) /* Loop over subcells */ 
+      for (int n=NN.first_particle(isc); n>=0; n=NN.next_particle(n)) { /* and particles */                                                                       
+	/* find pairs in the same subcell */ 
+	for (int m=NN.next_particle(n); m>=0; m=NN.next_particle(m)) { 
+	  double dsq=NN.conf->distancesq(n,m); 
+	  if (dsq<NN.cutoffsq()) f(n,m,dsq);
+	} 
+	/* find pairs in neighbouring subcells */ 
+	for (int nn=0; nn<13; nn++)
+	  for (int m=NN.first_particle(NN.neighbour(isc,nn)); m>=0; m=NN.next_particle(m) ) {                                                                    
+	    double dsq=NN.conf->distancesq(n,m); 
+	    if (dsq<NN.cutoffsq()) f(n,m,dsq); 
+	  } 
+      } 
+    return f;
+  }
+} ;
+
+template <typename Function,typename NeighboursT>
+Function for_each_pair(NeighboursT& NN,Function f)
+{
+  implement_for_each_pair<Function,NeighboursT>::for_each_pair(NN,f);
+}
 
 /*****************************************************************************
  *

@@ -94,7 +94,7 @@ std::ostream &operator<<(std::ostream& o,const glsim::Subcells::Pair& p)
 }
 
 //
-// Test generig NeighbourAlgo against NeighbourList_naive
+// Test generic NeighbourAlgo against NeighbourList_naive
 //
 template <typename NeighbourAlgo>
 void test_metric(glsim::OLconfiguration &conf,std::string name)
@@ -211,7 +211,11 @@ void test_topological_naive(glsim::OLconfiguration &conf)
   }
 }
 
-/*****************************************************************************/
+/*****************************************************************************
+ *
+ * Test driver
+ *
+ */
 
 void create_random(glsim::OLconfiguration &conf,int N,double boxl)
 {
@@ -237,7 +241,7 @@ void run_tests()
   glsim::OLconfiguration conf;
   glsim::Random_number_generator RNG(glsim::gsl_rng_mt19937,382930);
   
-  create_random(conf,100,10);
+  create_random(conf,300,10);
 
   test_metric_naive(conf);
   test_metric<glsim::MetricNearestNeighbours>(conf,"all pairs enumeration");
@@ -246,6 +250,12 @@ void run_tests()
 
   test_topological_naive(conf);
 }
+
+/*****************************************************************************
+ *
+ * main
+ *
+ */
 
 #define TEST_SUCCESS 0
 #define TEST_FAILURE 1
