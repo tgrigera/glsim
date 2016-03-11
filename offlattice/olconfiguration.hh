@@ -179,32 +179,30 @@ public:
   void open(const char* fname);
   void open_ro(const char* fname);
 
-struct options {
-  bool time_frame_;
-  bool box_frame_;
-  bool id_frame_;
-  bool type_frame_;
-  bool flags_frame_;
-  bool r_frame_;
-  bool v_frame_;
-  bool a_frame_;
+  struct options {
+    bool time_frame_;
+    bool box_frame_;
+    bool id_frame_;
+    bool type_frame_;
+    bool flags_frame_;
+    bool r_frame_;
+    bool v_frame_;
+    bool a_frame_;
 
-  options() :
-    time_frame_(false), box_frame_(false), id_frame_(false),
-    type_frame_(false), flags_frame_(false),
-    r_frame_(false), v_frame_(false), a_frame_(false) {}
+    options() :
+      time_frame_(false), box_frame_(false), id_frame_(false),
+      type_frame_(false), flags_frame_(false),
+      r_frame_(false), v_frame_(false), a_frame_(false) {}
 
-  options& time_frame() {time_frame_=true;}
-  options& box_frame() {time_frame_=true; box_frame_=true;}
-  options& id_frame() {time_frame_=true; id_frame_=true;}
-  options& type_frame() {time_frame_=true; type_frame_=true;}
-  options& flags_frame() {time_frame_=true; flags_frame_=true;}
-  options& r_frame() {time_frame_=true; r_frame_=true;}
-  options& v_frame() {time_frame_=true; v_frame_=true;}
-  options& a_frame() {time_frame_=true; a_frame_=true;}
-} ;
-
-
+    options& time_frame() {time_frame_=true; return *this;}
+    options& box_frame() {time_frame_=true; box_frame_=true; return *this;}
+    options& id_frame() {time_frame_=true; id_frame_=true; return *this;}
+    options& type_frame() {time_frame_=true; type_frame_=true; return *this;}
+    options& flags_frame() {time_frame_=true; flags_frame_=true; return *this;}
+    options& r_frame() {time_frame_=true; r_frame_=true; return *this;}
+    options& v_frame() {time_frame_=true; v_frame_=true; return *this;}
+    options& a_frame() {time_frame_=true; a_frame_=true; return *this;}
+  } ;
 
 private:
   options         opt;
