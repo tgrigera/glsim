@@ -68,6 +68,7 @@ Random_number_generator(rng_type type_,const unsigned long seed,
   generator_map[scope]=gsl_rng_alloc(gt);
   generator=generator_map[scope];
   glsim_generator_map[scope]=this;
+  set_seed(seed);
 }
 
 Random_number_generator::Random_number_generator(Random_number_generator& r)
