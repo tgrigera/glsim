@@ -133,9 +133,11 @@ bool read_files::read(double &x)
 {
   switch (binary) {
   case false:
-    if (*in >> x) return true;
+    *in >> x;
+    if (!in->eof()) return true;
     open_next();
-    return *in >> x;
+    *in >> x;
+    return !in->eof();
     break;
   case true:
     in->get();
@@ -144,10 +146,11 @@ bool read_files::read(double &x)
 
     if (single_precision) {
       float d;
-      return in->read((char *) &d,sizeof(d));
+      in->read((char *) &d,sizeof(d));
       x=d;
     } else
-      return in->read((char *) &x,sizeof(x));
+      in->read((char *) &x,sizeof(x));
+    return !in->eof();
     break;
   }
 }

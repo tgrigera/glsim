@@ -38,6 +38,7 @@
 #define ENVIRONMENT_HH
 
 #include <string>
+#include <list>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/version.hpp>
 #include <boost/archive/binary_oarchive.hpp>
