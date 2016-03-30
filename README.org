@@ -26,6 +26,7 @@ There have been some interface and several implementation changes
 since this publication leading to version 1.0, but it still remains a
 valid reference.
 
+
 * Contents
 
 The package contains libraries, utilities and simulations, divided in
@@ -89,12 +90,20 @@ Utilities:
 
 * Installation
 
-See the file INSTALL for detailed instructions. Basically, after
-unpacking you must run
+If you clone the repository or download the source archives provided
+by Github (from the releases or the latest commit), you will need
+=autotools= to generate the =Makefile= and configure script.  
+
+If you find that too complicated, look for a =glsim-x.y.z.tar.gz= file
+(distributed only with the releases, check the release tab), this file
+contains the =configure= script and does not need =autotools= for
+building.  After unpacking, you can build with the traditional
 
 : ./configure.sh
 : make
 : sudo make install
+
+Or check the file INSTALL for detailed instructions.
 
 
 * Documentation
