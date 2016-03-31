@@ -74,13 +74,15 @@ initialization.
 
 N, time, step, box(*2) and id are always written (and made frame if
 asked on construction).  type flags r,v,a must be requested from
-parameters.
+parameters.  r,v,a are always written as frame, type and flags by
+default are considered header, but this can be changed using an
+OLconfig_file::options object passed in the constructor.
 
 */
 class Trajectory : public Environment {
 public:
   Trajectory(const SimEnvironment&,const OLconfiguration&,
-	     OLconfig_file::options);
+	     OLconfig_file::options=OLconfig_file::options());
   virtual ~Trajectory();
   void observe_first();
   void step_local();

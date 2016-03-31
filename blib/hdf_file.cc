@@ -492,8 +492,6 @@ H5_multi_file::H5_multi_file(std::vector<std::string> filelist,HDF_record_file &
     filedesc[i].first_rec=totrecs;
     totrecs+=filedesc[i].Nrec;
     filep->close();
-    std::cout << filedesc[i].name << ' ' << filedesc[i].Nrec << ' ' << filedesc[i].first_rec << '\n';
-
   }
   open(0);
 }

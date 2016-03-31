@@ -77,12 +77,18 @@ void Trajectory::observe_first()
       iconf->type=conf.type;
     if (par.value("trajectory.record_flags").as<bool>())
       iconf->flags=conf.flags;
-    if (par.value("trajectory.record_r").as<bool>())
+    if (par.value("trajectory.record_r").as<bool>()) {
       iconf->r=conf.r;
-    if (par.value("trajectory.record_v").as<bool>())
+      file_opt.r_frame();
+    }
+    if (par.value("trajectory.record_v").as<bool>()) {
       iconf->v=conf.v;
-    if (par.value("trajectory.record_a").as<bool>())
+      file_opt.v_frame();
+    }
+    if (par.value("trajectory.record_a").as<bool>()) {
       iconf->a=conf.a;
+      file_opt.a_frame();
+    }
     of=new OLconfig_file(iconf,file_opt);
     of->create(traj_fname.c_str());
     of->write_header();
