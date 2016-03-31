@@ -231,6 +231,7 @@ void BaseEnvironment::step()
 // and do the serialization through pointers yourself.
 void BaseEnvironment::save()
 {
+  initialized=Environment::load;
   std::ofstream os(environment_file_fin,std::ios::binary);
   if (!os.is_open())
     throw Open_file_error(environment_file_fin);

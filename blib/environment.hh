@@ -63,23 +63,6 @@ The environment constructor must accept a scope name (a string), but
 must provide a default name to allow default construction.  The scope
 name will be also passed to the accompanying Parameters object.
 
-The constructor must initialize the object in a suitable default, but
-_must not_ attempt to read any value from Parameters: parameter
-parsing will be done only after all environment objects are created.
-Thus initialization from parameters must be provided with separate
-init() methods, discussed further below.  Initialization comes in two
-flavors: full initialization (init()), which rebuilds the environment
-state from scratch, reading from the parameters object (and thus
-file), and warm initialization, which means that the environment is
-already initialized (typically, has been read from an earlier
-simulation) but needs partial initialization to be prepared to start a
-new simulation.  What exactly this means will depend on a simulation,
-but for instance, in a Monte Carlo simulation warm initialization
-would _not_ initialize the random number generator, while it _would_
-initialize the requested number of steps.
-
-The variable initialized is records the initialization method used.
-
 The user of the library will derive at least one class from
 BaseEnvironment below: that class has the full interface for loading
 and saving complete scopes, and will be typically manged from the
@@ -91,6 +74,45 @@ belong to the scope of one BaseEnvironment descendant, and saving,
 loading and initialization will be managed from there.  For this
 reason the initialization methods are kept protected at this level.
 
+## Initialization
+
+The constructor must initialize the object in a suitable default, but
+_must not_ attempt to read any value from Parameters: parameter
+parsing will be done only after all environment objects are created.
+
+There are three ways initialization can happen in the simulation, and
+the derived classes must be prepared to handle them correctly:
+
+ 1. _cold_ or _full_ initialization: This happens at the start of the
+ first run, when there is no previously saved environment, and the
+ environment must be completely initialized from the parameter files
+ (.ini) reading through a Parameters object.  This is done by
+ init_local() (which will be called by base BaseEnvironment::init).
+
+ 2. _warm_ or _partial_ initialization: This happen at the start of a
+ continuation run, when the environment is already initialized
+ (typically, has been read from an earlier simulation) but needs
+ partial initialization to be prepared to start a new run that will be
+ the logical dyamic continuation of the first.  What exactly this
+ means will depend on a simulation, but for instance, in a Monte Carlo
+ simulation warm initialization would _not_ initialize the random
+ number generator, while it _would_ initialize the requested number of
+ steps.  This must be done by warm_init_local() (called from
+ BaseEnvironment::warm_init).
+
+ 3. initialization from a saved environment only: This happens when a
+ partially completed run is found and a new simulation stage starts
+ that will try to complete the previously started run.  No
+ initialization method is involved, just BaseEnvironment::load, which
+ loads each evironment through the serialize method.  Thus serialize
+ must save and load all variables, even those that are read from
+ Parameters and never changed.  This is necessary in order to avoid
+ useless calls of init_local or warm_init_local, which may be
+ expensive or have undesired side-effects.
+
+ The protected variable initialized records the initialization method
+ used and can be read through the public method initialization_kind().
+
 */
 class Environment {
 public:
@@ -99,6 +121,10 @@ public:
   virtual ~Environment();
   /// The scope we belong to
   const char * const scope() const {return scope_name.c_str();}
+
+  enum init_method {deflt,warm,cold,load};
+  init_method initialization_kind() const {return initialized;}
+  
 
 protected:
   typedef boost::archive::binary_oarchive oarchive_t;
@@ -118,7 +144,7 @@ protected:
   /// Build final filename from arguments
   void final_filename(std::string& name,const std::string& prefix);
 
-  enum {deflt,warm,cold}  initialized;  /// Initialization method used
+  init_method initialized;  /// Initialization method used
   std::string scope_name;
   std::string ini_infix,fin_infix,extension;
 
@@ -187,6 +213,7 @@ inline void Environment::serialize(Archive &ar,const unsigned int version)
 {
   if (version!=class_version)
     throw Environment_wrong_version("Environment",version,class_version);
+  ar & initialized;
   ar & scope_name;
   ar & ini_infix;
   ar & fin_infix;
