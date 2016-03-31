@@ -475,51 +475,93 @@ void HDF_record_file::read_record(hsize_t recnum)
  *
  */
 
-void H5_multi_file::open_first()
+H5_multi_file::H5_multi_file(std::vector<std::string> filelist,HDF_record_file &fileob) :
+  own_ptr(false),
+  filep(&fileob)
 {
-  curfile=0;
-  currec=0;
-  filep->open_ro(files[curfile].c_str());
+  currpos.file=0;
+  currpos.file_rec=0;
+  currpos.global_rec=0;
+  filedesc.resize(filelist.size());
+  totrecs=0;
+  for (int i=0; i<filelist.size(); ++i) {
+    filedesc[i].name=filelist[i];
+    filep->open_ro(filedesc[i].name.c_str());
+    filedesc[i].Nrec=filep->size();
+    if (filedesc[i].Nrec==0) filedesc[i].Nrec=1;
+    filedesc[i].first_rec=totrecs;
+    totrecs+=filedesc[i].Nrec;
+    filep->close();
+    std::cout << filedesc[i].name << ' ' << filedesc[i].Nrec << ' ' << filedesc[i].first_rec << '\n';
+
+  }
+  open(0);
+}
+
+void H5_multi_file::open(int filen)
+{
+  currpos.file=filen;
+  currpos.file_rec=0;
+  currpos.global_rec=filedesc[filen].first_rec;
+  filep->close();
+  filep->open_ro(filedesc[currpos.file].name.c_str());
   filep->read_header();
 }
 
 bool H5_multi_file::open_next()
 {
-  if (curfile==files.size()-1) return false;
-  ++curfile;
-  currec=0;
-  filep->close();
-  filep->open_ro(files[curfile].c_str());
-  filep->read_header();
+  if (currpos.file==filedesc.size()-1) return false;
+  open(currpos.file+1);
   return true;
 }
 
 // note that there may be files with pure header and no record
 // data, but these must be counted has having one record anyway
-// because the header data may change from file to file, anda
+// because the header data may change from file to file, and
 // fields that are record fields in some files may be header fields
 // in other files
 bool H5_multi_file::read()
 {
   if (eof()) return false;
-  if (currec<filep->size())
-    filep->read_record(currec);
-  ++currec;
+  if (currpos.file_rec<filep->size())
+    filep->read_record(currpos.file_rec);
+  ++currpos.file_rec;
+  ++currpos.global_rec;
   return true;
 }
 
 bool H5_multi_file::eof()
 {
-  if (currec<filep->size() || currec==0) return false;
+  if (currpos.file_rec<filep->size() || currpos.file_rec==0) return false;
   return !open_next();
+}
+
+H5_multi_file& H5_multi_file::seek(hsize_t rec)
+{
+  if (rec>totrecs) rec=totrecs;
+  if (rec<0) rec=0;
+
+  currpos.global_rec=rec;
+  int newfile=filedesc.size()-1;
+  while (rec<filedesc[newfile].first_rec) --newfile;
+  currpos.file_rec=rec-filedesc[newfile].first_rec;
+  if (currpos.file!=newfile) {
+    currpos.file=newfile;
+    filep->close();
+    filep->open_ro(filedesc[currpos.file].name.c_str());
+    filep->read_header();
+  }
+  return *this;
 }
 
 H5_multi_file& H5_multi_file::rewind()
 {
-  if (curfile==0) currec=0;
-  else {
+  if (currpos.file==0) {
+    currpos.file_rec=0;
+    currpos.global_rec=0;
+  } else {
     filep->close();
-    open_first();
+    open(0);
   }
   return *this;
 }

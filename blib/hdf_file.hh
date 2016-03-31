@@ -703,38 +703,46 @@ class H5_multi_file {
 public:
   H5_multi_file(std::vector<std::string> filelist,
 		HDF_record_file &fileob);  ///< Create object and open first file
-  /// Reads and returns true if there is more data
-  bool          read();
-  /// Returns true if last read operation exhausted all data
-  bool          eof();
-  /// Reset position so that next read returns the first record of the first file
-  H5_multi_file& rewind();
+  bool          read();  ///< Read next record; returns true on success, false if eof reached (no data read)
+  bool          eof();   ///< Returns true if last read operation exhausted all data
+  hsize_t       size() const;  ///< Return the total number of records
+  H5_multi_file& rewind();          ///< Reset position to the first record of the first file (equivalent to seek(0)
+  H5_multi_file& seek(hsize_t rec); ///< Move current file position so that next read returns record rec
+  hsize_t        pos() const;       ///< Return current record number (the record that to be read on the next call to read())
 
 private:
   /// Returns true if opened new file, false if currently open file is the last one
   bool            open_next();
-  void            open_first();
+  void            open(int filen);
 
   bool            own_ptr;
   HDF_record_file *filep;
 
-  std::vector<std::string> files;
-  int             curfile;
-  hsize_t         currec;
+  hsize_t         totrecs;
+  struct {
+    int     file;
+    hsize_t file_rec;
+    hsize_t global_rec;
+  } currpos;
+
+  struct filedesc_t {
+    std::string name;
+    hsize_t     Nrec;
+    hsize_t     first_rec;
+  } ;
+  std::vector<filedesc_t> filedesc;
 
 } ;
 
-inline H5_multi_file::H5_multi_file(std::vector<std::string> filelist,HDF_record_file &fileob) :
-  own_ptr(false),
-  filep(&fileob),
-  files(filelist),
-  curfile(0),
-  currec(0)
+inline hsize_t H5_multi_file::size() const
 {
-  open_first();
+  return totrecs;
 }
 
-
+inline hsize_t H5_multi_file::pos() const
+{
+  return currpos.global_rec;
+}
 
 } /* namespace */
 

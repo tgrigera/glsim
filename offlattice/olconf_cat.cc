@@ -38,15 +38,19 @@
     \ingroup Offlattice
     \brief A cat program for OLconfiguration files
 
-    This is so far very primitive...
+    This utility copies one or more configuration or trajectory files
+    to a new trajectory file, combining the input files in a single
+    output.  It can also copy a subset of the input records.
 */
 
 #include "parameters.hh"
 #include "olconfiguration.hh"
 
 static struct {
-  std::string ifile;
-  std::string ofile;
+  std::vector<std::string> ifiles;
+  std::string              ofile;
+  bool                     id_frame,type_frame;
+  long                     first,last;
 } options;
 
 class CLoptions : public glsim::UtilityCL {
@@ -58,18 +62,37 @@ public:
 CLoptions::CLoptions() : glsim::UtilityCL("GS_olconf_cat")
 {
   hidden_command_line_options().add_options()
-    ("ifile",po::value<std::string>(&options.ifile)->required(),"input file")
-    ("ofile",po::value<std::string>(&options.ofile)->required(),"output file")
+    ("ifiles",po::value<std::vector<std::string> >(&options.ifiles)->required(),"input files")
     ;
-  positional_options().add("ifile",1).add("ofile",1);
+  command_line_options().add_options()
+    ("ofile,o",po::value<std::string>(&options.ofile)->required(),"Output trajectory file")
+    ("first,f",po::value<long>(&options.first)->default_value(0),"First record to copy, negative counts backwards from end")
+    ("last,l",po::value<long>(&options.last)->default_value(-1),"Last record to copy, negative counts backwards from end")
+    ("id-frame",po::bool_switch(&options.id_frame)->default_value(false),"Assume ids change with time and record as frame variable")
+    ("type-frame",po::bool_switch(&options.type_frame)->default_value(false),"Assume types change with time and record as frame variable")
+    ;
+    positional_options().add("ifiles",-1);
 }
 
 void CLoptions::show_usage() const
 {
   std::cerr
-    << "usage: " << progname << "ifile ofile\n\n"
-    << "Copy configurations from ifile to ofile\n"
-    << "\n";
+    << "usage: " << progname << " [options] ifile [...]\n\n"
+    << "     Copy configurations from configuration or trajectory ifiles to a single\n"
+    << "trajectory file.  If you give more than one input file, they will be\n"
+    << "considered as one file, respecting the order in which they are named.\n"
+    << "You can ask for a subrange of records to be copied (see options -f and -l).\n"
+    << "The first record is number 0 and numbering continues consecutively\n"
+    << "across file borders.  Negative record numbers count from the end of the file,\n"
+    << "with -1 meaning the last record.  Coordinates, velocities and\n"
+    << "accelerations will be copied as frame variables if present.\n"
+    << "Particle id and type will be copied as header info unless requested\n"
+    << "otherwise.\n"
+    << "\nOptions:\n";
+  show_command_line_options(std::cerr);
+  std::cerr  << "\n";
+  show_parameters(std::cerr);
+  std::cerr  << "\n";
 }
 
 void wmain(int argc,char *argv[])
@@ -77,10 +100,40 @@ void wmain(int argc,char *argv[])
   CLoptions o;
   o.parse_command_line(argc,argv);
   
-  glsim::OLconfiguration cin;
-  cin.load(options.ifile);
-  glsim::OLconfiguration cout(cin);
-  cout.save(options.ofile);
+  glsim::OLconfiguration conf;
+  glsim::OLconfig_file   cfile(&conf);
+  glsim::H5_multi_file   ifs(options.ifiles,cfile);
+
+  if (options.first<0) options.first+=ifs.size();
+  if (options.last<0) options.last+=ifs.size();
+
+  if (options.first<0) options.first=0;
+  if (options.first>ifs.size()) options.first=ifs.size()-1;
+  if (options.last<0) options.last=0;
+  if (options.last>ifs.size()) options.last=ifs.size()-1;
+  
+  // Figure out what fields to copy and open output file
+  ifs.seek(options.first);
+  ifs.read();
+  glsim::OLconfiguration        oconf;
+  glsim::OLconfig_file::options fopt;
+  fopt.time_frame().box_frame();
+  if (conf.r) fopt.r_frame();
+  if (conf.v) fopt.v_frame();
+  if (conf.a) fopt.a_frame();
+  if (options.id_frame) fopt.id_frame();
+  if (options.type_frame) fopt.type_frame();
+  glsim::OLconfig_file of(&conf,fopt);
+  of.create(options.ofile.c_str());
+  of.write_header();
+  
+  // cat!
+  ifs.seek(options.first);
+  while (ifs.pos()<=options.last) {
+    ifs.read();
+    of.append_record();
+  } 
+
 }
 
 int main(int argc, char *argv[])
