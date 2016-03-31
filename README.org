@@ -90,20 +90,49 @@ Utilities:
 
 * Installation
 
-If you clone the repository or download the source archives provided
-by Github (from the releases or the latest commit), you will need
-=autotools= to generate the =Makefile= and configure script.  
-
-If you find that too complicated, look for a =glsim-x.y.z.tar.gz= file
-(distributed only with the releases, check the release tab), this file
-contains the =configure= script and does not need =autotools= for
-building.  After unpacking, you can build with the traditional
+If you download a tarball from a release (look for a =glsim-x.y.z.tar.gz= file
+distributed only with the releases, check the release tab), you can
+build with the traditional =configure= script: unpack, then run
 
 : ./configure.sh
 : make
 : sudo make install
 
 Or check the file INSTALL for detailed instructions.
+
+If you clone the repository or download the source archives provided
+by Github, you will not receive the =configure.sh= script, and you will need
+=autotools= to generate it, as well as the correspondig
+=Makefile.ini=.  With =autoconf=, =automake=, and =libtools=
+installed, you do
+
+: autoreconf
+: libtoolize
+: automake --add-missing
+: autoreconf
+
+and then you can run ~configure.sh~.
+
+** Required libraries
+
+=glsim= relies on several third-party libraries, which you will need
+to install (note that in many Linux distributions, libraries are
+distributed in separate development and run-time packages, you will
+need both).  Packages required are:
+
+ * GNU Scientific Library
+ * Boost::system
+ * Boost::program_options
+ * Boost::serialization
+ * Boost::date_time
+ * Boost::timer
+ * HDF5
+
+** Recommended libraries and packages
+
+ * FFTW3 (if not available, the FFT routines from GSL will be used)
+ * Doxygen (if you want to build documentation)
+ * LaTeX (for the Postscript or PDF documentation)
 
 
 * Documentation
