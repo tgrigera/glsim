@@ -202,6 +202,16 @@ void Subcells::update(double maxdisp)
     iz=(int) floor(conf->r[i][2]/scell[2]);
     ic=icell(ix,iy,iz);
 
+#ifdef DEBUG
+    if (ix<0 || ix>=m[0] || iy<0 || iy>=m[1] || iz<0 || iz>=m[2]) {
+      std::cout << "ERROR in scell: ix iy iz " << ix << ' ' << iy << ' ' << iz << '\n';
+      std::cout << "                mx my mz " << m[0] << ' ' << m[1] << ' ' << m[2] << '\n';
+      std::cout << "                particle " << i << '\n';
+      std::cout << "                position " << conf->r[i][0] << ' ' << conf->r[i][1] << ' ' << conf->r[i][2] << '\n';
+      throw glsim::Runtime_error("Invalid subcell number",HERE);
+    }
+#endif
+
     llist[i]=subcell[ic];
     subcell[ic]=i;
     WhichSubcell[i]=ic;
