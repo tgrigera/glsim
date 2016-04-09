@@ -121,14 +121,11 @@ long Simulation::run()
   case 0:
     break;
   case GLSIM_TERM_ON_SIGNAL:
-    logs(warn) << "\nWARNING: Terminating on signal " << signal_received <<
-      "\nCompleted " << env.steps_in_run << " in this run (" << env.steps_in_stage << 
-      " in this stage)\n\n";
+    logs(warn) << "\nWARNING: Terminating on signal " << signal_received
+	       << "\n\n";
     break;
   case GLSIM_TERM_ON_MAX_STEPS:
-      logs(warn) << "\nWARNING: Reached max_steps. " <<
-	"\nCompleted " << env.steps_in_run << " in this run (" << env.steps_in_stage << 
-	" in this stage)\n\n";
+    logs(warn) << "\nWARNING: Reached max_steps.\n\n";
       break;
   }
   log_stop_sim();
@@ -167,6 +164,9 @@ void Simulation::log_stop_sim()
 	     << d.day() << '-' << d.month() << '-' << d.year()
 	     << ' ' << now.time_of_day()
 	     << '\n';
+
+  logs(info) << "\nCompleted " << env.steps_in_run << " steps in this run (" << env.steps_in_stage << 
+      " in this stage)\n";
 
   cpu_times     simtimes=simulation_timer.elapsed();
   time_duration total=millisec(simtimes.wall/1000000);
