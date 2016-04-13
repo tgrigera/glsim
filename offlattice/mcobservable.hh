@@ -64,7 +64,7 @@ private:
   MCObservable_parameters par;
 } ;
 
-MCObservable::MCObservable(MCEnvironment& e,OLconfiguration &c) :
+inline MCObservable::MCObservable(MCEnvironment& e,OLconfiguration &c) :
   SBObservable(e),
   env(e),
   conf(c),

@@ -64,7 +64,7 @@ private:
   MDObservable_parameters par;
 } ;
 
-MDObservable::MDObservable(MDEnvironment& e,OLconfiguration &c) :
+inline MDObservable::MDObservable(MDEnvironment& e,OLconfiguration &c) :
   SBObservable(e),
   env(e),
   conf(c),
