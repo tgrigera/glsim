@@ -63,14 +63,16 @@ namespace glsim {
     can be read one at a time with the methods k() and S(), or can be
     sent as a whole to a stream with the operator<<().
 
-    There are two versions of push().  The anisotropic version takes a
-    vector as argument (apart from the configuration).  The structure
-    factor is then computed along the direction of this vector.  The
-    isotropic version computes the structure factor analytically
-    averaged over all possible orientations, assuming an isotropic
-    system, i.e.
+    There are two versions of push().  The anisotropic version takes
+    second argument that indecates one of the coordinate axes to take
+    as a direction, the structure factor is then computed along this
+    direction.  The isotropic version computes the structure factor
+    analytically averaged over all possible orientations, assuming an
+    isotropic system, i.e.
 
     \f[ S_\text{iso}(k) = \sum_{ij} \frac{\sin(k |r_i-r_j|)}{k|r_i-r_j|} \f]
+
+    but this is much slower (\f$O(N^2)\f$ vs \f$O(N)\f$).
     
 */
 class Sk {
@@ -86,28 +88,27 @@ public:
   /// Add the (isotropic) S(k) for the given configuration to the running average (O(N^2))
   void   push(OLconfiguration &conf);
   /// Add the value of S(k) in the given directon for the given configuration to the running average (O(N))
-  void   push(OLconfiguration &conf,double kdir[]);
+  void   push(OLconfiguration &conf,int kdir);
 
 private:
   int    Nk;
-  double deltak_;
+  int    kdir;
+  double deltak_[3];
 
   std::vector<double> sfact;
   int                 nsamp;
 
   void basic_init(double box_length[]);
-
-  friend std::ostream& operator<<(std::ostream&,Sk&);
 } ;
 
 /// Number of k (scattering vector) values
 inline int    Sk::size() const {return Nk;}
 
 /// Returs \f$\Delta k\f$
-inline double Sk::deltak() const {return deltak_;}
+inline double Sk::deltak() const {return deltak_[kdir];}
 
 /// Returns the (modulus of) the ith scattering vector
-inline double Sk::k(int i) const {return i*deltak_;}
+inline double Sk::k(int i) const {return i*deltak_[kdir];}
 
 /// Returns the structure factor at the ith scattering vector
 inline double Sk::S(int i) const {return sfact.at(i);}

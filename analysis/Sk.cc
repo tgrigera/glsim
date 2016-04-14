@@ -42,7 +42,9 @@ namespace glsim {
 void Sk::basic_init(double box_length[])
 {
   // choose deltak
-  deltak_=2*M_PI/box_length[0];
+  deltak_[0]=2*M_PI/box_length[0];
+  deltak_[1]=2*M_PI/box_length[1];
+  deltak_[2]=2*M_PI/box_length[2];
 
   sfact.clear();
   sfact.resize(Nk,0);
@@ -51,7 +53,8 @@ void Sk::basic_init(double box_length[])
 
 Sk::Sk(double box_length[],int Nk_) :
   nsamp(0),
-  Nk(Nk_)
+  Nk(Nk_),
+  kdir(0)
 {
   basic_init(box_length);
 }
@@ -62,8 +65,8 @@ void Sk::push(OLconfiguration &conf)
   nsamp++;
   sfact[0]=conf.N;
   for (int ik=1; ik<Nk; ik++) {
-    double k=ik*deltak_/M_PI; // Divide by PI because of GSL's definition 
-                              // of the sinc function
+    double k=ik*deltak_[0]/M_PI; // Divide by PI because of GSL's definition 
+                                 // of the sinc function
     double S=0;
     for (int i=0; i<conf.N-1; i++)
       for (int j=i+1; j<conf.N; j++) {
@@ -78,23 +81,26 @@ void Sk::push(OLconfiguration &conf)
   }
 }
 
-void Sk::push(OLconfiguration &conf,double kdir[])
+
+/**
+  \param[in] kdir  Direction of k (0=x, 1=y, 2=z)
+
+  We only allow the axes as directions, because in these directions
+  the periodic boundary conditions are correctly enforced
+  automatically by simply computing \f$\exp[-i k\cdot r]\f$.
+*/  
+void Sk::push(OLconfiguration &conf,int kdir_)
 {
   nsamp++;
-  double kvec[3];
+  kdir=kdir_;
+  double kvec[3],deltakvec[3]={0.,0.,0.};
   std::complex<double> uimag(0,1);
 
-  double kmod=kdir[0]*kdir[0]+kdir[1]*kdir[1]+kdir[2]*kdir[2];
-  kmod=1./sqrt(kmod);
-  kdir[0]*=kmod;
-  kdir[1]*=kmod;
-  kdir[2]*=kmod;
-
+  deltakvec[kdir]=deltak_[kdir];
   for (int ik=0; ik<Nk; ik++) {
-    kmod=ik*deltak_;
-    kvec[0]=kdir[0]*kmod;
-    kvec[1]=kdir[1]*kmod;
-    kvec[2]=kdir[2]*kmod;
+    kvec[0]=ik*deltakvec[0];
+    kvec[1]=ik*deltakvec[1];
+    kvec[2]=ik*deltakvec[2];
 
     std::complex<double> S=0;
 
@@ -109,6 +115,14 @@ void Sk::push(OLconfiguration &conf,double kdir[])
     double Q=Sr-sfact[ik];
     sfact[ik]+=Q/nsamp;
   }
+}
+
+std::ostream& operator<<(std::ostream& o,Sk& S)
+{
+  for (int i=0; i<S.size(); ++i)
+    o << S.k(i) << ' ' << S.S(i) << '\n';
+
+  return o;
 }
 
 } /* namespace */
