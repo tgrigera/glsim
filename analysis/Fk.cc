@@ -53,6 +53,7 @@ public:
   double k;
   std::vector<std::string> ifiles;
   bool   self_part;
+  bool   substract_cm;
   int    nave;
   long   seed;
 } options;
@@ -70,9 +71,14 @@ CLoptions::CLoptions() : glsim::UtilityCL("GS_olconf_dump")
     ("ifiles",po::value<std::vector<std::string> >(&options.ifiles)->required(),"input files")
     ;
   command_line_options().add_options()
-    ("self,s",po::bool_switch(&options.self_part)->default_value(false),"compute only the self part F_s(k) [default is the full F(k,t)]")
-    ("nave,n",po::value<int>(&options.nave)->default_value(10),"do arg averages over random directions of the wavevector")
-    ("seed,S",po::value<long>(&options.seed)->default_value(1L),"random number seed (with -s used to generate only one random direction)")
+    ("substract-cm,c",po::bool_switch(&options.substract_cm)->default_value(false),
+     "substract center of mass at each time (assumes all particles have the same mass)")
+    ("self,s",po::bool_switch(&options.self_part)->default_value(false),
+     "compute only the self part F_s(k) [default is the full F(k,t)]")
+    ("nave,n",po::value<int>(&options.nave)->default_value(10),
+     "do arg averages over random directions of the wavevector")
+    ("seed,S",po::value<long>(&options.seed)->default_value(1L),
+     "random number seed (with -s used to generate only one random direction)")
     ;
 
   positional_options().add("k",1).add("ifiles",-1);
@@ -105,6 +111,16 @@ double get_deltat(glsim::H5_multi_file &ifs,glsim::OLconfiguration &conf)
   return conf.time-t0;
 }
 
+void substract_cm(glsim::OLconfiguration &conf)
+{
+  std::vector<double> CM=conf.center_of_mass();
+  for (int i=0; i<conf.N; ++i) {
+    conf.r[i][0]-=CM[0];
+    conf.r[i][1]-=CM[1];
+    conf.r[i][2]-=CM[2];
+  }
+}
+
 void wmain(int argc,char *argv[])
 {
   CLoptions o;
@@ -119,7 +135,8 @@ void wmain(int argc,char *argv[])
   if (options.self_part) {
     glsim::Fsk F(options.k,deltat);
     while (ifs.read()) {
-      conf.unfold_coordinates(),
+      conf.unfold_coordinates();
+      if (options.substract_cm) substract_cm(conf);
       F.push_config(conf.r,conf.N);
     }
     F.compute_Fsk();
@@ -127,7 +144,8 @@ void wmain(int argc,char *argv[])
   } else {
     glsim::Fk F(options.k,deltat,options.nave);
     while (ifs.read()) {
-      conf.unfold_coordinates(),
+      conf.unfold_coordinates();
+      if (options.substract_cm) substract_cm(conf);
       F.push_config(conf.r,conf.N);
     }
     F.compute_Fk();
