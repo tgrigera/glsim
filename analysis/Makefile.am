@@ -32,7 +32,7 @@ EXTRA_DIST = gs_columnave.awk gs_fileave.awk
 
 lib_LTLIBRARIES = libglsim_an.la
 libglsim_an_la_LDFLAGS = -version-info @LIBGLSIM_VERSION@
-libglsim_an_la_SOURCES = avevar.cc geoave.cc Sk.cc timecorr.cc	\
+libglsim_an_la_SOURCES = avevar.cc geoave.cc gr.cc Sk.cc timecorr.cc	\
                          iscatt.cc
 
 #
@@ -41,20 +41,29 @@ libglsim_an_la_SOURCES = avevar.cc geoave.cc Sk.cc timecorr.cc	\
 
 bin_SCRIPTS = gs_columnave.awk gs_fileave.awk
 
-bin_PROGRAMS = gs_avesd gs_gav gs_histogram gs_tcorr gs_tau gs_Fk
+bin_PROGRAMS = gs_avesd gs_gav gs_gr gs_histogram gs_tcorr gs_tau gs_Fk gs_Sk
 
 LDADD=libglsim_an.la $(top_builddir)/blib/libglsim.la
 
 gs_avesd_SOURCES = avesd.cc
 
+gs_Fk_SOURCES = Fk.cc
+gs_Fk_LDADD=$(top_builddir)/offlattice/libglsim_ol.la libglsim_an.la	\
+            $(top_builddir)/blib/libglsim.la
+
 gs_gav_SOURCES = gav.cc
 
+gs_gr_SOURCES = gs_gr.cc
+gs_gr_LDADD=libglsim_an.la $(top_builddir)/offlattice/libglsim_ol.la \
+            $(top_builddir)/blib/libglsim.la
+
 gs_histogram_SOURCES = histocl.cc
+
+gs_Sk_SOURCES = gs_Sk.cc
+gs_Sk_LDADD=libglsim_an.la $(top_builddir)/offlattice/libglsim_ol.la \
+            $(top_builddir)/blib/libglsim.la
 
 gs_tcorr_SOURCES = tcorr.cc
 
 gs_tau_SOURCES = tau.cc
 
-gs_Fk_SOURCES = Fk.cc
-gs_Fk_LDADD=$(top_builddir)/offlattice/libglsim_ol.la libglsim_an.la	\
-            $(top_builddir)/blib/libglsim.la
