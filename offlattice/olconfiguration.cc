@@ -1,5 +1,5 @@
 /*
- * olconfiguration.hh -- definitions for class OLconfiguration
+ * olconfiguration.cc -- definitions for class OLconfiguration
  *
  * This file is part of glsim, a numerical simulation class library and
  * helper programs.
@@ -230,7 +230,7 @@ void OLconfiguration::unfold_coordinates(double (*ref)[3])
 }
 
 /*
- * Configuration composition
+ * Configuration properties
  *
  */
 size_t OLconfiguration::NTypes() const
@@ -240,6 +240,37 @@ size_t OLconfiguration::NTypes() const
     types[type[i]]++;
   return types.size();
 }
+
+/**
+Returns a vector of doubles with the position of the center of mass.
+If the configuration defines a type for each particle (through the
+type array), you can give the masses of each type, otherwise all are
+assumed to be identical.
+
+\param[in] masses Pointer to an array of masses for each type, so that
+                  `masses[type[i]]` gives the mass of particle `i`.
+                  If equal to 0, particles are assumed of equal mass.
+*/
+std::vector<double> OLconfiguration::center_of_mass(double *masses)
+{
+  std::vector<double> CM;
+  CM.resize(3,0.);
+
+  if (masses) {
+    double mass=0;
+    for (int i=0; i<N; ++i) {
+      mass+=masses[type[i]];
+      for (int j=0; j<3; ++j) CM[j]+=masses[type[i]]*r[i][j];
+    }
+    for (int j=0; j<3; ++j) CM[j]/=mass;
+  } else {
+    for (int i=0; i<N; ++i)
+      for (int j=0; j<3; ++j) CM[j]+=r[i][j];
+  }
+
+  return CM;
+}
+
 
 
 /*****************************************************************************

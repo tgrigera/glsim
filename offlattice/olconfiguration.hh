@@ -68,7 +68,8 @@ public:
   double    (*a)[3];       ///< Accelerations or forces
   
 public:
-  /// @{ \name Creation, destruction, and copying
+  /// \name Creation, destruction, and copying
+  /// @{
   OLconfiguration();
   OLconfiguration(const std::string &title);
   OLconfiguration(const OLconfiguration&);
@@ -76,7 +77,9 @@ public:
   ~OLconfiguration();
   OLconfiguration& swap(OLconfiguration& c);
 
-  /// @}@{ \name Initialization, load and save
+  /// @}
+  /// \name Initialization, load and save
+  /// @{
   using Configuration::init;
   using Configuration::load;
   using Configuration::save;
@@ -84,21 +87,26 @@ public:
   void save(const char* fname);
   void init(const char* fname);
 
-  /// @}@{ \name Periodic boundary conditions
+  /// @}
+  /// \name Periodic boundary conditions
+  /// @{
   void fold_coordinates();     ///< Move all particles inside the primary box (shifting by a multiple of the box length)
   void unfold_coordinates(double (*ref)[3]); ///< Undo periodic folding, using a proided reference configuration
   void unfold_coordinates(); ///< Undo periodic folding, using internal reference configuration
   void fold_one(double x[]);   ///< Apply PBCs to one particle
-  /// @}
 
   double ddiff(const double a,const double b,const double box_length) const;
   double distancesq(const double x[],const double y[]) const;
   double distancesq(int i,int j) const;
 
-  /// @}@{ \name Configuration composition
+  /// @}
+  /// \name Configuration properties
+  /// @{
   size_t NTypes() const;
   // int CountType(short t) const;
   // int CountFlag(short f) const;
+  std::vector<double> center_of_mass(double *masses=0);  ///< Compute the center of mass
+
   /// @}
 
   // void ApplyCubicSymmetry(OLconfiguration&,int n);
