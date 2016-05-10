@@ -440,16 +440,17 @@ void HDF_record_file::read_for_string(const field_info &fd)
 {
   char *s;
   HE(H5Dread(fd.dataset_id,fd.mem_datatype->id(),H5S_ALL,H5S_ALL,H5P_DEFAULT,
-	     &s));
+  	     &s));
   *((std::string*)fd.buffer)=s;
+
+  //  HE(H5Dvlen_reclaim(fd.mem_datatype->id(),space,H5P_DEFAULT,s));   // Some form of this functionmay be needed to reclaim space when using variable length strings, but documentation is obscure and I don't know what dataspace has to be specified (H5S_ALL is no good)
+
   HE(H5free_memory(s));
 }
 
 void HDF_record_file::read_header()
 {
   for (const field_info &fd : header_fields) {
-    // HE(H5Dread(fd.dataset_id,fd.mem_datatype->id(),H5S_ALL,H5S_ALL,H5P_DEFAULT,
-    // 		fd.buffer));
     (*(fd.read_function))(fd);
   }
 }
@@ -465,6 +466,7 @@ void HDF_record_file::read_record(hsize_t recnum)
     			   start,0,count,0));   
     HE(H5Dread(fd.dataset_id,fd.mem_datatype->id(),H5_scalar_s,selection,
 	       H5P_DEFAULT,fd.buffer));
+    HE(H5Sclose(selection));
   }
 }
 
