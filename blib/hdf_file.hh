@@ -299,6 +299,16 @@ public:
  * H5space
  *
  */
+/** \class H5space
+    \ingroup HDF
+
+    \brief Base class for HDF5 dataspace objects.
+
+    This class only holds the dataspace id and deletes it on
+    destruction.  The constructor creates an invalid dataspace.
+    Intended for use by derived classes to create proper dataspaces.
+
+*/
 class H5space {
 public:
   H5space() : sid(-1) {}
@@ -325,6 +335,18 @@ protected:
   hsize_t rank_,*curr_dims,*max_dims;
 } ;
 
+/** \class H5space_simple
+    \ingroup HDF
+    \brief Create an HDF5 simple dataspace
+
+    This class creates and holds until destruction a simple dataspace
+    according to the HDF5 definition.  Basically, it is a
+    multidimensional array that can be read/written in segments.  It
+    is not used by HDF_record_file, which instead saves arrays using
+    an array _datatype_ (which is read/written as a whole), and uses a
+    simple dataspace of unlimited dimension for al record fields).
+
+*/
 template <int rank>
 class H5space_simple : public H5space_simple_base {
 public:
@@ -446,8 +468,16 @@ Two approaches are possible:
  - rigid buffer organization (fixed offsets) but buffer is given at
    read/write time
 
-Right now only the second one is implemented (i.e. field may reside on
-arbitrary locations, but on read/write the same buffer is always used.
+Right now only the first one is implemented (i.e. field may reside on
+arbitrary locations, but on read/write the same buffer is always
+used).
+
+Records are implemented by using a "simple dataspace" of rank one and
+unlimited maximum dimension.  Arrays within a record are declared with
+array _datatype_ (but scalar dataspace appart from the dimension used
+for record number, i.e. no multidimensional dataspace is used).  By
+HDF's design, using an unlimited dimension requires that the dataset
+be chunked.  This apparently causes excessive memory consumption due to an HDF bug (see for example these reports in [Github](https://github.com/h5py/h5py/issues/382), [Stackoverflow](http://stackoverflow.com/questions/18466691/excessive-memory-use-with-hdf5-h5dread) and the [HDF forum](https://www.mail-archive.com/hdf-forum@lists.hdfgroup.org/msg01056.html)) when reading large files (i.e. when reading many records, even if each record is processed and discarded). The problem is alleviated by using larger chunks, currently we use a size of 10.  You can change this value by changing the  declare_field() method.
 
 */
 class HDF_record_file : public H5file {
@@ -660,13 +690,14 @@ HDF_record_file::declare_field(field_kind kind,const char* name,
 
     case f_record:
       fd.dataspace_id=H5_frame_s;
-      hsize_t chunks[1]={1};
+      hsize_t chunks[1]={10};
       hid_t PL=H5Pcreate(H5P_DATASET_CREATE);
       HE(PL);
       HE(H5Pset_chunk(PL,1,chunks));
       fd.dataset_id=H5Dcreate2(rootg,name,fd.file_datatype->id(),fd.dataspace_id,
     			       H5P_DEFAULT,PL,H5P_DEFAULT);
       HE(fd.dataset_id);
+      HE(H5Pclose(PL));
       break;
     }
     actual_kind=kind;
