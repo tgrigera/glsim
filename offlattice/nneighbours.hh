@@ -230,6 +230,7 @@ public:
   /// Build lists from scratch for given configuration. Will check for
   /// changes in box size and number of particles.
   Subcells(const Subcells&)=delete; ///<Copying is not implemented
+  Subcells& operator=(const Subcells&)=delete; ///<Assignment is not implemented
   void rebuild(OLconfiguration&,double rc=-1,double delta_r=-1);
   /// Inform of change in configuration, will try to update lists
   /// assuming particles have not moved much, may rebuild everything
