@@ -581,7 +581,7 @@ Applies a function to all pairs _within the specified cutoff_ of the
 neighbours described by the given class.  Candidates supplied by the
 class are screened to discard those whose distance is above cutoff.
 This template function is specialised for some nearest neighbour
-classes for improved perfomance.
+classes for improved perfomance.  See also for_each_pair_mt.
 
 \param NN   The nearest neighbour class, appropriately initialized
 
@@ -594,6 +594,63 @@ template <typename Function,typename NeighboursT>
 Function for_each_pair(NeighboursT& NN,Function f)
 {
  return implement_for_each_pair<Function,NeighboursT>::for_each_pair(NN,f);
+}
+
+/*****************************************************************************
+ *
+ * MUltithreaded versions of the functions to loop through all nearest
+ * neigbhours, with the static member function trick for partial
+ * specialization
+ *
+ */
+template <typename Function,typename NeighboursT>
+struct implement_for_each_pair_mt {
+  static Function for_each_pair(NeighboursT& NN,Function f)
+  {
+    throw Unimplemented("Multithreaded for_each_pair for these types");
+  }
+} ;
+
+template <typename Function>
+struct implement_for_each_pair_mt<Function,glsim::MetricNearestNeighbours> {
+  static Function for_each_pair(glsim::MetricNearestNeighbours& NN,Function f)
+  {
+    int N=NN.conf->N;
+    for (int i=0; i<N-1; ++i) {
+      int nn = (N-1)/2 + ( (N+1)%2 ) * 2*i/N;   // Number of neighbours assigned to i
+      for (int jp=i+1; jp <= i+nn; ++jp) {
+	int j = jp % N;
+	double dsq=NN.conf->distancesq(i,j);
+	if (dsq<=NN.cutoffsq()) f(i,j,dsq);
+      }
+    }
+    return f;
+  }
+} ;
+
+/**  \ingroup MetricNN
+
+A multithreaded version of for_each_pair.  Should allow
+parallelization of the task of applying Function f to all pairs as
+long as the function f is thread-safe.
+
+Applies a f to all pairs _within the specified cutoff_ of the
+neighbours described by the given class.  Candidates supplied by the
+class are screened to discard those whose distance is above cutoff.
+This template function is specialised for some nearest neighbour
+classes for improved perfomance.
+
+\param NN   The nearest neighbour class, appropriately initialized
+
+\param f The function to be applied.  Signature must be `anytype f(int
+            i,int j,double dsq)`.  It will receive two number (i and j)
+            describing the pair and the pair's squared distance (dsq).
+ 
+*/
+template <typename Function,typename NeighboursT>
+Function for_each_pair_mt(NeighboursT& NN,Function f)
+{
+ return implement_for_each_pair_mt<Function,NeighboursT>::for_each_pair(NN,f);
 }
 
 /*****************************************************************************
