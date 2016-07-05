@@ -181,6 +181,141 @@ void test_metric(glsim::OLconfiguration &conf,std::string name)
 
 }
 
+//
+// Test generic NeighbourAlgo with for_each_pair
+//
+template <typename NeighbourAlgo>
+void test_metric_for_each(glsim::OLconfiguration &conf,std::string name)
+{
+  double rc=conf.box_length[0]/4;
+  double rcsq=rc*rc;
+
+  std::cout << "Testing for_each_pair with " << name << "...";
+  std::cout.flush();
+
+  NeighbourAlgo NEW(rc);
+  NEW.rebuild(conf);
+
+  std::cout << "building naive pair list...";
+  std::cout.flush();
+  glsim::NeighbourList_naive TNN(rc,0);
+  TNN.rebuild(conf);
+  
+  std::cout << "comparing...";
+  std::cout.flush();
+
+  // Test pair-based
+
+  std::vector<std::pair<int,int>> pairs_new;
+
+  for_each_pair(NEW,[&pairs_new](int i,int j,double d){pairs_new.push_back(std::pair<int,int>(i,j));});
+
+  double dsq;
+  int np=0;
+  for (auto pp=pairs_new.begin(), end=pairs_new.end(); pp!=end; ++pp) {
+    dsq=conf.distancesq(pp->first,pp->second);
+    glsim::NeighbourList_naive::Pair p1(pp->first,pp->second);
+    glsim::NeighbourList_naive::Pair p2(pp->second,pp->first);
+    bool foundp1 =
+      find(TNN.pairs_begin(),TNN.pairs_end(),p1) != TNN.pairs_end();
+    bool foundp2 =
+      find(TNN.pairs_begin(),TNN.pairs_end(),p2) != TNN.pairs_end();
+    if (!foundp1 && !foundp2) 
+      throw Test_failure("pair ("+std::to_string(pp->first)+","
+			 +std::to_string(pp->second)+") present in both lists",
+			 "missing in naive pair list");
+    np++;
+    if (np%1000==0) std::cout << " (tested " << np << " candidate pairs)\n";
+  }
+  for (auto pp=TNN.pairs_begin(), end=TNN.pairs_end(); pp!=end; ++pp) {
+    dsq=conf.distancesq(pp->first,pp->second);
+    if (dsq<=rcsq) {
+      glsim::NeighbourList_naive::Pair p1(pp->first,pp->second);
+      glsim::NeighbourList_naive::Pair p2(pp->second,pp->first);
+      bool foundp1 =
+	find(pairs_new.begin(),pairs_new.end(),p1) != pairs_new.end();
+      bool foundp2 =
+	find(pairs_new.begin(),pairs_new.end(),p2) != pairs_new.end();
+      if (!foundp1 && !foundp2) 
+	throw Test_failure("pair ("+std::to_string(pp->first)+","
+			   +std::to_string(pp->second)+") present in both lists",
+			   "missing in new algorithm");
+    }
+    np++;
+    if (np%1000==0) std::cout << " (tested " << np << " candidate pairs)\n";
+  }
+
+  std::cout << "OK\n";
+}
+
+
+//
+// Test generic NeighbourAlgo with for_each_pair multithreaded
+//
+template <typename NeighbourAlgo>
+void test_metric_for_each_mt(glsim::OLconfiguration &conf,std::string name)
+{
+  double rc=conf.box_length[0]/4;
+  double rcsq=rc*rc;
+
+  std::cout << "Testing for_each_pair (multithreaded) with " << name << "...";
+  std::cout.flush();
+
+  NeighbourAlgo NEW(rc);
+  NEW.rebuild(conf);
+
+  std::cout << "building naive pair list...";
+  std::cout.flush();
+  glsim::NeighbourList_naive TNN(rc,0);
+  TNN.rebuild(conf);
+  
+  std::cout << "comparing...";
+  std::cout.flush();
+
+  // Test pair-based
+
+  std::vector<std::pair<int,int>> pairs_new;
+
+  for_each_pair_mt(NEW,[&pairs_new](int i,int j,double d){pairs_new.push_back(std::pair<int,int>(i,j));});
+
+  double dsq;
+  int np=0;
+  for (auto pp=pairs_new.begin(), end=pairs_new.end(); pp!=end; ++pp) {
+    dsq=conf.distancesq(pp->first,pp->second);
+    glsim::NeighbourList_naive::Pair p1(pp->first,pp->second);
+    glsim::NeighbourList_naive::Pair p2(pp->second,pp->first);
+    bool foundp1 =
+      find(TNN.pairs_begin(),TNN.pairs_end(),p1) != TNN.pairs_end();
+    bool foundp2 =
+      find(TNN.pairs_begin(),TNN.pairs_end(),p2) != TNN.pairs_end();
+    if (!foundp1 && !foundp2) 
+      throw Test_failure("pair ("+std::to_string(pp->first)+","
+			 +std::to_string(pp->second)+") present in both lists",
+			 "missing in naive pair list");
+    np++;
+    if (np%1000==0) std::cout << " (tested " << np << " candidate pairs)\n";
+  }
+  for (auto pp=TNN.pairs_begin(), end=TNN.pairs_end(); pp!=end; ++pp) {
+    dsq=conf.distancesq(pp->first,pp->second);
+    if (dsq<=rcsq) {
+      glsim::NeighbourList_naive::Pair p1(pp->first,pp->second);
+      glsim::NeighbourList_naive::Pair p2(pp->second,pp->first);
+      bool foundp1 =
+	find(pairs_new.begin(),pairs_new.end(),p1) != pairs_new.end();
+      bool foundp2 =
+	find(pairs_new.begin(),pairs_new.end(),p2) != pairs_new.end();
+      if (!foundp1 && !foundp2) 
+	throw Test_failure("pair ("+std::to_string(pp->first)+","
+			   +std::to_string(pp->second)+") present in both lists",
+			   "missing in new algorithm");
+    }
+    np++;
+    if (np%1000==0) std::cout << " (tested " << np << " candidate pairs)\n";
+  }
+
+  std::cout << "OK\n";
+}
+
 /*
  * Tests for topological routines
  *
@@ -247,6 +382,13 @@ void run_tests()
   test_metric<glsim::MetricNearestNeighbours>(conf,"all pairs enumeration");
   test_metric<glsim::Subcells>(conf,"subcell algorithm");
   test_metric<glsim::NeighbourList_subcells>(conf,"pair list with subcells");
+
+  test_metric_for_each<glsim::MetricNearestNeighbours>(conf,"all pairs enumeration");
+  test_metric_for_each<glsim::NeighbourList_naive>(conf,"naive neighbour list");
+  test_metric_for_each<glsim::Subcells>(conf,"subcell algorithm");
+  test_metric_for_each<glsim::NeighbourList_subcells>(conf,"pair list with subcells");
+
+  test_metric_for_each_mt<glsim::MetricNearestNeighbours>(conf,"pair list with subcells");
 
   test_topological_naive(conf);
 }

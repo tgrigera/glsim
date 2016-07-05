@@ -98,6 +98,8 @@ public:
 
   template <typename Function,typename NeighboursT>
   friend struct implement_for_each_pair;
+  template <typename Function,typename NeighboursT>
+  friend struct implement_for_each_pair_mt;
 
 private:
   OLconfiguration* conf;
@@ -205,6 +207,8 @@ public:
 
   template <typename Function,typename NeighboursT>
   friend struct implement_for_each_pair;
+  template <typename Function,typename NeighboursT>
+  friend struct implement_for_each_pair_mt;
 
 private:
   OLconfiguration*  conf;
@@ -252,6 +256,8 @@ public:
 
   template <typename Function,typename NeighboursT>
   friend struct implement_for_each_pair;
+  template <typename Function,typename NeighboursT>
+  friend struct implement_for_each_pair_mt;
 
 private:
   OLconfiguration* conf;
@@ -510,6 +516,8 @@ public:
 
   template <typename Function,typename NeighboursT>
   friend struct implement_for_each_pair;
+  template <typename Function,typename NeighboursT>
+  friend struct implement_for_each_pair_mt;
 
 private:
   OLconfiguration   *conf;
@@ -598,7 +606,7 @@ Function for_each_pair(NeighboursT& NN,Function f)
 
 /*****************************************************************************
  *
- * MUltithreaded versions of the functions to loop through all nearest
+ * Multithreaded versions of the functions to loop through all nearest
  * neigbhours, with the static member function trick for partial
  * specialization
  *
@@ -616,7 +624,7 @@ struct implement_for_each_pair_mt<Function,glsim::MetricNearestNeighbours> {
   static Function for_each_pair(glsim::MetricNearestNeighbours& NN,Function f)
   {
     int N=NN.conf->N;
-    for (int i=0; i<N-1; ++i) {
+    for (int i=0; i<N; ++i) {
       int nn = (N-1)/2 + ( (N+1)%2 ) * 2*i/N;   // Number of neighbours assigned to i
       for (int jp=i+1; jp <= i+nn; ++jp) {
 	int j = jp % N;
