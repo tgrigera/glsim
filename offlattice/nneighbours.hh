@@ -648,6 +648,57 @@ struct implement_for_each_pair_mt<RObject,glsim::MetricNearestNeighbours> {
   }
 } ;
 
+template <typename RObject>
+struct implement_for_each_pair_mt<RObject,glsim::Subcells> {
+  static RObject for_each_pair(glsim::Subcells& NN,RObject f)
+  {
+    #pragma omp parallel
+    {
+      RObject f_local(f);
+      #pragma omp for schedule(static) nowait
+      for (int isc=0; isc<NN.num_subcells(); isc++) { /* Loop over subcells */
+	for (int n=NN.first_particle(isc); n>=0; n=NN.next_particle(n)) { /* and particles */                                                                       
+	  /* find pairs in the same subcell */ 
+	  for (int m=NN.next_particle(n); m>=0; m=NN.next_particle(m)) { 
+	    double dsq=NN.conf->distancesq(n,m); 
+	    if (dsq<NN.cutoffsq()) f_local(n,m,dsq);
+	  } 
+	  /* find pairs in neighbouring subcells */ 
+	  for (int nn=0; nn<13; nn++)
+	    for (int m=NN.first_particle(NN.neighbour(isc,nn)); m>=0; m=NN.next_particle(m) ) {                                                                    
+	      double dsq=NN.conf->distancesq(n,m); 
+	      if (dsq<NN.cutoffsq()) f_local(n,m,dsq); 
+	    } 
+	}
+      }
+      #pragma omp critical
+      f.reduce(f_local);
+    }
+    return f;
+  }
+} ;
+
+template <typename RObject>
+struct implement_for_each_pair_mt<RObject,NeighbourList_subcells> {
+  static RObject for_each_pair(NeighbourList_subcells& NN,RObject f)
+  {
+    #pragma omp parallel
+    {
+      RObject f_local(f);
+      int N=NN.conf->N;
+      auto end=NN.pairs_end();
+      #pragma omp for schedule(static) nowait
+      for (auto p = NN.pairs_begin(); p<end; ++p) {
+	double dsq=NN.conf->distancesq(p->first,p->second);
+	if (dsq<=NN.cutoffsq()) f_local(p->first,p->second,dsq);
+      }
+      #pragma omp critical
+      f.reduce(f_local);
+    }
+    return f;
+  }
+} ;
+
 /**  \ingroup MetricNN
 
 A multithreaded version of for_each_pair.  Allows parallelization of

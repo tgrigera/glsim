@@ -251,7 +251,7 @@ void wmain(int argc,char *argv[])
     time_algo(NS,conf);
   }
   if (options.time_list_subcell) {
-    std::cout << "#### Neighbour list (list build with subcells)\n";
+    std::cout << "#### Neighbour list (list built with subcells)\n";
     glsim::NeighbourList_subcells  NLS(rc,rc*0.2);
     time_algo(NLS,conf);
   }
