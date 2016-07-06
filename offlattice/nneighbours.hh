@@ -626,8 +626,13 @@ struct implement_for_each_pair_mt<Function,glsim::MetricNearestNeighbours> {
     int N=NN.conf->N;
     for (int i=0; i<N; ++i) {
       int nn = (N-1)/2 + ( (N+1)%2 ) * 2*i/N;   // Number of neighbours assigned to i
-      for (int jp=i+1; jp <= i+nn; ++jp) {
-	int j = jp % N;
+      int M1 = i+nn < N ? i+nn : N-1;
+      int M2 = nn - (M1 - i);
+      for (int j=i+1; j <= M1; ++j) {
+	double dsq=NN.conf->distancesq(i,j);
+	if (dsq<=NN.cutoffsq()) f(i,j,dsq);
+      }
+      for (int j=0; j < M2; ++j) {
 	double dsq=NN.conf->distancesq(i,j);
 	if (dsq<=NN.cutoffsq()) f(i,j,dsq);
       }
