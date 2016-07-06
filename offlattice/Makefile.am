@@ -57,6 +57,7 @@ gs_ljld_SOURCES = ljld.cc
 gs_ljmc_SOURCES = ljmc.cc
 gs_ljmd_SOURCES = ljmd.cc
 gs_neighbour_time_SOURCES = neighbour_time.cc
+gs_neighbour_time_CXXFLAGS=$(OPENMP_CXXFLAGS) $(AM_CXXFLAGS)
 gs_rljmc_SOURCES = rljmc.cc
 gs_rljmd_SOURCES = rljmd.cc
 gs_traj2h5md_SOURCES = traj2h5md.cc

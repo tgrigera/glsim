@@ -19,6 +19,7 @@ AC_CONFIG_SRCDIR([blib/blib.hh])  # Check just one file as safety check
 AC_CONFIG_MACRO_DIR([m4])
 AC_LANG(C++)
 AM_INIT_AUTOMAKE
+AC_OPENMP
 LT_INIT
 
 # Set version numbers for libtool libraries (note that they are

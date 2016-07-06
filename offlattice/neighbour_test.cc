@@ -252,10 +252,25 @@ void test_metric_for_each(glsim::OLconfiguration &conf,std::string name)
 //
 // Test generic NeighbourAlgo with for_each_pair multithreaded
 //
+typedef std::vector<std::pair<int,int>> plist_t;
+
+class accum_pairs {
+public:
+  plist_t plist;
+  void operator()(int i,int j,double d) {
+    plist.push_back(std::pair<int,int>(i,j));
+  }
+  void reduce(accum_pairs& a)
+  {
+    plist.insert(plist.end(),a.plist.begin(),a.plist.end());
+  }
+} ;
+    
+
 template <typename NeighbourAlgo>
 void test_metric_for_each_mt(glsim::OLconfiguration &conf,std::string name)
 {
-  double rc=conf.box_length[0]/4;
+  double rc=conf.box_length[0]*4;
   double rcsq=rc*rc;
 
   std::cout << "Testing for_each_pair (multithreaded) with " << name << "...";
@@ -274,9 +289,13 @@ void test_metric_for_each_mt(glsim::OLconfiguration &conf,std::string name)
 
   // Test pair-based
 
-  std::vector<std::pair<int,int>> pairs_new;
-
-  for_each_pair_mt(NEW,[&pairs_new](int i,int j,double d){pairs_new.push_back(std::pair<int,int>(i,j));});
+  plist_t pairs_new=for_each_pair_mt(NEW,accum_pairs()).plist;
+  // for_each_pair_mt(NEW,p
+  // 		   [&pairs_new](int i,int j,double d)
+  // 		   {
+  // 		     pairs_new.push_back(std::pair<int,int>(i,j));
+  // 		   }
+  // 		   );
 
   double dsq;
   int np=0;
