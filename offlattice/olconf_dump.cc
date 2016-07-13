@@ -55,7 +55,7 @@ public:
   void show_usage() const;
 } ;
 
-CLoptions::CLoptions() : glsim::UtilityCL("GS_olconf_dump")
+CLoptions::CLoptions() : glsim::UtilityCL("gs_olconf_dump")
 {
   hidden_command_line_options().add_options()
     ("ifiles",po::value<std::vector<std::string> >(&options.ifiles)->required(),"input files")
@@ -80,9 +80,10 @@ void wmain(int argc,char *argv[])
   glsim::OLconfig_file   cfile(&conf);
   glsim::H5_multi_file ifs(options.ifiles,cfile);
 
-  printf("# Step  Time  N\n");
+  printf("# Step  Time  N  density\n");
   while (ifs.read()) {
-    printf("%7ld %g %d\n",conf.step,conf.time,conf.N);
+    double vol=conf.box_length[0]*conf.box_length[1]*conf.box_length[2];
+    printf("%7ld %g  %d  %g\n",conf.step,conf.time,conf.N,(double) conf.N/vol);
   }
 }
 
