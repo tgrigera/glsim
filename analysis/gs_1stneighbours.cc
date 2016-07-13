@@ -41,6 +41,7 @@
 
 */
 
+#include "log.hh"
 #include "parameters.hh"
 #include "olconfiguration.hh"
 #include "avevar.hh"
@@ -78,7 +79,7 @@ void CLoptions::show_usage() const
   std::cerr
     << "usage: " << progname << "[options]  ifile [ifile ....]\n\n"
     << "Computes the distribution of first (nearest) neighbours over the\n"
-    << "given trajectories.  You must -N or -r.\n"
+    << "given trajectories.  You must give -N.\n"
     << "\n"
     << " Options:\n";
   show_command_line_options(std::cerr);
@@ -90,15 +91,16 @@ void process_conf(glsim::OLconfiguration &conf,glsim::AveVar<false> &av,
 		  glsim::Histogram& nnd)
 {
   static glsim::Subcells NN(nnd.max()/5);
+  double d,mind;
 
   NN.rebuild(conf);
   for (int i=0; i<conf.N; ++i) {
-    double d,mind=2*nnd.max()*nnd.max();
+    mind=2*nnd.max()*nnd.max();
     for (auto n=NN.neighbours_begin(i); n!=NN.neighbours_end(i); ++n)
       if ( (d=conf.distancesq(i,*n))<mind) mind=d;
-    d=sqrt(d);
-    nnd.push(d);
-    av.push(d);
+    mind=sqrt(mind);
+    nnd.push(mind);
+    av.push(mind);
   }
 }
 
@@ -110,6 +112,8 @@ void process_conf(glsim::OLconfiguration &conf,glsim::AveVar<false> &av,
 
 void wmain(int argc,char *argv[])
 {
+  glsim::logs.set_stream(std::cout,glsim::error);
+
   CLoptions o;
   o.parse_command_line(argc,argv);
   
@@ -128,9 +132,11 @@ void wmain(int argc,char *argv[])
   do {
     process_conf(conf,av,nnd);
   } while (ifs.read());
-  std::cout << "# Average nearest neighbour distance = " << av.ave();
-  std::cout << "# Average nearest neighbour standard dev = " << sqrt(av.var());
+  std::cout << "# Average nearest neighbour distance = " << av.ave() << '\n';
+  std::cout << "# Average nearest neighbour standard dev = " << sqrt(av.var()) << '\n';
   std::cout << "#\n";
+  if (nnd.outliers()>0)
+    std::cout << "#\n# WARNING: There were " << nnd.outliers() << " outliers in histogram\n#\n";
   std::cout << nnd;
 }
 
