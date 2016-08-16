@@ -91,7 +91,7 @@ class MC : public Simulation {
 public:
   MC(MCEnvironment& e, OLconfiguration &c,Interactions* i);
 
-  const char* name() const {return "Metropolis MC with shitf moves";}
+  const char* name() const {return "Metropolis MC with shift moves";}
   void        step();
   void        log();
   void        log_start_sim();

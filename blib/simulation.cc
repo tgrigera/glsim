@@ -37,6 +37,8 @@
 #include <iomanip>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <netdb.h>
+#include <arpa/inet.h>
 
 #include "simulation.hh"
 
@@ -137,6 +139,14 @@ Prints and records starting time
 */
 void Simulation::log_start_sim()
 {
+  char hn[1000];
+  gethostname(hn,1000);
+  struct hostent *he=gethostbyname(hn);
+  logs(info) << "\nStarting simulation: " << name() << "\n\n";
+  logs(info) << "Running on " << he->h_name << "[";
+  for (struct in_addr **ap=(struct in_addr **)he->h_addr_list; *ap!=0; ++ap)
+    logs(info) << " " << inet_ntoa(**ap);
+  logs(info) << " ]\n";
   boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
   boost::gregorian::date  d=now.date();
   logs(info) << "\n***** SIMULATION START ***** "
