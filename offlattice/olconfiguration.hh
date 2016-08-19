@@ -105,8 +105,8 @@ public:
   size_t NTypes() const;
   // int CountType(short t) const;
   // int CountFlag(short f) const;
-  double volume();  ///< Box volume
-  double number_density();  ///< conf.N / volume
+  double volume() const;  ///< Box volume
+  double number_density() const;  ///< conf.N / volume
   std::vector<double> center_of_mass(double *masses=0);  ///< Compute the center of mass
 
   /// @}
@@ -178,12 +178,12 @@ inline double OLconfiguration::distancesq(int i,int j) const
  *
  */
 
-inline double OLconfiguration::number_density()
+inline double OLconfiguration::number_density() const
 {
   return N/volume();
 }
 
-inline double OLconfiguration::volume()
+inline double OLconfiguration::volume() const
 {
   return box_length[0]*box_length[1]*box_length[2];
 }
