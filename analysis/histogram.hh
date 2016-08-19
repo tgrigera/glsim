@@ -84,6 +84,8 @@ public:
   long   outliers_high() const {return out_above;}
   /// Return number of points with value lower than min
   long   outliers_low() const {return out_below;}
+  /// Return the center of the range corresponding to given bin
+  double binc(int bin) {return min_+(bin+.5)*delta_;}
   /// Return count value for the given bin
   long   count(int bin) const {return count_[bin];}
   /// Return the probability value for the given bin
@@ -111,7 +113,7 @@ private:
  \param extrabins Add extrabins bins below and above min and max, respectively, but
                   computing the bin width as (max-min)/nbins
 */
-Histogram::Histogram(int nbins,double min,double max,int extrabins) : 
+inline Histogram::Histogram(int nbins,double min,double max,int extrabins) : 
   min_(min),
   max_(max),
   nbin(nbins+2*extrabins),      // provide a padding above and below max/min
