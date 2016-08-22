@@ -93,6 +93,7 @@ public:
   void fold_coordinates();     ///< Move all particles inside the primary box (shifting by a multiple of the box length)
   void unfold_coordinates(double (*ref)[3]); ///< Undo periodic folding, using a proided reference configuration
   void unfold_coordinates(); ///< Undo periodic folding, using internal reference configuration
+  void unfold_coordinates_reset(); ///< Reset reference configuration for unfold_coordinates()
   void fold_one(double x[]);   ///< Apply PBCs to one particle
 
   double ddiff(const double a,const double b,const double box_length) const;

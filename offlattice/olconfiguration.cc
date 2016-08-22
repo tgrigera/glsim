@@ -189,21 +189,38 @@ void OLconfiguration::fold_coordinates()
   will fail if the trajectory contains snapshots recorded too far
   apart, or if the simulation involves nonlocal moves.
 
+  Call unfold_coordinates_reset() to reset the reference configuration
+  (e.g. upon loading a completely different configuration).
+
   The stored private reference is copied upon copy construction, but
   invalidated on assingment.
  */
 void OLconfiguration::unfold_coordinates()
 {
-  if (reference_r!=0 && reference_N==N)
-    // We have a valid private reference, unfold wrt to it
+  if (reference_r!=0 && reference_N==N) {
+    // We have a valid private reference, unfold and updata
     unfold_coordinates(reference_r);
-  else {
+    memcpy(reference_r,r,3*N*sizeof(double));
+  } else {
     // No valid private reference, initialize it
+    unfold_coordinates_reset();
+  }
+}
+
+/**
+  Set current configuration as reference for unfolding, discarding the
+  previous stored reference.  Will be called automatically by
+  unfold_coordinates() if no reference is found.
+*/
+void OLconfiguration::unfold_coordinates_reset()
+{
+  if (reference_r==0 || reference_N!=N) {
+    // Initialize reference array
     reference_N=N;
     delete[] reference_r;
     reference_r=new double[N][3];
   }
-  
+
   // Update private reference
   memcpy(reference_r,r,3*N*sizeof(double));
 }
