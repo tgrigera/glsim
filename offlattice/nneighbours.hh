@@ -98,8 +98,10 @@ public:
 
   template <typename Function,typename NeighboursT>
   friend struct implement_for_each_pair;
+  template <typename Function,typename NeighboursT>
+  friend struct implement_for_each_pair_mt;
 
-private:
+  private:
   OLconfiguration* conf;
   double           rc,rcsq;
 } ;
@@ -205,6 +207,8 @@ public:
 
   template <typename Function,typename NeighboursT>
   friend struct implement_for_each_pair;
+  template <typename Function,typename NeighboursT>
+  friend struct implement_for_each_pair_mt;
 
 private:
   OLconfiguration*  conf;
@@ -252,6 +256,8 @@ public:
 
   template <typename Function,typename NeighboursT>
   friend struct implement_for_each_pair;
+  template <typename Function,typename NeighboursT>
+  friend struct implement_for_each_pair_mt;
 
 private:
   OLconfiguration* conf;
@@ -510,6 +516,8 @@ public:
 
   template <typename Function,typename NeighboursT>
   friend struct implement_for_each_pair;
+  template <typename Function,typename NeighboursT>
+  friend struct implement_for_each_pair_mt;
 
 private:
   OLconfiguration   *conf;
@@ -581,7 +589,7 @@ Applies a function to all pairs _within the specified cutoff_ of the
 neighbours described by the given class.  Candidates supplied by the
 class are screened to discard those whose distance is above cutoff.
 This template function is specialised for some nearest neighbour
-classes for improved perfomance.
+classes for improved perfomance.  See also for_each_pair_mt.
 
 \param NN   The nearest neighbour class, appropriately initialized
 
@@ -594,6 +602,156 @@ template <typename Function,typename NeighboursT>
 Function for_each_pair(NeighboursT& NN,Function f)
 {
  return implement_for_each_pair<Function,NeighboursT>::for_each_pair(NN,f);
+}
+
+/*****************************************************************************
+ *
+ * Multithreaded versions of the functions to loop through all nearest
+ * neigbhours, with the static member function trick for partial
+ * specialization
+ *
+ */
+template <typename Function,typename NeighboursT>
+struct implement_for_each_pair_mt {
+  static Function for_each_pair(NeighboursT& NN,Function f)
+  {
+    throw Unimplemented("Multithreaded for_each_pair for these types");
+  }
+} ;
+
+template <typename RObject>
+struct implement_for_each_pair_mt<RObject,glsim::MetricNearestNeighbours> {
+  static RObject for_each_pair(MetricNearestNeighbours& NN,RObject f)
+  {
+    #pragma omp parallel
+    {
+      RObject f_local(f);
+      int N=NN.conf->N;
+      #pragma omp for schedule(static) nowait
+      for (int i=0; i<N; ++i) {
+	int nn = (N-1)/2 + ( (N+1)%2 ) * 2*i/N;   // Number of neighbours assigned to i
+	int M1 = i+nn < N ? i+nn : N-1;
+	int M2 = nn - (M1 - i);
+	for (int j=i+1; j <= M1; ++j) {
+	  double dsq=NN.conf->distancesq(i,j);
+	  if (dsq<=NN.cutoffsq()) f_local(i,j,dsq);
+	}
+	for (int j=0; j < M2; ++j) {
+	  double dsq=NN.conf->distancesq(i,j);
+	  if (dsq<=NN.cutoffsq()) f_local(i,j,dsq);
+	}
+      }
+      #pragma omp critical
+      f.reduce(f_local);
+    }
+    return f;
+  }
+} ;
+
+template <typename RObject>
+struct implement_for_each_pair_mt<RObject,glsim::Subcells> {
+  static RObject for_each_pair(glsim::Subcells& NN,RObject f)
+  {
+    #pragma omp parallel
+    {
+      RObject f_local(f);
+      #pragma omp for schedule(static) nowait
+      for (int isc=0; isc<NN.num_subcells(); isc++) { /* Loop over subcells */
+	for (int n=NN.first_particle(isc); n>=0; n=NN.next_particle(n)) { /* and particles */                                                                       
+	  /* find pairs in the same subcell */ 
+	  for (int m=NN.next_particle(n); m>=0; m=NN.next_particle(m)) { 
+	    double dsq=NN.conf->distancesq(n,m); 
+	    if (dsq<NN.cutoffsq()) f_local(n,m,dsq);
+	  } 
+	  /* find pairs in neighbouring subcells */ 
+	  for (int nn=0; nn<13; nn++)
+	    for (int m=NN.first_particle(NN.neighbour(isc,nn)); m>=0; m=NN.next_particle(m) ) {                                                                    
+	      double dsq=NN.conf->distancesq(n,m); 
+	      if (dsq<NN.cutoffsq()) f_local(n,m,dsq); 
+	    } 
+	}
+      }
+      #pragma omp critical
+      f.reduce(f_local);
+    }
+    return f;
+  }
+} ;
+
+template <typename RObject>
+struct implement_for_each_pair_mt<RObject,NeighbourList_subcells> {
+  static RObject for_each_pair(NeighbourList_subcells& NN,RObject f)
+  {
+    #pragma omp parallel
+    {
+      RObject f_local(f);
+      int N=NN.conf->N;
+      auto end=NN.pairs_end();
+      #pragma omp for schedule(static) nowait
+      for (auto p = NN.pairs_begin(); p<end; ++p) {
+	double dsq=NN.conf->distancesq(p->first,p->second);
+	if (dsq<=NN.cutoffsq()) f_local(p->first,p->second,dsq);
+      }
+      #pragma omp critical
+      f.reduce(f_local);
+    }
+    return f;
+  }
+} ;
+
+/**  \ingroup MetricNN
+
+A multithreaded version of for_each_pair.  Allows parallelization of
+the task of applying a function f to all pairs, as long as the
+function is thread-safe.
+
+The function that is applied is operator() of the type RObject
+("reducible object", in the sense explained below).  To avoid as much
+as possible mutual exclusion bottlenecks, a thread-local copy of f
+(f_local) (using the RObject's copy constructor) is created, and
+applied to all pairs handled by the thread.  After looping through the
+local pairs, f.reduce(f_local) is called.  This method should
+consolidate the information of the local objects, to be returned to
+the caller (see example below).
+
+Applies a f to all pairs _within the specified cutoff_ of the
+neighbours described by the given class.  Candidates supplied by the
+class are screened to discard those whose distance is above cutoff.
+This template function is specialised for some nearest neighbour
+classes for improved perfomance.
+
+\param NN   The nearest neighbour class, appropriately initialized
+
+\param f The function object to be applied. The object must have an
+         `operator()(int i,int j,double dsq)` that will be called with
+         each of the pairs within cutoff, and a `void
+         reduce(RObject&)` method to consolidate the partial
+         information obtained by one thread.  `operator()` is called
+         only on the thread-local copy of f.
+
+Returns a copy of f.
+
+Example RObject (a simple accumulator of all the pair distances):
+
+~~~~~{.cc}
+class SumDistances {
+  SumDistances() : sum(0) {}
+  SumDistances(SumDistances& d) : sum(d.sum) {}
+  void operator()(int i,int j,double dist)
+  { 
+    sum+=dist;
+  }
+  void reduce(SumDistances& e)
+  { sum+=e.sum;}
+  double sum;
+} ;
+~~~~~
+ 
+*/
+template <typename RObject,typename NeighboursT>
+RObject for_each_pair_mt(NeighboursT& NN,RObject f)
+{
+ return implement_for_each_pair_mt<RObject,NeighboursT>::for_each_pair(NN,f);
 }
 
 /*****************************************************************************

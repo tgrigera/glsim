@@ -59,6 +59,7 @@ static struct ooptions {
   double rc;
 
   bool   time_naive,time_list_naive,time_subcell,time_list_subcell;
+  bool   multithreaded;
 } options;
 
 class CLoptions : public glsim::UtilityCL {
@@ -78,6 +79,8 @@ CLoptions::CLoptions() : UtilityCL("gs_neighbour_time")
      "time subcell algorithm")
     ("list_subcells",po::bool_switch(&options.time_list_subcell),
      "time pair list with list built through subcell algorithm")
+    ("multithreaded,m",po::bool_switch(&options.multithreaded),
+     "test also multithreaded version of for_each_pair")
     ;  
   hidden_command_line_options().add_options()
     ("Npart",po::value<int>(&options.Nparticles)->required(),
@@ -119,10 +122,16 @@ Function for_each_pair_generic(glsim::OLconfiguration& conf,NeighboursT& NN,Func
   return f;
 }
 
-struct accumulate {
-  accumulate() : tot(0) {}
-  void operator()(int i,int j,double dist) {tot+=sqrt(dist);}
-  double tot;
+struct energy {
+  energy() : ener(0) {}
+  void operator()(int i,int j,double dist)
+  { 
+    double ds=dist*dist*dist;
+    ener+=ds*ds-2*ds;
+  }
+  void reduce(energy& e)
+  { ener+=e.ener;}
+  double ener;
 } ;
 
 std::ostream& operator<<(std::ostream& o,const boost::timer::cpu_times& times)
@@ -143,6 +152,7 @@ double time_algo(NearestT& NN,glsim::OLconfiguration& conf)
 {
   boost::timer::cpu_timer     timer,total_timer;
   boost::timer::cpu_times     times;
+  double E1=0,E2=0,E3=0;
 
   total_timer.start();
 
@@ -154,24 +164,33 @@ double time_algo(NearestT& NN,glsim::OLconfiguration& conf)
   
   timer.start();
   std::cout << "     loop generic (x10)...\t";  std::cout.flush();
-  double totd=0;
   for (int i=0; i<10; ++i)
-    totd+= for_each_pair_generic(conf,NN,accumulate()).tot;
+    E1+= for_each_pair_generic(conf,NN,energy()).ener;
   times=timer.elapsed();
   std::cout << times << '\n';
 
   timer.start();
   std::cout << "     loop ad hoc (x10)... \t";   std::cout.flush();
-  totd=0;
   for (int i=0; i<10; ++i)
-    totd += glsim::for_each_pair(NN,accumulate()).tot;
+    E2 += glsim::for_each_pair(NN,energy()).ener;
   times=timer.elapsed();
   std::cout << times << '\n';
 
+  if (options.multithreaded) {
+    timer.start();
+    std::cout << "     loop multithread (x10)... \t";   std::cout.flush();
+    for (int i=0; i<10; ++i)
+      E3 += glsim::for_each_pair_mt(NN,energy()).ener;
+      // E3 += for_each_pair_local(NN,energy()).ener;
+    times=timer.elapsed();
+    std::cout << times << '\n';
+  }
+
   times=total_timer.elapsed();
   std::cout << "     total\t\t\t" << times << '\n';
+  std::cout << "     energies = " << E1 << ' ' << E2 << ' ' << E3 << '\n';
 
-  return totd;
+  return E1+E2+E3;
 }
 
 void create_random(glsim::OLconfiguration &conf,int N,double boxl)
@@ -232,7 +251,7 @@ void wmain(int argc,char *argv[])
     time_algo(NS,conf);
   }
   if (options.time_list_subcell) {
-    std::cout << "#### Neighbour list (list build with subcells)\n";
+    std::cout << "#### Neighbour list (list built with subcells)\n";
     glsim::NeighbourList_subcells  NLS(rc,rc*0.2);
     time_algo(NLS,conf);
   }
