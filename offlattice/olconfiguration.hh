@@ -104,7 +104,7 @@ public:
   /// \name Configuration properties
   /// @{
   size_t NTypes() const;
-  // int CountType(short t) const;
+  int    count_type(short t) const;
   // int CountFlag(short f) const;
   double volume() const;  ///< Box volume
   double number_density() const;  ///< conf.N / volume

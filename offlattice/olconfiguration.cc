@@ -258,6 +258,16 @@ size_t OLconfiguration::NTypes() const
   return types.size();
 }
 
+int OLconfiguration::count_type(short T) const
+{
+  if (!type) return -1;
+  int c=0;
+  for (int i=0; i<N; ++i)
+    if (type[i]==T) c++;
+  return c;
+}
+
+
 /**
 Returns a vector of doubles with the position of the center of mass.
 If the configuration defines a type for each particle (through the
