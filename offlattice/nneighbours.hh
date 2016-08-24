@@ -736,10 +736,10 @@ Example RObject (a simple accumulator of all the pair distances):
 ~~~~~{.cc}
 class SumDistances {
   SumDistances() : sum(0) {}
-  SumDistances(SumDistances& d) : sum(d.sum) {}
-  void operator()(int i,int j,double dist)
+  SumDistances(const SumDistances& d) : sum(d.sum) {}
+  void operator()(int i,int j,double dsq)
   { 
-    sum+=dist;
+    sum+=sqrt(dsq);
   }
   void reduce(SumDistances& e)
   { sum+=e.sum;}

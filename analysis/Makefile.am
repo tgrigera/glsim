@@ -48,6 +48,7 @@ LDADD=libglsim_an.la $(top_builddir)/blib/libglsim.la
 
 gs_1stneighbours_SOURCES = gs_1stneighbours.cc
 gs_1stneighbours_LDADD = $(LDADD) $(top_builddir)/offlattice/libglsim_ol.la
+gs_1stneighbours_CXXFLAGS=$(OPENMP_CXXFLAGS) $(AM_CXXFLAGS)
 
 gs_avesd_SOURCES = avesd.cc
 

@@ -52,6 +52,7 @@ struct optlst {
 public:
   std::vector<std::string> ifiles;
   int    Nbins;
+  bool   mt;
 } options;
 
 class CLoptions : public glsim::UtilityCL {
@@ -69,6 +70,8 @@ CLoptions::CLoptions() : glsim::UtilityCL("gs_gr")
   command_line_options().add_options()
     ("Nbins,N",po::value<int>(&options.Nbins)->required(),
      "Number of bins to use")
+    ("multi-threaded,m",po::bool_switch(&options.mt)->default_value(false),
+     "use multithreaded algorithm for neighbour iteration")
     ;
 
   positional_options().add("ifiles",-1);
@@ -104,6 +107,28 @@ void process_conf(glsim::OLconfiguration &conf,glsim::AveVar<false> &av,
   }
 }
 
+void process_conf_mt(glsim::OLconfiguration &conf,glsim::AveVar<false> &av,
+		  glsim::Histogram& nnd)
+{
+  static glsim::Subcells NN(nnd.max()/5);
+
+  NN.rebuild(conf);
+  #pragma omp parallel for schedule(static)
+  for (int i=0; i<conf.N; ++i) {
+    double d,mind=2*nnd.max()*nnd.max();
+    for (auto n=NN.neighbours_begin(i); n!=NN.neighbours_end(i); ++n)
+      if ( (d=conf.distancesq(i,*n))<mind) mind=d;
+    mind=sqrt(mind);
+    #pragma omp critical
+    {
+      nnd.push(mind);
+      av.push(mind);
+    }
+  }
+}
+
+
+
 /*****************************************************************************
  *
  * main
@@ -121,6 +146,13 @@ void wmain(int argc,char *argv[])
   glsim::OLconfig_file   cfile(&conf);
   glsim::H5_multi_file   ifs(options.ifiles,cfile);
 
+  void (*process_conf_f)(glsim::OLconfiguration &conf,glsim::AveVar<false> &av,
+			 glsim::Histogram& nnd);
+
+  if (options.mt) process_conf_f=process_conf_mt;
+  else process_conf_f=process_conf;
+
+
   ifs.read();
   double diag=sqrt(conf.box_length[0]*conf.box_length[0] +
 	    conf.box_length[1]*conf.box_length[1] +
@@ -130,7 +162,7 @@ void wmain(int argc,char *argv[])
   glsim::AveVar<false> av;
 
   do {
-    process_conf(conf,av,nnd);
+    process_conf_f(conf,av,nnd);
   } while (ifs.read());
   std::cout << "# Average nearest neighbour distance = " << av.ave() << '\n';
   std::cout << "# Average nearest neighbour standard dev = " << sqrt(av.var()) << '\n';
