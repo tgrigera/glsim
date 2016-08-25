@@ -82,8 +82,7 @@ public:
   virtual double acceleration_and_potential_energy(OLconfiguration&) = 0;
   virtual double kinetic_energy_and_momentum(OLconfiguration&,double P[]);
   virtual double delta_energy_particle_shift(OLconfiguration&,int,double*) = 0;
-  // virtual double delta_energy_particle_swap(olconfig&,int a,int b)
-  //= 0;
+  virtual double delta_energy_particle_swap(OLconfiguration&,int a,int b) = 0;
 
   virtual void   fold_coordinates(OLconfiguration&,double maxdisp=-1.);
   virtual ~Interactions() {}
@@ -111,6 +110,7 @@ class FreeParticles : public Interactions {
   double force_and_potential_energy(OLconfiguration& c) {return 0;}
   double acceleration_and_potential_energy(OLconfiguration& c) {return 0;}
   double delta_energy_particle_shift(OLconfiguration&,int,double*) {return 0;}
+  double delta_energy_particle_swap(OLconfiguration&,int,int) {return 0;}
 } ;
 
 /*****************************************************************************
@@ -146,6 +146,7 @@ public:
   double force_and_potential_energy(OLconfiguration&);
   double acceleration_and_potential_energy(OLconfiguration&);
   double delta_energy_particle_shift(OLconfiguration &conf,int n,double *rnew);
+  double delta_energy_particle_swap(OLconfiguration&,int a,int b);
   void   tabulate_potential(std::ostream&,short t1,short t2);
 
 private:
@@ -305,6 +306,44 @@ delta_energy_particle_shift(OLconfiguration &conf,int n,double *rnew)
 }
 
 template <typename PotentialT>
+double Interactions_isotropic_pairwise_naive<PotentialT>::
+delta_energy_particle_swap(OLconfiguration& conf,int a,int b)
+{
+  double rn[3],E0=0,E1=0;
+
+  int typea=conf.type[a];
+  int typeb=conf.type[b];
+
+  if (PP.has_efield()) {
+    E0=PP.external_field(conf.r[a],typea);
+    E0+=PP.external_field(conf.r[b],typeb);
+    E1=PP.external_field(conf.r[a],typeb);
+    E1+=PP.external_field(conf.r[b],typea);
+  }
+
+  for (int m=0; m<conf.N; m++) {
+    if (m==a || m==b) continue;    // no int with itself; no difference in DE
+                                  // by omitting the pair a-b from the loop
+    int    typem=conf.type[m];
+    double dsq=conf.distancesq(a,m);
+    E0+=PP.pair_potential(dsq,typea,typem);
+    E1+=PP.pair_potential(dsq,typeb,typem);
+  }
+  for (int m=0; m<conf.N; m++) {
+    if (m==a || m==b) continue;
+    int    typem=conf.type[m];
+    double dsq=conf.distancesq(b,m);
+    E0+=PP.pair_potential(dsq,typeb,typem);
+    E1+=PP.pair_potential(dsq,typea,typem);
+  }
+
+  return E1-E0;
+}  
+
+
+
+
+template <typename PotentialT>
 void Interactions_isotropic_pairwise_naive<PotentialT>::tabulate_potential(std::ostream& o,
 									  short t1,short t2)
 {
@@ -348,6 +387,7 @@ public:
   double force_and_potential_energy(OLconfiguration&);
   double acceleration_and_potential_energy(OLconfiguration&);
   double delta_energy_particle_shift(OLconfiguration &conf,int n,double *rnew);
+  double delta_energy_particle_swap(OLconfiguration &conf,int n,int m);
   void   tabulate_potential(std::ostream&,short t1,short t2);
   void   fold_coordinates(OLconfiguration& conf,double maxdisp=-1);
 
@@ -529,6 +569,39 @@ delta_energy_particle_shift(OLconfiguration &conf,int n,double *rnew)
     DE+=PEshift-PE;
   }
   return DE;
+}
+
+
+template <typename PotentialT,typename NeighboursT>
+double Interactions_isotropic_pairwise<PotentialT,NeighboursT>::
+delta_energy_particle_swap(OLconfiguration &conf,int a,int b)
+{
+  double E0=0,E1=0;
+  int typea=conf.type[a];
+  int typeb=conf.type[b];
+
+  if (PP.has_efield()) {
+    E0=PP.external_field(conf.r[a],typea);
+    E0+=PP.external_field(conf.r[b],typeb);
+    E1=PP.external_field(conf.r[a],typeb);
+    E1+=PP.external_field(conf.r[b],typea);
+  }
+
+  for (auto m=NN->neighbours_begin(a); m!=NN->neighbours_end(a); ++m) {
+    int    typem=conf.type[*m];
+    double dsq=conf.distancesq(a,*m);
+    E0+=PP.pair_potential(dsq,typea,typem);
+    E1+=PP.pair_potential(dsq,typeb,typem);
+  }
+  for (auto m=NN->neighbours_begin(b); m!=NN->neighbours_end(b); ++m) {
+    int    typem=conf.type[*m];
+    double dsq=conf.distancesq(b,*m);
+    E0+=PP.pair_potential(dsq,typeb,typem);
+    E1+=PP.pair_potential(dsq,typea,typem);
+  }
+
+  return E1-E0;
+  
 }
 
 

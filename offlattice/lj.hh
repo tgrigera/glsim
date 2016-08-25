@@ -394,7 +394,7 @@ inline LennardJones::LennardJones(const char *scope) :
   init_constants();
 }
 
-void LennardJones::init_constants()
+inline void LennardJones::init_constants()
 {
   sigmasq=env.sigma*env.sigma;
   foureps=4.*env.epsilon;
