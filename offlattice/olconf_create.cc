@@ -143,6 +143,7 @@ static struct oops {
   double        boxx,boxy,boxz;
   double        vtemp;
   double        mass;
+  std::vector<double> tfracs;
 
   oops() :
     N(0),
@@ -168,6 +169,8 @@ CLoptions::CLoptions() : UtilityCL("gs_olconf_create")
     ("density,d",po::value<double>(&options.density),"Average density.  If given --boxx etc are ignored")
     ("coordinates-from-stdin",po::bool_switch(&options.from_given_coordinates)->default_value(false),"Read coordinates from stdin")
     ("seed,S",po::value<unsigned long>(&options.seed)->default_value(0),"Random number seed")
+    ("type,t",po::value<std::vector<double>>(&options.tfracs),
+     "Make fraction arg of total particles of different type")
     ("mass,m",po::value<double>(&options.mass)->default_value(1.),"Particle mass")
     ("velocities,v",po::value<double>(&options.vtemp)->default_value(0.),
      "Generate Maxwellian velocities with kT=arg (if not given, velocities are not written)")
@@ -196,9 +199,16 @@ void wmain(int argc,char *argv[])
 
   scomp SC;
   
-  SC.Nt=1;
-  SC.N=new int[1];
-  SC.N[0]=options.N;
+  if (options.tfracs.size()>0) {
+    SC.Nt=options.tfracs.size();
+    SC.N=new int[SC.Nt];
+    for (int i=0; i<options.tfracs.size(); ++i)
+      SC.N[i]=options.N*options.tfracs[i];
+  } else {
+    SC.Nt=1;
+    SC.N=new int[SC.Nt];
+    SC.N[0]=options.N;
+  }
   if (options.density>0) {
     double volume=options.N/options.density;
     SC.boxl[0]=pow(volume,1./3.);
