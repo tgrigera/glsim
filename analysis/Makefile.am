@@ -21,7 +21,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/blib -I$(top_srcdir)/offlattice
 # Headers
 #
 
-pkginclude_HEADERS = avevar.hh binvec.hh geoave.hh histogram.hh	\
+pkginclude_HEADERS = avevar.hh binvec.hh geoave.hh gr.hh histogram.hh	\
                      iscatt.hh Sk.hh timecorr.hh
 
 EXTRA_DIST = gs_columnave.awk gs_fileave.awk

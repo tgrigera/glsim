@@ -25,6 +25,10 @@
 #ifndef BINVEC_HH
 #define BINVEC_HH
 
+#include <valarray>
+
+#include "glsim/exception.hh"
+
 namespace glsim {
 
 /** \class Binned_vector
@@ -67,6 +71,9 @@ public:
   T& at(std::size_t pos);
   T& at(int pos) {return at((std::size_t) pos);}
   T& at(double r) {return data_[binn_protected(r)];}
+
+  Binned_vector& operator=(const T& x)
+  {data_=x; return *this;}
 
 private:
   long         out_below,out_above;
