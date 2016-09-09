@@ -137,6 +137,8 @@ void OLconfiguration::init(const char* s)
 {
   if (s==0) throw glsim::Unimplemented("Create config from scratch",HERE);
   load(s);
+  step=0;
+  time=0;
 }
 
 /**

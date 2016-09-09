@@ -76,10 +76,8 @@ public:
   {data_=x; return *this;}
 
 private:
-  long         out_below,out_above;
   double       min_,max_,delta_;
   long         nbin;
-  long         ndata;
   std::valarray<T> data_;
 } ;
 
