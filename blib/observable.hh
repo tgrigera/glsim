@@ -98,6 +98,7 @@ template <typename ITYP>
 template <typename Arch>
 void Observable<ITYP>::serialize(Arch &ar, const unsigned version)
 {
+  ar & boost::serialization::base_object<Environment>(*this);
   ar & obs_fname & obs_interval;
   ar & first_observed;
 }
@@ -203,6 +204,7 @@ inline KMCObservable::KMCObservable(SimEnvironment& env_,const char* scope) :
 template <typename Archive>
 void KMCObservable::serialize(Archive &ar,const unsigned int version)
 {
+  ar & boost::serialization::base_object<Observable<double>>(*this);
   ar & obs_time;
 }
 
