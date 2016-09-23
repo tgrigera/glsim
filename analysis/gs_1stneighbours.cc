@@ -44,6 +44,7 @@
 #include "log.hh"
 #include "parameters.hh"
 #include "olconfiguration.hh"
+#include "geoave.hh"
 #include "avevar.hh"
 #include "histogram.hh"
 #include "nneighbours.hh"
@@ -52,7 +53,11 @@ struct optlst {
 public:
   std::vector<std::string> ifiles;
   int    Nbins;
+  double timew;
   bool   mt;
+
+  optlst() : timew(-1.),Nbins(-1) {}
+
 } options;
 
 class CLoptions : public glsim::UtilityCL {
@@ -61,15 +66,17 @@ public:
   void show_usage() const;
 } ;
 
-CLoptions::CLoptions() : glsim::UtilityCL("gs_gr")
+CLoptions::CLoptions() : glsim::UtilityCL("gs_1stneighbours")
 {
   hidden_command_line_options().add_options()
     ("ifiles",po::value<std::vector<std::string> >(&options.ifiles)->required(),
      "input files")
     ;
   command_line_options().add_options()
-    ("Nbins,N",po::value<int>(&options.Nbins)->required(),
-     "Number of bins to use")
+    ("Nbins,N",po::value<int>(&options.Nbins),
+     "Number space of bins to use")
+    ("time,t",po::value<double>(&options.timew),
+     "compute average neighbour distance as function of time")
     ("multi-threaded,m",po::bool_switch(&options.mt)->default_value(false),
      "use multithreaded algorithm for neighbour iteration")
     ;
@@ -81,8 +88,12 @@ void CLoptions::show_usage() const
 {
   std::cerr
     << "usage: " << progname << "[options]  ifile [ifile ....]\n\n"
-    << "Computes the distribution of first (nearest) neighbours over the\n"
-    << "given trajectories.  You must give -N.\n"
+    << "This program works in two possible ways.  If -t is not given (or if\n"
+    << "given with negative argument), it computes the distribution of first\n"
+    << "(nearest) neighbours over the given trajectories.\n"
+    << "If -t is given, only the average distance is computed, but as a function of\n"
+    << "time, averaging over the time window given as argument, and -N is ingored\n"
+    << "You must give -N if you don't give -t.\n"
     << "\n"
     << " Options:\n";
   show_command_line_options(std::cerr);
@@ -127,6 +138,28 @@ void process_conf_mt(glsim::OLconfiguration &conf,glsim::AveVar<false> &av,
   }
 }
 
+void process_conf_time(glsim::OLconfiguration &conf,glsim::Geoave &gav)
+{
+  static double diag=sqrt(conf.box_length[0]*conf.box_length[0] +
+			  conf.box_length[1]*conf.box_length[1] +
+			  conf.box_length[2]*conf.box_length[2])/2;
+  static glsim::Subcells NN(diag/5);
+  glsim::AveVar<false> av;
+
+  NN.rebuild(conf);
+  #pragma omp parallel for schedule(static)
+  for (int i=0; i<conf.N; ++i) {
+    double d,mind=2*diag*diag;
+    for (auto n=NN.neighbours_begin(i); n!=NN.neighbours_end(i); ++n)
+      if ( (d=conf.distancesq(i,*n))<mind) mind=d;
+    mind=sqrt(mind);
+    #pragma omp critical
+    {
+      av.push(mind);
+    }
+  }
+  gav.push(conf.time,av.ave());
+}
 
 
 /*****************************************************************************
@@ -135,23 +168,19 @@ void process_conf_mt(glsim::OLconfiguration &conf,glsim::AveVar<false> &av,
  *
  */
 
-void wmain(int argc,char *argv[])
+void comp_ndistribution()
 {
-  glsim::logs.set_stream(std::cout,glsim::error);
-
-  CLoptions o;
-  o.parse_command_line(argc,argv);
-  
   glsim::OLconfiguration conf;
   glsim::OLconfig_file   cfile(&conf);
   glsim::H5_multi_file   ifs(options.ifiles,cfile);
+
+  if (options.Nbins<=0) throw glsim::Runtime_error("Must give -N with positive argument");
 
   void (*process_conf_f)(glsim::OLconfiguration &conf,glsim::AveVar<false> &av,
 			 glsim::Histogram& nnd);
 
   if (options.mt) process_conf_f=process_conf_mt;
   else process_conf_f=process_conf;
-
 
   ifs.read();
   double diag=sqrt(conf.box_length[0]*conf.box_length[0] +
@@ -170,6 +199,34 @@ void wmain(int argc,char *argv[])
   if (nnd.outliers()>0)
     std::cout << "#\n# WARNING: There were " << nnd.outliers() << " outliers in histogram\n#\n";
   std::cout << nnd;
+}
+
+void comp_vs_time()
+{
+  glsim::OLconfiguration conf;
+  glsim::OLconfig_file   cfile(&conf);
+  glsim::H5_multi_file   ifs(options.ifiles,cfile);
+
+  ifs.read();
+  glsim::Geoave  av(conf.time,1.,options.timew);
+
+  do {
+    process_conf_time(conf,av);
+  } while (ifs.read());
+
+  std::cout << "# time   1stn dist  sd\n";
+  std::cout << av;
+}
+
+void wmain(int argc,char *argv[])
+{
+  glsim::logs.set_stream(std::cout,glsim::error);
+
+  CLoptions o;
+  o.parse_command_line(argc,argv);
+
+  if (options.timew>0) comp_vs_time();
+  else comp_ndistribution();
 }
 
 int main(int argc, char *argv[])
