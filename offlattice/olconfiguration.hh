@@ -112,12 +112,22 @@ public:
 
   /// @}
 
-  // void ApplyCubicSymmetry(OLconfiguration&,int n);
-
 private:
   int       reference_N;
   double    (*reference_r)[3];
+
+  static const int CubicMatrices[48][3][3];
+  friend void apply_cubic_operation(OLconfiguration& conf,double (*r)[3],int n);
+
 } ;
+
+/** \brief  Apply cubic symmetry operation
+
+Apply the nth (from 0 to 47) cubic symmetry operation to given
+configuration.  Output coordinates are put in r (may coincide with
+conf.r)
+*/
+void apply_cubic_operation(OLconfiguration& conf,double (*r)[3],int n);
 
 inline OLconfiguration::OLconfiguration() :
   Configuration(""), 

@@ -50,7 +50,7 @@ static struct {
   std::vector<std::string> ifiles;
   std::string              ofile;
   bool                     id_frame,type_frame;
-  long                     first,last;
+  long                     first,last,deltarec;
 } options;
 
 class CLoptions : public glsim::UtilityCL {
@@ -68,6 +68,8 @@ CLoptions::CLoptions() : glsim::UtilityCL("GS_olconf_cat")
     ("ofile,o",po::value<std::string>(&options.ofile)->required(),"Output trajectory file")
     ("first,f",po::value<long>(&options.first)->default_value(0),"First record to copy, negative counts backwards from end")
     ("last,l",po::value<long>(&options.last)->default_value(-1),"Last record to copy, negative counts backwards from end")
+    ("increment,i",po::value<long>(&options.deltarec)->default_value(1),
+     "Record increment (must be positive, 1 copies all records in range")
     ("id-frame",po::bool_switch(&options.id_frame)->default_value(false),"Assume ids change with time and record as frame variable")
     ("type-frame",po::bool_switch(&options.type_frame)->default_value(false),"Assume types change with time and record as frame variable")
     ;
@@ -132,6 +134,7 @@ void wmain(int argc,char *argv[])
   while (ifs.pos()<=options.last) {
     ifs.read();
     of.append_record();
+    ifs.seek(ifs.pos()+options.deltarec-1);
   } 
 
 }
