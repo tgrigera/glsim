@@ -204,8 +204,8 @@ void read_data(glsim::MFILE &f,std::vector<double>& a)
     while ( !f.eof() ) {
       fgets(buf,200,f);
       if (*buf=='#') continue;
-      sscanf(buf,"%lg",&at);
-      if (errno) throw glsim::Clib_error(HERE);
+      if (sscanf(buf,"%lg",&at)!=1)
+	throw glsim::Clib_error(HERE);
       a.push_back(at);
     }
   }
@@ -221,8 +221,8 @@ void read_data(glsim::MFILE &f,glsim::vcomplex& a)
     while ( !f.eof() ) {
       fgets(buf,200,f);
       if (*buf=='#') continue;
-      sscanf(buf,"%lg %lg %lg",&t,&atr,&ati);
-      if (errno) throw glsim::Clib_error(HERE);
+      if (sscanf(buf,"%lg %lg %lg",&t,&atr,&ati)!=3)
+	throw glsim::Clib_error(HERE);
       if (options.t0set && t<options.t0) continue;
       a.push_back(glsim::dcomplex(atr,ati));
       if (n==0) options.deltat=t;
@@ -233,8 +233,8 @@ void read_data(glsim::MFILE &f,glsim::vcomplex& a)
     while ( !f.eof() ) {
       fgets(buf,200,f);
       if (*buf=='#') continue;
-      sscanf(buf,"%lg %lg",&atr,&ati);
-      if (errno) throw glsim::Clib_error(HERE);
+      if (sscanf(buf,"%lg %lg",&atr,&ati)!=2)
+	throw glsim::Clib_error(HERE);
       a.push_back(glsim::dcomplex(atr,ati));
     }
   }
@@ -260,11 +260,14 @@ void wmain(int argc,char *argv[])
   opt.parse_command_line(argc,argv);
 
   glsim::MFILE fin(options.ifiles);
-  if (options.complex_data)
+  int nt;
+  if (options.complex_data) {
     read_data(fin,ac);
-  else
+    nt=ac.size()/options.fractdiff;
+  } else {
     read_data(fin,a);
-  int nt=a.size()/options.fractdiff;
+    nt=a.size()/options.fractdiff;
+  }
   if (nt<2) throw glsim::Runtime_error("Too few points!");
 
   /* Call function to compute requested correlation */
