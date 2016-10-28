@@ -304,7 +304,27 @@ void correlation_1d_tti_fft(const vcomplex &a,ComplexFFT &corr,int nt)
 void correlation_connected_1d_tti_fft(vcomplex &a,ComplexFFT &corr,int nt,
 				      bool normalize)
 {
-  throw Unimplemented("Complex connected correlation with FFT",HERE);
+  // Compute average and substract
+  dcomplex ave=0;
+  for (auto ai: a) ave+=ai;
+  ave/=a.size();
+  corr.tdata_rw().clear();
+  corr.tdata_rw().resize(a.size());
+  for (int i=0; i<corr.tdata().size(); i++)
+    corr.tdatum(i)=a[i]-ave;
+
+  // Compute correlation
+  long N=do_corr_1d_tti_fft_unnorm(corr);
+  corr.tdata_rw().resize(nt);
+  // Normalize
+  dcomplex f=2*N;
+  corr.tdatum(0)/=f*dcomplex(N,0);
+  if (normalize) {
+    f*=corr.tdatum(0);
+    corr.tdatum(0)=1;
+  }
+  for (int i=1; i<nt; i++)
+    corr.tdatum(i)/=f*dcomplex(N-i,0);
 }
 
 } /* namespace */

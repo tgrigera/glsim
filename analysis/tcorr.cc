@@ -310,24 +310,29 @@ void wmain(int argc,char *argv[])
   }
 
   /* Integral */
-  double sum=0;
-  for (int i=0; i<acorr->size(); i++)
-    sum+=(*acorr)[i];
-    sum*=options.deltat;
 
   /* Output */
   printf("# Time correlation\n#\n");
-  printf("#\n# Integral = %g\n#\n",sum);
-  if (options.connected)
-    printf("# time    <[a(0)-<a>][a(t)-<a>]>\n");
-  else
-    printf("# time    <a(0)a(t)>\n");
-  if (options.complex_data)
+  if (options.complex_data) {
+    if (options.connected)
+      printf("# time    <[a(0)-<a>][a*(t)-<a*>]>\n");
+    else
+      printf("# time    <a(0)a*(t)>\n");
     for (int i=0; i<nt; i++)
       printf("%g %g %g\n",i*options.deltat,(*acorrc)[i].real(),(*acorrc)[i].imag());
-  else
+  } else {
+    if (options.connected)
+      printf("# time    <[a(0)-<a>][a(t)-<a>]>\n");
+    else
+      printf("# time    <a(0)a(t)>\n");
+    double sum=0;
+    for (int i=0; i<acorr->size(); i++)
+      sum+=(*acorr)[i];
+    sum*=options.deltat;
+    printf("#\n# Integral = %g\n#\n",sum);
     for (int i=0; i<nt; i++)
       printf("%g %g\n",i*options.deltat,(*acorr)[i]);
+  }
 
   delete realft,complexft;
 }
