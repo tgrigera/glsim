@@ -162,7 +162,7 @@ of La Plata. He can be contacted by e-mail at
 
 * Copyright statements and licensing terms
 
-glsim is copyright (C) 2009--2015 by Tomas S. Grigera.
+glsim is copyright (C) 2009--2017 by Tomas S. Grigera.
 
 glsim is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License (GPL) as published by the

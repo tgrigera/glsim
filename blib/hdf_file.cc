@@ -55,7 +55,7 @@ H5file::H5file() :
     HE(H5open());
     HE(H5Eset_auto2(H5E_DEFAULT,0,0));
     H5_scalar_s=H5Screate(H5S_SCALAR);
-    H5Pset_libver_bounds(H5_file_access_p, H5F_LIBVER_18, H5F_LIBVER_18);
+    H5Pset_libver_bounds(H5_file_access_p, H5F_LIBVER_EARLIEST, H5F_LIBVER_LATEST);
   }
   file_count++;
 }
