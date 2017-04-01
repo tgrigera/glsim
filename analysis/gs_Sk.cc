@@ -82,7 +82,7 @@ void CLoptions::show_usage() const
     << "repetitions of the simulation box (up to Nk per side) are computed, then all with the\n"
     << "same modulus of wave vector are averaged (actually doing a binning in k).  Note that this\n"
     << "is linear in the number of particles but O(Nk^3).  It is computed as the squared modulus\n"
-    << "of the sum of exp(ik\cdot r_i).\n\n"
+    << "of the sum of exp(ik\\cdot r_i).\n\n"
     << "With -i, the isotropic formula with sin(kr_{ij})/r_{ij} is used, which is linear in Nk\n"
     << "but quadratic in the number of particles."
     << "\n"

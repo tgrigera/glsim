@@ -4,7 +4,8 @@
  * This file is part of glsim, a numerical simulation class library and
  * helper programs.
  *
- * glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014, 2015
+ * glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016,
+ *                        2017
  * by Tomas S. Grigera.
  * 
  * glsim is free software; you can redistribute it and/or modify it under
@@ -93,7 +94,7 @@ private:
   double Sk0;
   Binned_vector<double> *sfact,*nsamp;
 
-  friend std::ostream& operator<<(std::ostream& o,Sk& S);
+  friend std::ostream& operator<<(std::ostream& o,const Sk& S);
 } ;
 
 /// Number of k (scattering vector) values
@@ -111,7 +112,7 @@ inline double Sk::k(int i) const {return sfact->binc(i);}
 inline double Sk::S(int i) const {return sfact->at(i);}
 
 /// Print the structure factor for all vectors in two columns
-std::ostream& operator<<(std::ostream&,Sk&);
+std::ostream& operator<<(std::ostream&,const Sk&);
 
 
 /** \class Skiso
@@ -164,7 +165,7 @@ inline double Skiso::k(int i) const {return i*deltak_;}
 inline double Skiso::S(int i) const {return sfact[i];}
 
 /// Print the structure factor for all vectors in two columns
-std::ostream& operator<<(std::ostream&,Sk&);
+std::ostream& operator<<(std::ostream&,const Skiso&);
 
 } /* namespace */
 

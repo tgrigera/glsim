@@ -4,7 +4,8 @@
  * This file is part of glsim, a numerical simulation class library and
  * helper programs.
  *
- * glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014, 2015
+ * glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016,
+ *                        2017
  * by Tomas S. Grigera.
  * 
  * glsim is free software; you can redistribute it and/or modify it under
@@ -109,7 +110,7 @@ void Sk::push(OLconfiguration &conf)
   }
 }
 
-std::ostream& operator<<(std::ostream& o,Sk& S)
+std::ostream& operator<<(std::ostream& o,const Sk& S)
 {
   o << 0 << ' ' << S.Sk0 << '\n';
   for (int i=0; i<S.size(); ++i)
@@ -167,6 +168,5 @@ std::ostream& operator<<(std::ostream& o,const Skiso& S)
     o << S.k(i) << ' ' << S.S(i) << '\n';
   return o;
 }
-
 
 } /* namespace */
