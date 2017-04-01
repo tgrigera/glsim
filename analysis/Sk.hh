@@ -43,6 +43,7 @@
 #include <math.h>
 
 #include "olconfiguration.hh"
+#include "binvec.hh"
 
 namespace glsim {
 
@@ -55,63 +56,112 @@ namespace glsim {
     \frac{1}{N}\langle | \rho_k |^2 \rangle = \frac{1}{N} \sum_{ij}
     \left\langle e^{-i k\cdot r_i} e^{-k\cdot r_j} \right\rangle \f]
 
+    The result is the structure factor as a function of the modulus of
+    k, obtained by averaging over all the compatible wavevectors that
+    belong to the reciprocal lattice of the Bravais lattice
+    corresponding to the periodic repetitions of the simulation box.
 
     The constructor takes the box size and number of desired k values
     as arguments.  Once constructed, the desired configurations are
-    passed one by one to one of push() methdos, and the structure
-    factor is computed and added to a running average.  The results
-    can be read one at a time with the methods k() and S(), or can be
-    sent as a whole to a stream with the operator<<().
+    passed one by one the push() methd, and the structure factor is
+    computed and added to a running average.  The results can be read
+    one at a time with the methods k() and S(), or can be sent as a
+    whole to a stream with the operator<<().
 
-    There are two versions of push().  The anisotropic version takes
-    second argument that indecates one of the coordinate axes to take
-    as a direction, the structure factor is then computed along this
-    direction.  The isotropic version computes the structure factor
-    analytically averaged over all possible orientations, assuming an
-    isotropic system, i.e.
-
-    \f[ S_\text{iso}(k) = \sum_{ij} \frac{\sin(k |r_i-r_j|)}{k|r_i-r_j|} \f]
-
-    but this is much slower (\f$O(N^2)\f$ vs \f$O(N)\f$).
-    
+    The push() function is linear in the number of particle but cubic
+    in Nx (or linear in Nx*Ny*Nz).
 */
 class Sk {
 public:
-  ///  Constructor: give box size and desired number of k values
-  Sk(double box_length[],int Nk);
+  ///  Constructor: give box size and desired number of k values on each axis (if only one given, the same number is used for all three)
+  Sk(double box_length[],int Nx,int Ny=-1,int Nz=-1);
+  ~Sk();
 
   int    size() const;
   double deltak() const;
   double k(int) const;
   double S(int) const;
 
-  /// Add the (isotropic) S(k) for the given configuration to the running average (O(N^2))
-  void   push(OLconfiguration &conf);
   /// Add the value of S(k) in the given directon for the given configuration to the running average (O(N))
-  void   push(OLconfiguration &conf,int kdir);
+  void   push(OLconfiguration &conf);
 
 private:
-  int    Nk;
-  int    kdir;
+  int    Nkx,Nky,Nkz;
   double deltak_[3];
+  double kmax;
 
-  std::vector<double> sfact;
-  int                 nsamp;
+  double Sk0;
+  Binned_vector<double> *sfact,*nsamp;
 
-  void basic_init(double box_length[]);
+  friend std::ostream& operator<<(std::ostream& o,Sk& S);
 } ;
 
 /// Number of k (scattering vector) values
-inline int    Sk::size() const {return Nk;}
+inline int    Sk::size() const {return sfact->nbins();}
 
-/// Returs \f$\Delta k\f$
-inline double Sk::deltak() const {return deltak_[kdir];}
+/// Returs \f$\Delta k\f$.  This is not the value used for the vector
+/// wavelength (which can be different for the different axes) but the
+/// bin witdh used to average directions
+inline double Sk::deltak() const {return sfact->delta();}
 
 /// Returns the (modulus of) the ith scattering vector
-inline double Sk::k(int i) const {return i*deltak_[kdir];}
+inline double Sk::k(int i) const {return sfact->binc(i);}
 
 /// Returns the structure factor at the ith scattering vector
-inline double Sk::S(int i) const {return sfact.at(i);}
+inline double Sk::S(int i) const {return sfact->at(i);}
+
+/// Print the structure factor for all vectors in two columns
+std::ostream& operator<<(std::ostream&,Sk&);
+
+
+/** \class Skiso
+    \ingroup Structure
+    \brief Compute the static structure factor (isotropic version)
+
+    This computes the static structure factor analitically averaged
+    over directions, \f[ S(k) = \frac{1}{N} \sum_{ij} \frac{\sin
+    kr_{ij}}{kr_{ij}}. \f] Note that the sum includes the terms with
+    \f$i=j\f$, so that \f$\lim_{k\to\infty}S(k)=1\f$.
+
+    This class is used in the same way as glsim::Sk.
+
+    The push() function is linear in the number of wavevectors but
+    quadratic in the number of particles.
+*/
+class Skiso {
+public:
+  ///  Constructor: give box size and desired number of k values
+  Skiso(double box_length[],int Nk);
+  ~Skiso();
+
+  int    size() const;
+  double deltak() const;
+  double k(int) const;
+  double S(int) const;
+
+  /// Add the value of S(k) in the given directon for the given configuration to the running average (O(N))
+  void   push(OLconfiguration &conf);
+
+private:
+  int    Nk;
+  double deltak_;
+  double kmax;
+
+  double *sfact;
+  long   nsamp;
+} ;
+
+/// Number of k (scattering vector) values
+inline int  Skiso::size() const {return Nk;}
+
+/// Returs \f$\Delta k\f$
+inline double Skiso::deltak() const {return deltak_;}
+
+/// Returns the (modulus of) the ith scattering vector
+inline double Skiso::k(int i) const {return i*deltak_;}
+
+/// Returns the structure factor at the ith scattering vector
+inline double Skiso::S(int i) const {return sfact[i];}
 
 /// Print the structure factor for all vectors in two columns
 std::ostream& operator<<(std::ostream&,Sk&);
@@ -119,4 +169,3 @@ std::ostream& operator<<(std::ostream&,Sk&);
 } /* namespace */
 
 #endif /* SK_HH */
-

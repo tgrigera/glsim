@@ -27,7 +27,7 @@
 
 #include <valarray>
 
-#include "glsim/exception.hh"
+#include "exception.hh"
 
 namespace glsim {
 
@@ -53,6 +53,7 @@ public:
 
   /// Return number of bins
   int    nbins() const {return nbin;}
+  size_t size() const {return nbin;}
   double min() const {return min_;}
   double max() const {return max_;}
   /// Return bin width

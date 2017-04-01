@@ -34,38 +34,118 @@
  *
  */
 
+#include <math.h>
+#include <algorithm>
+
 #include <gsl/gsl_sf_trig.h>
 #include "Sk.hh"
 
+
 namespace glsim {
 
-void Sk::basic_init(double box_length[])
+Sk::Sk(double box_length[],int Nx,int Ny,int Nz) :
+  nsamp(0),Sk0(0),
+  Nkx(Nx), Nky(Ny), Nkz(Nz),
+  sfact(0)
 {
-  // choose deltak
+  if (Ny<0) Nkz=Nky=Nkx;
+
   deltak_[0]=2*M_PI/box_length[0];
   deltak_[1]=2*M_PI/box_length[1];
   deltak_[2]=2*M_PI/box_length[2];
+  kmax=sqrt( Nkx*Nkx*deltak_[0]*deltak_[0] + Nky*Nky*deltak_[1]*deltak_[1] +
+	     Nkz*Nkz*deltak_[2]*deltak_[2] );
 
-  sfact.clear();
-  sfact.resize(Nk,0);
-  nsamp=0;
+  sfact = new glsim::Binned_vector<double>(std::max(Nkx, std::max(Nky,Nkz) ),0.,kmax);
+  nsamp = new glsim::Binned_vector<double>(sfact->nbins(),0.,kmax);
+  for (int i=0; i<sfact->nbins(); ++i)
+    (*sfact)[i]=(*nsamp)[i]=0;
 }
 
-Sk::Sk(double box_length[],int Nk_) :
+Sk::~Sk()
+{
+  delete sfact;
+  delete nsamp;
+}
+
+
+/**
+  \param[in] conf     Configuration
+
+  Since we use only vectors belonging to the reciprocal lattice,
+  periodic boundary conditions automatically enforced automatically by
+  simply computing \f$\exp[-i k\cdot r]\f$.
+*/  
+void Sk::push(OLconfiguration &conf)
+{
+  double k,kx,ky,kz;
+  std::complex<double> uimag(0,1);
+
+  Sk0=conf.N;
+
+  for (int ikx=0; ikx<Nkx; ++ikx) {
+    kx=ikx*deltak_[0];
+    for (int iky=0; iky<Nky; ++iky) {
+      ky=iky*deltak_[1];
+      for (int ikz=0; ikz<Nkz; ++ikz) {
+	kz=ikz*deltak_[2];
+	k=sqrt(kx*kx + ky*ky + kz*kz);
+
+	if (k==0.) continue;  // S(k=0) = N, we know that and output separetely
+
+	std::complex<double> rhok=0;
+	for (int i=0; i<conf.N; i++) {
+	  double kr=kx*conf.r[i][0] + ky*conf.r[i][1] + kz*conf.r[i][2];
+	  rhok+=exp(-uimag*kr);
+	}
+	double Sk=(rhok.real()*rhok.real()+rhok.imag()*rhok.imag())/conf.N;
+
+	// iterative average
+	(*nsamp)[k]++;
+	double Q=Sk-(*sfact)[k];
+	(*sfact)[k]+=Q/(*nsamp)[k];
+      }
+    }
+  }
+}
+
+std::ostream& operator<<(std::ostream& o,Sk& S)
+{
+  o << 0 << ' ' << S.Sk0 << '\n';
+  for (int i=0; i<S.size(); ++i)
+    o << S.k(i) << ' ' << S.S(i) << '\n';
+  return o;
+}
+
+/*****************************************************************************
+ *
+ * Skiso
+ *
+ */
+  
+Skiso::Skiso(double box_length[],int Nk_) :
   nsamp(0),
   Nk(Nk_),
-  kdir(0)
+  sfact(0)
 {
-  basic_init(box_length);
+  double bl=std::min( std::min(box_length[0],box_length[1]) , box_length[2]);
+  deltak_=2*M_PI/bl;
+  kmax=Nk*deltak_;
+
+  sfact = new double[Nk];
 }
 
-// this is isotropic
-void Sk::push(OLconfiguration &conf)
+Skiso::~Skiso()
+{
+  delete[] sfact;
+}
+
+void Skiso::push(OLconfiguration &conf)
 {
   nsamp++;
   sfact[0]=conf.N;
   for (int ik=1; ik<Nk; ik++) {
-    double k=ik*deltak_[0]/M_PI; // Divide by PI because of GSL's definition 
+    double k=ik*deltak_/M_PI; // Divide by PI because of GSL's definition 
                                  // of the sinc function
     double S=0;
     for (int i=0; i<conf.N-1; i++)
@@ -81,48 +161,12 @@ void Sk::push(OLconfiguration &conf)
   }
 }
 
-
-/**
-  \param[in] kdir  Direction of k (0=x, 1=y, 2=z)
-
-  We only allow the axes as directions, because in these directions
-  the periodic boundary conditions are correctly enforced
-  automatically by simply computing \f$\exp[-i k\cdot r]\f$.
-*/  
-void Sk::push(OLconfiguration &conf,int kdir_)
-{
-  nsamp++;
-  kdir=kdir_;
-  double kvec[3],deltakvec[3]={0.,0.,0.};
-  std::complex<double> uimag(0,1);
-
-  deltakvec[kdir]=deltak_[kdir];
-  for (int ik=0; ik<Nk; ik++) {
-    kvec[0]=ik*deltakvec[0];
-    kvec[1]=ik*deltakvec[1];
-    kvec[2]=ik*deltakvec[2];
-
-    std::complex<double> S=0;
-
-    for (int i=0; i<conf.N; i++) {
-        double kr=kvec[0]*conf.r[i][0] + kvec[1]*conf.r[i][1] +
-          kvec[2]*conf.r[i][2];
-        S+=exp(-uimag*kr);
-    }
-    double Sr=(S.real()*S.real()+S.imag()*S.imag())/conf.N;
-
-    // iterative average
-    double Q=Sr-sfact[ik];
-    sfact[ik]+=Q/nsamp;
-  }
-}
-
-std::ostream& operator<<(std::ostream& o,Sk& S)
+std::ostream& operator<<(std::ostream& o,const Skiso& S)
 {
   for (int i=0; i<S.size(); ++i)
     o << S.k(i) << ' ' << S.S(i) << '\n';
-
   return o;
 }
+
 
 } /* namespace */
