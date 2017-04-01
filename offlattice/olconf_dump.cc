@@ -46,6 +46,7 @@
 #include "olconfiguration.hh"
 
 static struct {
+  bool   dump_positions;
   std::vector<std::string> ifiles;
 } options;
 
@@ -60,6 +61,10 @@ CLoptions::CLoptions() : glsim::UtilityCL("gs_olconf_dump")
   hidden_command_line_options().add_options()
     ("ifiles",po::value<std::vector<std::string> >(&options.ifiles)->required(),"input files")
     ;
+  command_line_options().add_options()
+    ("positions,p",po::bool_switch(&options.dump_positions),
+     "Dump positions in ASCII")
+    ;
   positional_options().add("ifiles",-1);
 }
 
@@ -69,6 +74,17 @@ void CLoptions::show_usage() const
     << "usage: " << progname << "ifile [ifile ....]\n\n"
     << "Dump information about configurations\n"
     << "\n";
+  show_command_line_options(std::cerr);
+}
+
+void dump_positions(glsim::H5_multi_file &ifs,glsim::OLconfiguration &conf)
+{
+  printf("#  Step   Id            x            y            z\n");
+  while (ifs.read()) {
+    for (int i=0; i<conf.N; ++i)
+      printf("%7ld %4d %12.6e %12.6e %12.6e\n",conf.step,conf.id[i],
+	     conf.r[i][0],conf.r[i][1],conf.r[i][2]);
+  }
 }
 
 void wmain(int argc,char *argv[])
@@ -80,10 +96,13 @@ void wmain(int argc,char *argv[])
   glsim::OLconfig_file   cfile(&conf);
   glsim::H5_multi_file ifs(options.ifiles,cfile);
 
-  printf("# Step  Time  N  density\n");
-  while (ifs.read()) {
-    double vol=conf.box_length[0]*conf.box_length[1]*conf.box_length[2];
-    printf("%7ld %g  %d  %g\n",conf.step,conf.time,conf.N,(double) conf.N/vol);
+  if (options.dump_positions) dump_positions(ifs,conf);
+  else {
+    printf("# Step  Time  N  density\n");
+    while (ifs.read()) {
+      double vol=conf.box_length[0]*conf.box_length[1]*conf.box_length[2];
+      printf("%7ld %g  %d  %g\n",conf.step,conf.time,conf.N,(double) conf.N/vol);
+    }
   }
 }
 

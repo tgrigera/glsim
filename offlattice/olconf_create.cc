@@ -149,10 +149,10 @@ rho::rho(int N_,double box[],int Nmax_,double xi_) :
 
 double rho::S(double ksq)
 {
-  return N/(1+xisq*ksq);
+  return 1+(N-1)/(1+xisq*ksq);
 }
 
-double rho::Smax() {return N;}
+double rho::Smax() {return N*N;}
 
 double rho::operator()(double r[])
 {
@@ -166,7 +166,7 @@ double rho::operator()(double r[])
 	double kz=ikz*deltak_[2];
 	double ksq=kx*kx + ky*ky + kz*kz;
 	double kr=kx*r[0] + ky*r[1] + kz*r[2];
-	rx+=sqrt(S(ksq)/N)*cos(kr);
+	rx+=sqrt(N*S(ksq))*cos(kr);
       }
     }
   }
@@ -254,7 +254,7 @@ CLoptions::CLoptions() : UtilityCL("gs_olconf_create")
     ("density,d",po::value<double>(&options.density),"Average density.  If given --boxx etc are ignored")
     ("coordinates-from-stdin",po::bool_switch(&options.from_given_coordinates)->default_value(false),"Read coordinates from stdin")
     ("pair-correlated,P",po::value<double>(&options.correlation_length)->default_value(-1),
-     "Random positions with pair-correlations of correlation length arg (experimental)")
+     "Random positions with pair-correlations of correlation length arg (experimental, slow)")
     ("seed,S",po::value<unsigned long>(&options.seed)->default_value(0),"Random number seed")
     ("type,t",po::value<std::vector<double>>(&options.tfracs),
      "Make fraction arg of total particles of different type")
