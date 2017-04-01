@@ -127,6 +127,90 @@ void set_velocities(glsim::OLconfiguration &conf,double kT,double mass)
 }
 
 
+class rho {
+public:
+  rho(int N,double box[],int Nmax,double xi);
+  double operator()(double *x);
+  double rhomax() {return Nmax*sqrt(Smax()/N);}
+
+private:
+  double S(double ksq),Smax();
+  int N,Nmax;
+  double xisq,deltak_[3];
+} ;
+
+rho::rho(int N_,double box[],int Nmax_,double xi_) :
+  N(N_), Nmax(Nmax_), xisq(xi_*xi_)
+{
+  deltak_[0]=2*M_PI/box[0];
+  deltak_[1]=2*M_PI/box[1];
+  deltak_[2]=2*M_PI/box[2];
+}
+
+double rho::S(double ksq)
+{
+  return N/(1+xisq*ksq);
+}
+
+double rho::Smax() {return N;}
+
+double rho::operator()(double r[])
+{
+  double rx=0;
+  
+  for (int ikx=0; ikx<Nmax; ++ikx) {
+    double kx=ikx*deltak_[0];
+    for (int iky=0; iky<Nmax; ++iky) {
+      double ky=iky*deltak_[1];
+      for (int ikz=0; ikz<Nmax; ++ikz) {
+	double kz=ikz*deltak_[2];
+	double ksq=kx*kx + ky*ky + kz*kz;
+	double kr=kx*r[0] + ky*r[1] + kz*r[2];
+	rx+=sqrt(S(ksq)/N)*cos(kr);
+      }
+    }
+  }
+
+  return rx;
+}
+
+void create_pair_correlated(glsim::OLconfiguration &conf,scomp &SC,double clen)
+{
+  conf.N=0;
+  for (int c=0; c<SC.Nt; ++c) conf.N+=SC.N[c];
+  conf.step=0;
+  conf.time=0;
+  conf.box_angles[0]=conf.box_angles[1]=conf.box_angles[2]=90.;
+  memcpy(conf.box_length,SC.boxl,3*sizeof(double));
+
+  int i;
+  conf.id=new short[conf.N];
+  for (i=0; i<conf.N; conf.id[i]=i++) ;
+  if (SC.Nt>1) {
+    conf.type = new short[conf.N];
+    i=0;
+    for (int c=0; c<SC.Nt; ++c)
+      for (int j=0; j<SC.N[c]; ++j)
+	conf.type[i++]=c;
+  }
+  conf.r=new double[conf.N][3];
+  rho rh(conf.N,conf.box_length,20,clen);
+  glsim::Uniform_real ranx(0,conf.box_length[0]);
+  glsim::Uniform_real rany(0,conf.box_length[1]);
+  glsim::Uniform_real ranz(0,conf.box_length[2]);
+  glsim::Uniform_real eps(0,rh.rhomax());
+  for (i=0; i<conf.N; ++i) {
+    do {
+      conf.r[i][0]=ranx();
+      conf.r[i][1]=rany();
+      conf.r[i][2]=ranz();
+    } while (eps()>rh(conf.r[i]));  // rho is the probability to find a particle; iterate until acceptance
+  }
+}
+
+
+
+
 /*****************************************************************************
  *
  * options and main
@@ -143,6 +227,7 @@ static struct oops {
   double        boxx,boxy,boxz;
   double        vtemp;
   double        mass;
+  double        correlation_length;
   std::vector<double> tfracs;
 
   oops() :
@@ -168,6 +253,8 @@ CLoptions::CLoptions() : UtilityCL("gs_olconf_create")
      "Box length in the Z direction; -1 means use --boxx")
     ("density,d",po::value<double>(&options.density),"Average density.  If given --boxx etc are ignored")
     ("coordinates-from-stdin",po::bool_switch(&options.from_given_coordinates)->default_value(false),"Read coordinates from stdin")
+    ("pair-correlated,P",po::value<double>(&options.correlation_length)->default_value(-1),
+     "Random positions with pair-correlations of correlation length arg (experimental)")
     ("seed,S",po::value<unsigned long>(&options.seed)->default_value(0),"Random number seed")
     ("type,t",po::value<std::vector<double>>(&options.tfracs),
      "Make fraction arg of total particles of different type")
@@ -227,7 +314,9 @@ void wmain(int argc,char *argv[])
 
   if (options.from_given_coordinates)
     create_given_coordinates(conf,SC);
-  else 
+  else if (options.correlation_length>0)
+    create_pair_correlated(conf,SC,options.correlation_length);
+  else
     create_random(conf,SC);
 
   conf.name="Created by olconf_create";
