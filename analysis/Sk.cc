@@ -57,7 +57,8 @@ Sk::Sk(double box_length[],int Nx,int Ny,int Nz) :
   kmax=sqrt( Nkx*Nkx*deltak_[0]*deltak_[0] + Nky*Nky*deltak_[1]*deltak_[1] +
 	     Nkz*Nkz*deltak_[2]*deltak_[2] );
 
-  sfact = new glsim::Binned_vector<double>(std::max(Nkx, std::max(Nky,Nkz) ),0.,kmax);
+  int nbins = std::max(Nkx, std::max(Nky,Nkz) );
+  sfact = new glsim::Binned_vector<double>(nbins,0.,kmax);
   nsamp = new glsim::Binned_vector<double>(sfact->nbins(),0.,kmax);
   for (int i=0; i<sfact->nbins(); ++i)
     (*sfact)[i]=(*nsamp)[i]=0;
@@ -113,7 +114,7 @@ void Sk::push(OLconfiguration &conf)
 std::ostream& operator<<(std::ostream& o,const Sk& S)
 {
   o << 0 << ' ' << S.Sk0 << '\n';
-  for (int i=0; i<S.size(); ++i)
+  for (int i=0; i<S.size()-1; ++i)
     o << S.k(i) << ' ' << S.S(i) << '\n';
   return o;
 }

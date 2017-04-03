@@ -113,12 +113,14 @@ void wmain(int argc,char *argv[])
   }
 
   if (options.isotropic) {
+    std::cout << "# Structure factor (computed with isotropic formula)\n# k    S(k)\n";
     glsim::Skiso Sk(conf.box_length,options.Nk);
     do {
       Sk.push(conf);
     } while (ifs.read());
     std::cout << Sk;
   } else {
+    std::cout << "# Structure factor\n# k    S(k)\n";
     glsim::Sk Sk(conf.box_length,options.Nk);
     do {
       Sk.push(conf);

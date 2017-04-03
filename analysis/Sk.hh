@@ -100,7 +100,7 @@ private:
 /// Number of k (scattering vector) values
 inline int    Sk::size() const {return sfact->nbins();}
 
-/// Returs \f$\Delta k\f$.  This is not the value used for the vector
+/// Returns \f$\Delta k\f$.  This is not the value used for the vector
 /// wavelength (which can be different for the different axes) but the
 /// bin witdh used to average directions
 inline double Sk::deltak() const {return sfact->delta();}
