@@ -358,7 +358,7 @@ void GraphBase<node>::cleanup()
   
 /** \brief Add a link between the named nodes
  *
- * This method is never called from GraphBond, it is to be used by
+ * This method is never called from GraphBase, it is to be used by
  * children to add links.  Note however that it updates the respective
  * nodes' neighbour lists, but no bond list is maintained.
  * GraphBondBase must override this to update its list of bonds.
@@ -626,6 +626,42 @@ template <typename Iterator,typename Function>
 inline Function for_each_neighbour(Iterator n,Function f)
 {
   return implement_for_each_neighbour<
+    typename std::iterator_traits<Iterator>::value_type,
+    Function,Iterator>::fen(n,f);
+}
+
+/* \internal Implementation of for_each_bond
+ *
+ * This is the actual code for_each_bond will run in the general case.
+ * It is placed somewhat awkwardly in a struct because we will use
+ * partial template specialization to write code for certain types of
+ * graphs, and partial specialization is only allowed for classes, not
+ * function templates.  Currently it does not work for general graphs
+ * (which should be of type GraphBondBase), only some specializations
+ * are provided.
+ *
+ */
+template <typename nodeT,typename Function,typename Iterator>
+struct implement_for_each_bond {
+  inline static Function fen(Iterator n,Function f)
+  {
+    throw Unimplemented("Generic for_each_bond",HERE);
+  }
+} ;
+
+/** \ingroup lattice
+
+ This is a STL-style `for_each` function that will visit all
+ bonds of the graph, calling f with the joined nodes as arguments.  Use of
+ this function allows optimizations (such as unrolling the loop over
+ neighbours) for certain regular classes (see e.g. the periodic square
+ lattice implementation).
+
+ */
+template <typename Iterator,typename Function>
+inline Function for_each_bond(Iterator n,Function f)
+{
+  return implement_for_each_bond<
     typename std::iterator_traits<Iterator>::value_type,
     Function,Iterator>::fen(n,f);
 }

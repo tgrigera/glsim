@@ -475,6 +475,19 @@ struct implement_for_each_neighbour<nodeT,Function,typename PeriodicSCLattice<no
   }
 } ;
 
+template <typename nodeT,typename Function>
+struct implement_for_each_bond<nodeT,Function,typename PeriodicSCLattice<nodeT>::node_iterator> {
+  inline static Function fen(PeriodicSCLattice<nodeT> &lat,Function f)
+  {
+    for (auto iter=lat.begin(); iter!=lat.end(); ++iter) {
+      f(*iter,iter.W());
+      f(*iter,iter.S());
+      f(*iter,iter.D());
+    }
+    return f;
+  }
+} ;
+
 } /* namespace */
 
 #endif /* LATTICE3D_HH */

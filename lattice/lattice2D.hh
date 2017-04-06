@@ -439,7 +439,20 @@ struct implement_for_each_neighbour<nodeT,Function,typename PeriodicSQLattice<no
     return f;
   }
 } ;
-  
+
+
+template <typename nodeT,typename Function>
+struct implement_for_each_bond<nodeT,Function,typename PeriodicSQLattice<nodeT>::node_iterator> {
+  inline static Function fen(PeriodicSQLattice<nodeT> &lat,Function f)
+  {
+    for (auto iter=lat.begin(); iter!=lat.end(); ++iter) {
+      f(*iter,iter.W());
+      f(*iter,iter.S());
+    }
+    return f;
+  }
+} ;
+
 } /* namespace */
 
 #endif /* _LATTICE2D_HH_ */
