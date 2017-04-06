@@ -476,7 +476,7 @@ struct implement_for_each_neighbour<nodeT,Function,typename PeriodicSCLattice<no
 } ;
 
 template <typename nodeT,typename Function>
-struct implement_for_each_bond<nodeT,Function,typename PeriodicSCLattice<nodeT>::node_iterator> {
+struct implement_for_each_bond<nodeT,Function,PeriodicSCLattice<nodeT>> {
   inline static Function fen(PeriodicSCLattice<nodeT> &lat,Function f)
   {
     for (auto iter=lat.begin(); iter!=lat.end(); ++iter) {

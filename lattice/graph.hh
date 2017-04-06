@@ -641,9 +641,9 @@ inline Function for_each_neighbour(Iterator n,Function f)
  * are provided.
  *
  */
-template <typename nodeT,typename Function,typename Iterator>
+template <typename nodeT,typename Function,typename Graph>
 struct implement_for_each_bond {
-  inline static Function fen(Iterator n,Function f)
+  inline static Function fen(Graph& n,Function f)
   {
     throw Unimplemented("Generic for_each_bond",HERE);
   }
@@ -658,12 +658,11 @@ struct implement_for_each_bond {
  lattice implementation).
 
  */
-template <typename Iterator,typename Function>
-inline Function for_each_bond(Iterator n,Function f)
+template <typename Graph,typename Function>
+inline Function for_each_bond(Graph lat,Function f)
 {
   return implement_for_each_bond<
-    typename std::iterator_traits<Iterator>::value_type,
-    Function,Iterator>::fen(n,f);
+    typename Graph::node_t, Function,Graph>::fen(lat,f);
 }
 
 /******************************************************************************
