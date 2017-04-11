@@ -48,8 +48,9 @@ namespace glsim {
 */
 class gr {
 public:
-  ///  Constructor: give box size and desired number of k values
+  /// Constructor: give desired \f$\Delta r\f$
   gr(const glsim::OLconfiguration& c,double Dr);
+  /// Constructor: give desired number of r values
   gr(const glsim::OLconfiguration& c,int Nbin);
 
   /// Number of bins

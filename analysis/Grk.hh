@@ -122,14 +122,13 @@ inline double Gk::G(int i) const {return gk->at(i);}
 std::ostream& operator<<(std::ostream&,const Gk&);
 
 
-/** \class Gkcub
-    \ingroup Structure
-    \brief Compute the static structure factor (for square boxes)
+// \class Gkcub
+//     \ingroup Structure
+//     \brief Compute the static structure factor (for square boxes)
 
-    This is like Gk, but performs no binning and returns the actual
-    values of the wave vector used, without averaging close values of
-    k as Gk does.  Only good for cubic simulation boxes.
-*/
+//     This is like Gk, but performs no binning and returns the actual
+//     values of the wave vector used, without averaging close values of
+//     k as Gk does.  Only good for cubic simulation boxes.
 // class Gkcub {
 // public:
 //   ///  Constructor: give box size and desired number of k values on each axis (if only one given, the same number is used for all three)
@@ -173,60 +172,109 @@ std::ostream& operator<<(std::ostream&,const Gk&);
 // std::ostream& operator<<(std::ostream&,const Gkcub&);
 
 
-// /** \class Gkiso
-//     \ingroup Structure
-//     \brief Compute the static structure factor (isotropic version)
+/** \class Grk
+    \ingroup Structure
+    \brief Compute the space correlation function in real and Fourier space (isotropic)
 
-//     This computes the static structure factor analitically averaged
-//     over directions, \f[ S(k) = \frac{1}{N} \sum_{ij} \frac{\sin
-//     kr_{ij}}{kr_{ij}}. \f] Note that the sum includes the terms with
-//     \f$i=j\f$, so that \f$\lim_{k\to\infty}S(k)=1\f$.
+    This computes the space correlation function of some property $\phi$,
+    \f[ G(r) = \frac{ \sum_{ij} \phi_i\phi_j \delta (r-r_{ij})}{\sum_{ij} \delta(r-r_{ij}), \f]
+    and its (analytically averaged over directions) Fourier transform
+    \f[ G(k) = \frac{1}{N} \sum_{ij} \frac{\sin kr_{ij}}{kr_{ij}}. \f]
 
-//     This class is used in the same way as glsim::Gk.
+    Note that the sum includes the terms with
+    \f$i=j\f$, so that \f$\lim_{k\to\infty}S(k)=1\f$.
 
-//     The push() function is linear in the number of wavevectors but
-//     quadratic in the number of particles.
-// */
-// class Gkiso {
-// public:
-//   ///  Constructor: give box size and desired number of k values
-//   Gkiso(double box_length[],int Nk);
-//   ~Gkiso();
+    This class is used in the same way as glsim::Gk.
 
-//   int    size() const;
-//   double deltak() const;
-//   double k(int) const;
-//   double S(int) const;
+    The push() function is linear in the number of wavevectors but
+    quadratic in the number of particles.
+*/
+class Grk {
+public:
+  class prtGk;
+  class prtGr; 
 
-//   /// Add the value of S(k) in the given directon for the given configuration to the running average (O(N))
-//   void   push(OLconfiguration &conf);
+  ///  Constructor: give box size and desired number of k values
+  Grk(double box_length[],int Nr,int Nk);
+  ~Grk();
 
-// private:
-//   int    Nk;
-//   double deltak_;
-//   double kmax;
+  int    sizer() const,sizek() const;
+  double deltar() const,deltak() const;
+  double r(int) const,k(int) const;
+  double Gr(int) const,Gk(int) const;
 
-//   double *sfact;
-//   long   nsamp;
-// } ;
+  prtGk  pGk() const;
+  prtGr  pGr() const;
 
-// /// Number of k (scattering vector) values
-// inline int  Gkiso::size() const {return Nk;}
+  /// Add the value of S(k) in the given directon for the given configuration to the running average (O(N))
+  void   push(OLconfiguration &conf,double phi[]);
+  void   push(OLconfiguration &conf,double phi[][3]);
 
-// /// Returs \f$\Delta k\f$
-// inline double Gkiso::deltak() const {return deltak_;}
+private:
+  void   iteav(double&,long&,double&);
+  double dotp(double a[3],double b[3]);
 
-// /// Returns the (modulus of) the ith scattering vector
-// inline double Gkiso::k(int i) const {return i*deltak_;}
+  int    N,Nk;
+  double deltak_;
+  Binned_vector<double> *gr;
+  Binned_vector<long>   *nsr;
+  double                gr0,*gk;
+  long                  nsk,nsr0;
 
-// /// Returns the structure factor at the ith scattering vector
-// inline double Gkiso::S(int i) const {return sfact[i];}
+  friend std::ostream& operator<<(std::ostream&,const prtGk);
+  friend std::ostream& operator<<(std::ostream&,const prtGr);
 
-// /// Print the structure factor for all vectors in two columns
-// std::ostream& operator<<(std::ostream&,const Gkiso&);
+} ;
+
+class Grk::prtGr {
+public:
+  prtGr(const Grk* g) : p(g) {}
+  const Grk *p;
+} ;
+
+class Grk::prtGk {
+public:
+  prtGk(const Grk* g) : p(g) {}
+  const Grk *p;
+} ;
+
+inline Grk::prtGr Grk::pGr() const {return prtGr(this);}
+
+inline Grk::prtGk Grk::pGk() const {return prtGk(this);}
+
+inline double Grk::dotp(double a[3],double b[3])
+{  return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
 
 /// Number of r (space) values
-// inline int    Grk::sizer() const {return gr->nbins();}
+inline int  Grk::sizer() const {return gr->nbins();}
+
+/// Number of k (scattering vector) values
+inline int  Grk::sizek() const {return Nk;}
+
+/// Returs \f$\Delta r\f$
+inline double Grk::deltar() const {return gr->delta();}
+
+/// Returs \f$\Delta k\f$
+inline double Grk::deltak() const {return deltak_;}
+
+/// Returns the ith distance
+inline double Grk::r(int i) const {return gr->binc(i);}
+
+/// Returns the (modulus of) the ith scattering vector
+inline double Grk::k(int i) const {return i*deltak_;}
+
+/// Returns G(r) at the ith distance
+inline double Grk::Gr(int i) const {return (*gr)[i]/gr->delta();}
+
+/// Returns G(k) at the ith scattering vector
+inline double Grk::Gk(int i) const {return gk[i]/(N*nsk);}
+
+/// Print G(k) for all vectors in two columns
+std::ostream& operator<<(std::ostream& o,const Grk::prtGr G);
+
+/// Print G(k) for all vectors in two columns
+std::ostream& operator<<(std::ostream& o,const Grk::prtGk G);
+
 
 } /* namespace */
 

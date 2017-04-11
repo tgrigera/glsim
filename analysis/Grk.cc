@@ -223,55 +223,122 @@ std::ostream& operator<<(std::ostream& o,const Gk& G)
 //   return o;
 // }
 
-// /*****************************************************************************
-//  *
-//  * Gkiso
-//  *
-//  */
+/*****************************************************************************
+ *
+ * Grk
+ *
+ */
+Grk::Grk(double box_length[],int Nr,int Nk_) :
+  Nk(Nk_), gr(0), gk(0), nsr(0), nsk(0),
+  gr0(0), nsr0(0)
+{
+  double rmax=0.51*sqrt(box_length[0]*box_length[0] + box_length[1]*box_length[1] +
+		       box_length[2]*box_length[2]);
+  double bl=std::min( std::min(box_length[0],box_length[1]) , box_length[2]);
+  deltak_=2*M_PI/bl;
+
+  gr = new Binned_vector<double>(Nr,0.,rmax);
+  nsr = new Binned_vector<long>(Nr,0.,rmax);
+  for (int i=0; i<gr->size(); ++i) (*gr)[i]=0;
+  for (int i=0; i<nsr->size(); ++i) (*nsr)[i]=0;
+  gk = new double[Nk];
+  for (int i=0; i<Nk; ++i) gk[i]=0;
+}
+
+Grk::~Grk()
+{
+  delete gr,nsr;
+  delete[] gk;
+}
+
+inline void Grk::iteav(double &ave,long &count,double &datum)
+{
+  ++count;
+  double Q=datum-ave;
+  ave+=Q/count;
+}
+
+void Grk::push(OLconfiguration &conf,double phi[])
+{
+  double r,k,sGr,sGk;
   
-// Gkiso::Gkiso(double box_length[],int Nk_) :
-//   nsamp(0),
-//   Nk(Nk_),
-//   sfact(0)
-// {
-//   double bl=std::min( std::min(box_length[0],box_length[1]) , box_length[2]);
-//   deltak_=2*M_PI/bl;
-//   kmax=Nk*deltak_;
+  N=conf.N;
+  ++nsk;
 
-//   sfact = new double[Nk];
-// }
+  for (int i=0; i<conf.N; ++i) {
+    sGr=phi[i]*phi[i];
+    iteav(gr0,nsr0,sGr);
+    gk[0]+=sGr; // Because sinc=1 in this case (r=0)
+    for (int ik=1; ik<Nk; ik++) {
+	k=ik*deltak_/M_PI; // Divide by PI because of GSL's definition 
+	gk[ik]+=sGr;
+    }
+  }
+  for (int i=0; i<conf.N-1; i++) {
+    for (int j=i+1; j<conf.N; j++) {
+      r=sqrt(conf.distancesq(i,j));
+      sGr=phi[i]*phi[j];
+      iteav((*gr)[r],(*nsr)[r],sGr);
+      iteav((*gr)[r],(*nsr)[r],sGr);  // The pair is counted twice
 
-// Gkiso::~Gkiso()
-// {
-//   delete[] sfact;
-// }
+      gk[0]+=2*sGr; // Becuase sinc=1 in this case (k=0), and counts twice because i!=j
+      for (int ik=1; ik<Nk; ik++) {
+	double k=ik*deltak_/M_PI; // Divide by PI because of GSL's definition
+        sGk=phi[i]*phi[j]*gsl_sf_sinc(k*r); // S+=phi_*phi_j*sin(kr)/kr;
+	gk[ik]+=2*sGk;
+      }
+    }
+  }
+}
 
-// void Gkiso::push(OLconfiguration &conf)
-// {
-//   nsamp++;
-//   sfact[0]=conf.N;
-//   for (int ik=1; ik<Nk; ik++) {
-//     double k=ik*deltak_/M_PI; // Divide by PI because of GSL's definition 
-//                                  // of the sinc function
-//     double S=0;
-//     for (int i=0; i<conf.N-1; i++)
-//       for (int j=i+1; j<conf.N; j++) {
-//         double kr=k*sqrt(conf.distancesq(i,j));
-//         S+=gsl_sf_sinc(kr); // S+=sin(kr)/kr;
-//     }
-//     S=1+2*S/conf.N;
+void Grk::push(OLconfiguration &conf,double phi[][3])
+{
+  double r,k,sGr,sGk;
+  
+  N=conf.N;
+  ++nsk;
 
-//     // iterative average
-//     double Q=S-sfact[ik];
-//     sfact[ik]+=Q/nsamp;
-//   }
-// }
+  for (int i=0; i<conf.N; ++i) {
+    sGr=dotp(phi[i],phi[i]);
+    iteav(gr0,nsr0,sGr);
+    gk[0]+=sGr; // Because sinc=1 in this case (r=0)
+    for (int ik=1; ik<Nk; ik++) {
+	k=ik*deltak_/M_PI; // Divide by PI because of GSL's definition 
+	gk[ik]+=sGr;
+    }
+  }
+  for (int i=0; i<conf.N-1; i++) {
+    for (int j=i+1; j<conf.N; j++) {
+      r=sqrt(conf.distancesq(i,j));
+      sGr=dotp(phi[i],phi[j]);
+      iteav((*gr)[r],(*nsr)[r],sGr);
+      iteav((*gr)[r],(*nsr)[r],sGr);  // The pair is counted twice
 
-// std::ostream& operator<<(std::ostream& o,const Gkiso& S)
-// {
-//   for (int i=0; i<S.size(); ++i)
-//     o << S.k(i) << ' ' << S.S(i) << '\n';
-//   return o;
-// }
+      gk[0]+=2*sGr; // Becuase sinc=1 in this case (k=0), and counts twice because i!=j
+      for (int ik=1; ik<Nk; ik++) {
+	double k=ik*deltak_/M_PI; // Divide by PI because of GSL's definition
+        sGk=sGr*gsl_sf_sinc(k*r); // S+=phi_*phi_j*sin(kr)/kr;
+	gk[ik]+=2*sGk;
+      }
+    }
+  }
+}
+
+std::ostream& operator<<(std::ostream& o,const Grk::prtGr Gp)
+{
+  const Grk *G=Gp.p;
+  o << 0 << ' ' << G->gr0;
+  for (int i=0; i<G->sizer(); ++i)
+    o << G->r(i) << ' ' << G->Gr(i) << '\n';
+  return o;
+}
+
+std::ostream& operator<<(std::ostream& o,const Grk::prtGk Gp)
+{
+  const Grk *G=Gp.p;
+  for (int i=0; i<G->sizek(); ++i)
+    o << G->k(i) << ' ' << G->Gk(i) << '\n';
+  return o;
+}
 
 } /* namespace */
