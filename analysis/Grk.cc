@@ -339,7 +339,7 @@ void Grk::push(OLconfiguration &conf,double phi[][3])
     for (int i=0; i<conf.N-1; i++) {
       for (int j=i+1; j<conf.N; j++) {
 	r=sqrt(conf.distancesq(i,j));
-	sGr=dotp(phi[i],phi[i]);
+	sGr=dotp(phi[i],phi[j]);
 	(*gr)[r]+=2*sGr;
 	gk[0]+=2*sGr; // Becuase sinc=1 in this case (k=0), and counts twice because i!=j
 	for (int ik=1; ik<Nk; ik++) {
@@ -362,7 +362,7 @@ void Grk::push(OLconfiguration &conf,double phi[][3])
     for (int i=0; i<conf.N-1; i++) {
       for (int j=i+1; j<conf.N; j++) {
 	r=sqrt(conf.distancesq(i,j));
-	sGr=dotp(phi[i],phi[i]);
+	sGr=dotp(phi[i],phi[j]);
 	iteav((*gr)[r],(*nsr)[r],sGr);
 	iteav((*gr)[r],(*nsr)[r],sGr);  // The pair is counted twice
 
