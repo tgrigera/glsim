@@ -239,10 +239,10 @@ Grk::Grk(double box_length[],int Nr,int Nk_,bool space) :
   deltak_=2*M_PI/bl;
 
   gr = new Binned_vector<double>(Nr,0.,rmax);
-  for (int i=0; i<nsr->size(); ++i) (*nsr)[i]=0;
+  for (int i=0; i<gr->size(); ++i) (*gr)[i]=0;
   if (!Gr_space) {
     nsr = new Binned_vector<long>(Nr,0.,rmax);
-    for (int i=0; i<gr->size(); ++i) (*gr)[i]=0;
+    for (int i=0; i<nsr->size(); ++i) (*nsr)[i]=0;
   }
   gk = new double[Nk];
   for (int i=0; i<Nk; ++i) gk[i]=0;
