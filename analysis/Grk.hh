@@ -176,13 +176,22 @@ std::ostream& operator<<(std::ostream&,const Gk&);
     \ingroup Structure
     \brief Compute the space correlation function in real and Fourier space (isotropic)
 
-    This computes the space correlation function of some property $\phi$,
-    \f[ G(r) = \frac{ \sum_{ij} \phi_i\phi_j \delta (r-r_{ij})}{\sum_{ij} \delta(r-r_{ij}), \f]
+    This computes the space correlation function of some property \f$\phi\f$,
+    \f[ G(r) = \frac{ \sum_{ij} \phi_i\phi_j \delta (r-r_{ij})}{\sum_{ij} \delta(r-r_{ij})}, \f]
     and its (analytically averaged over directions) Fourier transform
-    \f[ G(k) = \frac{1}{N} \sum_{ij} \frac{\sin kr_{ij}}{kr_{ij}}. \f]
+    \f[ G(k) = \frac{1}{N} \sum_{ij} \phi_i \phi_j \frac{\sin kr_{ij}}{kr_{ij}}. \f]
+
+    \f$\phi\f$ can be a scalar or a 3-\f$d\f$ vector, in this case the
+    product is understood as a scalar product.
+
+    Optionally, the real space correlation can be computed with the
+    following alternative definition, based on space-averaged (rather
+    than particle-averaged) fields:
+    \f[ G^{(S)}(\mathbf{r})  =  \frac{1}{N \rho_0} \sum_{ij} \phi_i \phi_j \delta ({\bf r} -{\bf r}_{ij}), \f]
+    where \f$\rho_0=N/V\f$ is the number density.
 
     Note that the sum includes the terms with
-    \f$i=j\f$, so that \f$\lim_{k\to\infty}S(k)=1\f$.
+    \f$i=j\f$, so that \f$\lim_{k\to\infty}G(k)=\sum_i \phi^2_i /N\f$.
 
     This class is used in the same way as glsim::Gk.
 
@@ -195,27 +204,31 @@ public:
   class prtGr; 
 
   ///  Constructor: give box size and desired number of k values
-  Grk(double box_length[],int Nr,int Nk);
+  Grk(double box_length[],int Nr,int Nk,bool Gr_space);
   ~Grk();
 
   int    sizer() const,sizek() const;
   double deltar() const,deltak() const;
   double r(int) const,k(int) const;
-  double Gr(int) const,Gk(int) const;
-
+  /// Returns G(r) at the ith distance
+  double Gr(int) const;
+  double Gk(int) const;
+  
   prtGk  pGk() const;
   prtGr  pGr() const;
 
-  /// Add the value of S(k) in the given directon for the given configuration to the running average (O(N))
+  /// Update the running average of \f$G(r)\f$ and \f$G(k)\f$ using the given configuration and property phi
   void   push(OLconfiguration &conf,double phi[]);
+  /// Update the running average of \f$G(r)\f$ and \f$G(k)\f$ using the given configuration and 3-d vector property  phi
   void   push(OLconfiguration &conf,double phi[][3]);
 
 private:
+  bool   Gr_space;
   void   iteav(double&,long&,double&);
   double dotp(double a[3],double b[3]);
 
   int    N,Nk;
-  double deltak_;
+  double vol,deltak_;
   Binned_vector<double> *gr;
   Binned_vector<long>   *nsr;
   double                gr0,*gk;
@@ -251,10 +264,10 @@ inline int  Grk::sizer() const {return gr->nbins();}
 /// Number of k (scattering vector) values
 inline int  Grk::sizek() const {return Nk;}
 
-/// Returs \f$\Delta r\f$
+/// Returns \f$\Delta r\f$
 inline double Grk::deltar() const {return gr->delta();}
 
-/// Returs \f$\Delta k\f$
+/// Returns \f$\Delta k\f$
 inline double Grk::deltak() const {return deltak_;}
 
 /// Returns the ith distance
@@ -262,9 +275,6 @@ inline double Grk::r(int i) const {return gr->binc(i);}
 
 /// Returns the (modulus of) the ith scattering vector
 inline double Grk::k(int i) const {return i*deltak_;}
-
-/// Returns G(r) at the ith distance
-inline double Grk::Gr(int i) const {return (*gr)[i]/gr->delta();}
 
 /// Returns G(k) at the ith scattering vector
 inline double Grk::Gk(int i) const {return gk[i]/(N*nsk);}
