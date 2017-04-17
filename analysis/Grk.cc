@@ -232,13 +232,16 @@ Grk::Grk(double box_length[],int Nr,int Nk_,bool space) :
   Gr_space(space), Nk(Nk_), gr(0), gk(0), nsr(0), nsk(0),
   gr0(0), nsr0(0)
 {
-  double rmax=0.51*sqrt(box_length[0]*box_length[0] + box_length[1]*box_length[1] +
-		       box_length[2]*box_length[2]);
   vol=box_length[0]*box_length[1]*box_length[2];
   double bl=std::min( std::min(box_length[0],box_length[1]) , box_length[2]);
   deltak_=2*M_PI/bl;
+  double rmax;
+  rmax = 0.51*sqrt(box_length[0]*box_length[0] + box_length[1]*box_length[1] +
+		  box_length[2]*box_length[2]);
 
   gr = new Binned_vector<double>(Nr,0.,rmax);
+  sizer_= space ? floor(0.5*bl/gr->delta())  : gr->size();
+
   for (int i=0; i<gr->size(); ++i) (*gr)[i]=0;
   if (!Gr_space) {
     nsr = new Binned_vector<long>(Nr,0.,rmax);
@@ -274,7 +277,6 @@ void Grk::push(OLconfiguration &conf,double phi[])
       gr0+=sGr;
       gk[0]+=sGr; // Because sinc=1 in this case (r=0)
       for (int ik=1; ik<Nk; ik++) {
-	k=ik*deltak_/M_PI; // Divide by PI because of GSL's definition 
 	gk[ik]+=sGr;
       }
     }
@@ -297,7 +299,6 @@ void Grk::push(OLconfiguration &conf,double phi[])
       iteav(gr0,nsr0,sGr);
       gk[0]+=sGr; // Because sinc=1 in this case (r=0)
       for (int ik=1; ik<Nk; ik++) {
-	k=ik*deltak_/M_PI; // Divide by PI because of GSL's definition 
 	gk[ik]+=sGr;
       }
     }
@@ -332,7 +333,6 @@ void Grk::push(OLconfiguration &conf,double phi[][3])
       gr0+=sGr;
       gk[0]+=sGr; // Because sinc=1 in this case (r=0)
       for (int ik=1; ik<Nk; ik++) {
-	k=ik*deltak_/M_PI; // Divide by PI because of GSL's definition 
 	gk[ik]+=sGr;
       }
     }
@@ -341,7 +341,7 @@ void Grk::push(OLconfiguration &conf,double phi[][3])
 	r=sqrt(conf.distancesq(i,j));
 	sGr=dotp(phi[i],phi[j]);
 	(*gr)[r]+=2*sGr;
-	gk[0]+=2*sGr; // Becuase sinc=1 in this case (k=0), and counts twice because i!=j
+	gk[0]+=2*sGr; // Because sinc=1 in this case (k=0), and counts twice because i!=j
 	for (int ik=1; ik<Nk; ik++) {
 	  double k=ik*deltak_/M_PI; // Divide by PI because of GSL's definition
 	  sGk=dotp(phi[i],phi[j])*gsl_sf_sinc(k*r); // S+=phi_*phi_j*sin(kr)/kr;
@@ -355,7 +355,6 @@ void Grk::push(OLconfiguration &conf,double phi[][3])
       iteav(gr0,nsr0,sGr);
       gk[0]+=sGr; // Because sinc=1 in this case (r=0)
       for (int ik=1; ik<Nk; ik++) {
-	k=ik*deltak_/M_PI; // Divide by PI because of GSL's definition 
 	gk[ik]+=sGr;
       }
     }
@@ -394,7 +393,12 @@ double Grk::Gr(int i) const
 std::ostream& operator<<(std::ostream& o,const Grk::prtGr Gp)
 {
   const Grk *G=Gp.p;
-  o << 0 << ' ' << G->gr0 << '\n';
+  if (G->Gr_space) {
+    double rhon=G->N*G->N/G->vol;
+    o << 0 << ' ' << G->gr0/(G->nsk*rhon) << '\n';
+  } else {
+    o << 0 << ' ' << G->gr0 << '\n';
+  }
   for (int i=0; i<G->sizer(); ++i)
     o << G->r(i) << ' ' << G->Gr(i) << '\n';
   return o;

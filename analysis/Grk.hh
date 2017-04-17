@@ -193,7 +193,13 @@ std::ostream& operator<<(std::ostream&,const Gk&);
     Note that the sum includes the terms with
     \f$i=j\f$, so that \f$\lim_{k\to\infty}G(k)=\sum_i \phi^2_i /N\f$.
 
-    This class is used in the same way as glsim::Gk.
+    \f$C(r)\$ is computed in a histogram fashion, so that \f$C(r)\f$
+    is actually the integral of the correlation in the interval
+    \f$[r-\Delta r/2,r+\Delta r/2]\f$ divided by \f$\Delta r\f$.  The
+    value for \f$r=0\f$ is however computed separately, and is not
+    binned, so that if one wishes to integrate the correlation, the
+    value of \f$C(r=0)\f$ must be added to the first bin and then
+    multiplied by the bin width.
 
     The push() function is linear in the number of wavevectors but
     quadratic in the number of particles.
@@ -224,6 +230,7 @@ public:
 
 private:
   bool   Gr_space;
+  double sizer_;
   void   iteav(double&,long&,double&);
   double dotp(double a[3],double b[3]);
 
@@ -259,7 +266,7 @@ inline double Grk::dotp(double a[3],double b[3])
 {  return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
 
 /// Number of r (space) values
-inline int  Grk::sizer() const {return gr->nbins();}
+inline int  Grk::sizer() const {return sizer_;}
 
 /// Number of k (scattering vector) values
 inline int  Grk::sizek() const {return Nk;}
