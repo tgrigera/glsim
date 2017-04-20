@@ -513,6 +513,8 @@ public:
   std::vector<Pair>::iterator pairs_end() {return pairs.end();}
   std::vector<int>::iterator neighbours_begin(int i) {return neighbours[i].begin();}
   std::vector<int>::iterator neighbours_end(int i) {return neighbours[i].end();}
+  int Nneighbours(int i) const {return neighbours[i].size(); }
+  const std::vector<int>& neighbour_list(int i) const {return neighbours[i];}
 
   template <typename Function,typename NeighboursT>
   friend struct implement_for_each_pair;

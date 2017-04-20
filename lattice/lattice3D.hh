@@ -43,6 +43,12 @@
 
 namespace glsim {
 
+/******************************************************************************
+ *
+ * Periodic simple cubic lattice
+ *
+ */
+
 /** \ingroup lattice
 
  \brief The periodic simple cubic lattice (3 dimensions).
