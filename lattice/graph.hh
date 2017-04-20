@@ -659,7 +659,7 @@ struct implement_for_each_bond {
 
  */
 template <typename Graph,typename Function>
-inline Function for_each_bond(Graph lat,Function f)
+inline Function for_each_bond(Graph& lat,Function f)
 {
   return implement_for_each_bond<
     typename Graph::node_t, Function,Graph>::fen(lat,f);
