@@ -55,6 +55,11 @@ namespace glsim {
 /** \ingroup lattice
 
     \brief Metric Poisson graph in 3-d
+
+    This class implements a metric Poisson graph in 3-d, i.e. a graph
+    formed by taking N points randomly and independently placed within
+    a parallelepiped and connecting those lying within an Euclidean
+    distance less than a given cut-off.
 */
 template <typename nodeT>
 class MetricPoisson3D : public GraphBase<nodeT> {
@@ -117,6 +122,15 @@ private:
  *
  */
 
+/**
+   Create and build graph.
+
+  \param N      Number of nodes
+  \param box    Size of parallelepiped containing the nodes
+  \param irange Interaction (cut-off) range
+  \param periodic  Whether to compute the distances using periodic boundary conditions
+ 
+ */
 template <typename nodeT> inline
 MetricPoisson3D<nodeT>::MetricPoisson3D(int N,double box[],double irange,
 					bool periodic) :
@@ -212,7 +226,7 @@ void MetricPoisson3D<nodeT>::read(std::istream& f)
  * Iterator
  *
  */
-/** \brief A bidirectional iterator for the 3-d metric MetricPoisson3D graph
+/** \brief A bidirectional iterator for the 3-d metric Poisson graph
 
  */
 template <typename nodeT>
