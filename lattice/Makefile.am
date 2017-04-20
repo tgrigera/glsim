@@ -22,13 +22,13 @@ LDADD=$(top_builddir)/blib/libglsim.la
 #
 
 pkginclude_HEADERS = graph.hh bethe.hh lattice1D.hh lattice2D.hh	\
-                     lattice3D.hh graph_test.hh
+                     lattice3D.hh graph_test.hh poisson.hh
 
 #
 # binaries
 #
 check_PROGRAMS = graph_ck bethe_test lattice1D_test lattice2D_test	\
-                 lattice3D_test
+                 lattice3D_test poisson_test
 
 # Binary dependencies
 
@@ -37,12 +37,15 @@ bethe_test_SOURCES = graph_test.cc bethe_test.cc
 lattice1D_test_SOURCES = graph_test.cc lattice1D_test.cc
 lattice2D_test_SOURCES = graph_test.cc lattice2D_test.cc
 lattice3D_test_SOURCES = graph_test.cc lattice3D_test.cc
+poisson_test_SOURCES = graph_test.cc poisson_test.cc
+poisson_test_CPPFLAGS = -I$(top_srcdir)/blib -I$(top_srcdir)/offlattice
+poisson_test_LDADD =  -L../offlattice -lglsim_ol -L../blib -lglsim
 
 #
 # Tests
 #
 
-TESTS = bethe_test lattice1D_test lattice2D_test lattice3D_test
+TESTS = bethe_test lattice1D_test lattice2D_test lattice3D_test poisson_test
 
 #doc_DATA = lattice.pdf
 
