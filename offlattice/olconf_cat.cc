@@ -125,7 +125,8 @@ void wmain(int argc,char *argv[])
   if (conf.a) fopt.a_frame();
   if (options.id_frame) fopt.id_frame();
   if (options.type_frame) fopt.type_frame();
-  glsim::OLconfig_file of(&conf,fopt);
+  oconf=conf;
+  glsim::OLconfig_file of(&oconf,fopt);
   of.create(options.ofile.c_str());
   of.write_header();
   
@@ -133,6 +134,7 @@ void wmain(int argc,char *argv[])
   ifs.seek(options.first);
   while (ifs.pos()<=options.last) {
     ifs.read();
+    oconf=conf;
     of.append_record();
     ifs.seek(ifs.pos()+options.deltarec-1);
   } 
