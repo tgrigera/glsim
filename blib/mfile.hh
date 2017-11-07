@@ -77,7 +77,7 @@ namespace glsim {
 class MFILE {
 public:
   MFILE(std::vector<std::string> filelist);  ///< Creates MFILE and opens first file.  If filelist is empty, stdin is used
-  ~MFILE();  ///< Close all files and destroy
+  ~MFILE() noexcept(false);  ///< Close all files and destroy
 
   bool eof();   ///< Returns true when last character of last file has been read.  Does not need past-eof-read to detect EOF
   void rewind(); ///< Return to the beginning of the first file
@@ -97,7 +97,7 @@ private:
   void open_next();
 } ;
 
-inline MFILE::~MFILE()
+  inline MFILE::~MFILE() noexcept(false)
 {
   if (filep)
     if (fclose(filep)) throw Clib_error(HERE);
