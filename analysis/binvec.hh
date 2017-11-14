@@ -59,7 +59,7 @@ public:
   /// Return bin width
   double delta() const {return delta_;}
   /// Return the center of the range corresponding to given bin
-  double binc(int bin) {return min_+(bin+.5)*delta_;}
+  double binc(int bin) const {return min_+(bin+.5)*delta_;}
   /// Return the bin number corresponding to value r
   std::size_t binn(double r)
   {return (std::size_t) floor((r-min_)/delta_);}
