@@ -225,8 +225,10 @@ void wmain(int argc,char *argv[])
   double x;
   while (in.read(x)) histog.push(x);
   
-  std::cout << "#\n#  Outliers " << histog.outliers() << " (" <<
-    histog.outliers_low() << " below and " << histog.outliers_high() << " above)\n";
+  std::cout << "#\n# Total points processed = " << histog.npoints() << '\n'
+	    << "# Outliers total         = " << histog.outliers() << '\n'
+	    << "# Outliers below         = " << histog.outliers_low() << '\n'
+	    << "# Outliers above         = " << histog.outliers_high() << '\n';
   std::cout << "# Bin  Frequency\n";
   histog.probability_output(options.probability);
   std::cout << histog;
