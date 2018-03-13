@@ -106,9 +106,10 @@ void Subcells::init_cells(int npart,double box_length[])
   for (int i=0; i<3; i++) {
     m[i]=(int) floor(box_length[i]/scmin);
     boxl[i]=box_length[i];
-    if (m[i]<3) throw System_too_small(i==0 ? "x" : (i==1 ? "y" : "z"),
-				       boxl[i],3*scmin);
-    else scell[i]=sfac*box_length[i]/m[i]; 
+    if (m[i]<3) {
+      std::cerr << "Got " << m[i] << " subcells!\n";
+      throw System_too_small(i==0 ? "x" : (i==1 ? "y" : "z"),boxl[i],3*scmin);
+    } else scell[i]=sfac*box_length[i]/m[i]; 
   }
   nscell=m[0]*m[1]*m[2];
   glsim::logs(glsim::info) << "Subcells for nearest neighbours reset, using " <<

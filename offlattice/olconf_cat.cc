@@ -51,6 +51,7 @@ static struct {
   std::string              ofile;
   bool                     id_frame,type_frame;
   long                     first,last,deltarec;
+  bool                     unfold;
 } options;
 
 class CLoptions : public glsim::UtilityCL {
@@ -72,6 +73,7 @@ CLoptions::CLoptions() : glsim::UtilityCL("GS_olconf_cat")
      "Record increment (must be positive, 1 copies all records in range")
     ("id-frame",po::bool_switch(&options.id_frame)->default_value(false),"Assume ids change with time and record as frame variable")
     ("type-frame",po::bool_switch(&options.type_frame)->default_value(false),"Assume types change with time and record as frame variable")
+    ("unfold,u",po::bool_switch(&options.unfold),"Unfold positions across periodic box")
     ;
     positional_options().add("ifiles",-1);
 }
@@ -129,12 +131,13 @@ void wmain(int argc,char *argv[])
   glsim::OLconfig_file of(&oconf,fopt);
   of.create(options.ofile.c_str());
   of.write_header();
-  
+
   // cat!
   ifs.seek(options.first);
   while (ifs.pos()<=options.last) {
     ifs.read();
-    oconf=conf;
+    oconf.warmcpy(conf);
+    if (options.unfold) oconf.unfold_coordinates();
     of.append_record();
     ifs.seek(ifs.pos()+options.deltarec-1);
   } 

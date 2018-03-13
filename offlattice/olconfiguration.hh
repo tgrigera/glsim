@@ -73,7 +73,14 @@ public:
   OLconfiguration();
   OLconfiguration(const std::string &title);
   OLconfiguration(const OLconfiguration&);
+  /// Copy the whole object, including the reference configuration
+  /// *Warning:* This may change the positions of the buffers (arrays) if the source
+  /// configuration has a different N or contains a different set of nonempty fields
   OLconfiguration& operator=(const OLconfiguration&);
+  /// Copy all the data except reference configuration, assuming that all buffers
+  /// are correctly allocated (same size, same set of nonempty fields).  Undefined behavior
+  /// will result if N or nonempty fields differ, or if buffers were not previously allocate
+  OLconfiguration& warmcpy(const OLconfiguration&);
   ~OLconfiguration();
   OLconfiguration& swap(OLconfiguration& c);
 

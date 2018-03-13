@@ -91,26 +91,69 @@ OLconfiguration::OLconfiguration(const OLconfiguration& o) :
 OLconfiguration& OLconfiguration::operator=(const OLconfiguration& c)
 {
   if (this==&c) return *this;
+  bool Nchanged= N!=c.N;
   N=c.N;
   name=c.name;
   time=c.time;
   step=c.step;
   memcpy(box_length,c.box_length,3*sizeof(double));
   memcpy(box_angles,c.box_angles,3*sizeof(double));
-  reference_N=0;
-  delete[] id; id=0;
-  delete[] type; type=0;
-  delete[] flags; flags=0;
-  delete[] r; r=0;
-  delete[] v; v=0;
-  delete[] a; a=0;
-  delete[] reference_r; reference_r=0;
-  if (c.id) {id=new short[N]; memcpy(id,c.id,N*sizeof(short));}
-  if (c.type) {type=new short[N]; memcpy(type,c.type,N*sizeof(short));}
-  if (c.flags) {flags=new short[N]; memcpy(flags,c.flags,N*sizeof(short));}
-  if (c.r) {r=new double[N][3]; memcpy(r,c.r,3*N*sizeof(double));}
-  if (c.v) {v=new double[N][3]; memcpy(v,c.v,3*N*sizeof(double));}
-  if (c.a) {a=new double[N][3]; memcpy(a,c.a,3*N*sizeof(double));}
+  reference_N=c.reference_N;
+
+  if (c.id==0 || Nchanged) {delete[] id; id=0;}
+  if (c.id) {
+    if (id==0) id=new short[N];
+    memcpy(id,c.id,N*sizeof(short));
+  }
+  if (c.type==0 || Nchanged) {delete[] type; type=0;}
+  if (c.type) {
+    if (type==0) type=new short[N];
+    memcpy(type,c.type,N*sizeof(short));
+  }
+  if (c.flags==0 || Nchanged) {delete[] flags; flags=0;}
+  if (c.flags) {
+    if (flags==0) flags=new short[N];
+    memcpy(flags,c.flags,N*sizeof(short));
+  }
+  if (c.r==0 || Nchanged) {delete[] r; r=0;}
+  if (c.r) {
+    if (r==0) r=new double[N][3];
+    memcpy(r,c.r,3*N*sizeof(double));
+  }
+  if (c.v==0 || Nchanged) {delete[] v; v=0;}
+  if (c.v) {
+    if (v==0) v=new double[N][3];
+    memcpy(v,c.v,3*N*sizeof(double));
+  }
+  if (c.a==0 || Nchanged) {delete[] a; a=0;}
+  if (c.a) {
+    if (a==0) a=new double[N][3];
+    memcpy(a,c.a,3*N*sizeof(double));
+  }
+  if (c.reference_r==0 || Nchanged) {delete[] reference_r; reference_r=0;}
+  if (c.reference_r) {
+    if (reference_r==0) reference_r=new double[N][3];
+    memcpy(reference_r,c.reference_r,3*N*sizeof(double));
+  }
+  return *this;
+}
+
+OLconfiguration& OLconfiguration::warmcpy(const OLconfiguration& c)
+{
+  if (this==&c) return *this;
+  name=c.name;
+  time=c.time;
+  step=c.step;
+  memcpy(box_length,c.box_length,3*sizeof(double));
+  memcpy(box_angles,c.box_angles,3*sizeof(double));
+
+  if (id && c.id) memcpy(id,c.id,N*sizeof(short));
+  if (type && c.type) memcpy(type,c.type,N*sizeof(short));
+  if (flags && c.flags) memcpy(flags,c.flags,N*sizeof(short));
+  if (r && c.r) memcpy(r,c.r,3*N*sizeof(double));
+  if (v && c.v) memcpy(v,c.v,3*N*sizeof(double));
+  if (a && c.a) memcpy(a,c.a,3*N*sizeof(double));
+  return *this;
 }
 
 OLconfiguration& OLconfiguration::swap(OLconfiguration& c)
