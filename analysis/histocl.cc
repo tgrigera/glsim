@@ -228,7 +228,8 @@ void wmain(int argc,char *argv[])
   std::cout << "#\n# Total points processed = " << histog.npoints() << '\n'
 	    << "# Outliers total         = " << histog.outliers() << '\n'
 	    << "# Outliers below         = " << histog.outliers_low() << '\n'
-	    << "# Outliers above         = " << histog.outliers_high() << '\n';
+	    << "# Outliers above         = " << histog.outliers_high() << '\n'
+	    << "# Median (coarse-grained)= " << histog.median() << '\n';
   std::cout << "# Bin  Frequency\n";
   histog.probability_output(options.probability);
   std::cout << histog;

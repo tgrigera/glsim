@@ -92,6 +92,8 @@ public:
   double prob(int bin) const {return (double) count_[bin]/(ndata*delta_);}
   /// Return histogram area (not counting outliers)
   double area();
+  /// Compute the coarse-grained median (i.e. using bins and counts, not full list of data)
+  double median();
 
 private:
   long         out_below,out_above;
@@ -138,6 +140,15 @@ inline int Histogram::push(double datum) {
 inline double Histogram::area()
 {
   return (double) (ndata-outliers())/ndata;
+}
+
+inline double Histogram::median()
+{
+  long cc=out_below;
+  int  i;
+  for (i=0; cc<npoints()/2; ++i)
+    cc+=count(i);
+  return binc(i);
 }
 
 /// Print histogram (two columns)
