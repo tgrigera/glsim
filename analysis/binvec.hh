@@ -107,6 +107,94 @@ T& Binned_vector<T>::at(std::size_t pos)
   return data_[pos];
 }
 
+
+
+/** \class Gird2D
+    \ingroup Analysis
+
+This is a two-dimensional array that can be indexed with real (type double)
+subindices.  It is the 2-D version of Binned_vector.
+
+The number of bins (or grid sites) and range is fixed on creation.
+Bins are accessed through operator(), which is overloaded to take
+integer values (selection by grid position) or double values (2-D
+positions which will map to grid sites).  As in std::vector, no bound
+checks are made.  If you need bound checks, use at().
+
+*/
+template <typename T>
+class Grid2D {
+public:
+  Grid2D(double Lx,double Ly,double gsx,double gsy);
+
+  /// Return number of bins
+  int    nxbins() const {return nxbin;}
+  int    nybins() const {return nybin;}
+  size_t size() const {return nxbin*nybin;}
+  double Lx() const {return Lx_;}
+  double Ly() const {return Ly_;}
+  /// Return grid size
+  double gsx() const {return gsx_;}
+  double gsy() const {return gsy_;}
+  /// Return the center of the grid corresponding to given grid number
+  double gridc(std::size_t gridn,double &xc,double &yc);
+  /// Return the grid number corresponding to (x,y)
+  std::size_t gridn(double x,double y) const
+  {return (std::size_t) igrid(floor(x/gsx_),floor(y/gsy_));}
+  std::size_t gridn_protected(double x,double y) const;
+  /// Element access without bound check
+  T& operator()(int nx,int ny) {return data[igrid(nx,ny)];}
+  T& operator()(double px,double py) {return data[gridn(px,py)];}
+  /// Element access with bound check
+  T& at(int nx,int ny);
+  T& at(double px,double py) {return data[gridn_protected(px,py)];}
+
+private:
+  double           Lx_,Ly_,gsx_,gsy_;
+  double           nxbin,nybin;
+  std::valarray<T> data;
+
+  std::size_t igrid(int nx,int ny) const
+  {return nxbin*ny + nx;}
+  void gridnxny(int igrid,int &nx,int &ny)
+  {ny = igrid/nxbin; nx=igrid - ny*nxbin;}
+} ;
+
+template <typename T>
+inline Grid2D<T>::Grid2D(double Lx,double Ly,double gsx,double gsy) :
+  Lx_(Lx), Ly_(Ly), gsx_(gsx), gsy_(gsy)
+{
+  nxbin=ceil(Lx/gsx_);
+  nybin=ceil(Ly/gsy_);
+  data.resize(nxbin*nybin);
+}
+
+template <typename T>
+std::size_t Grid2D<T>::gridn_protected(double x,double y) const
+{
+  std::size_t igr=gridn(x,y);
+  if (igr<0 || igr>=this->size()) throw glsim::Out_of_range(HERE);
+  return igr;
+}
+
+template <typename T>
+double Grid2D<T>::gridc(std::size_t gridn,double &xc,double &yc)
+{
+  int nx,ny;
+  gridnxny(gridn,nx,ny);
+  xc=(nx+0.5)*gsx_;
+  yc=(ny+0.5)*gsy_;
+}
+
+template <typename T>
+T& Grid2D<T>::at(int nx,int ny)
+{
+  if (nx<0 || nx>=nxbin) throw glsim::Out_of_range(HERE);
+  if (ny<0 || ny>=nybin) throw glsim::Out_of_range(HERE);
+  return data[igrid(nx,ny)];
+}
+
+  
 } /* namespace */
 
 

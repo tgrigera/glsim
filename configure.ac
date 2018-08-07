@@ -70,6 +70,9 @@ AC_CHECK_HEADER([hdf5.h],,exit)
 AC_CHECK_LIB([gslcblas], [cblas_dsdot],,exit)
 AC_CHECK_LIB([gsl], [gsl_rng_alloc],,exit)
 
+# Other standard
+AC_CHECK_LIB([pthread], [pthread_cancel],,exit)
+
 # Boost::system
 AC_MSG_CHECKING([for working -lboost_system])
 SAVED_LIBS=$LIBS
@@ -111,6 +114,16 @@ AC_LINK_IFELSE(
   	           [boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();])],
   AC_MSG_RESULT(yes) ; AC_DEFINE([HAVE_LIBBOOST_DATE_TIME],[1],[Define if Boost::date_time is available]),
   AC_MSG_RESULT(no) ; [LIBS=$SAVED_LIBS] ; [AC_MSG_FAILURE([cannot build without boost::date_time])])
+
+# Boost::chrono
+AC_MSG_CHECKING([for working -lboost_chrono])
+SAVED_LIBS=$LIBS
+LIBS="-lboost_chrono $LIBS"
+AC_LINK_IFELSE(
+  [AC_LANG_PROGRAM([#include <boost/chrono.hpp>],
+  	           [boost::chrono::system_clock t;])],
+  AC_MSG_RESULT(yes) ; AC_DEFINE([HAVE_LIBBOOST_CHRONO],[1],[Define if Boost::chrono is available]),
+  AC_MSG_RESULT(no) ; [LIBS=$SAVED_LIBS] ; [AC_MSG_FAILURE([cannot build without boost::chrono])])
 
 # Boost::timer
 AC_MSG_CHECKING([for working -lboost_timer])
