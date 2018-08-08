@@ -143,6 +143,7 @@ public:
   {return (std::size_t) igrid(floor(x/gsx_),floor(y/gsy_));}
   std::size_t gridn_protected(double x,double y) const;
   /// Element access without bound check
+  T& operator[](std::size_t gridn) {return data[gridn];}
   T& operator()(int nx,int ny) {return data[igrid(nx,ny)];}
   T& operator()(double px,double py) {return data[gridn(px,py)];}
   /// Element access with bound check
