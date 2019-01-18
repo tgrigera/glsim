@@ -135,14 +135,14 @@ AC_LINK_IFELSE(
   AC_MSG_RESULT(no) ; [LIBS=$SAVED_LIBS] ; [AC_MSG_FAILURE([cannot build without boost::timer])])
 
 # HDF5
-AC_CHECK_LIB([hdf5], H5Fcreate,,)
+SAVED_LIBS=$LIBS
+LIBS="-lhdf5 $LIBS"
+AC_CHECK_LIB([hdf5], H5Fcreate,[HAVE_LIBHDF5="yes";  AC_DEFINE([HAVE_LIBHDF5],[],[Define if HDF5 is available])],[LIBS=$SAVED_LIBS])
 AC_CHECK_LIB([hdf5_hl], H5LTset_attribute_short,,)
 
 AS_IF([test -z $HAVE_LIBHDF5],[AC_MSG_WARN([HDF5 not found --- NOT BUILDING offlilattice library])],
-                              [AC_CHECK_HEADER([hdf5.h],,exit)]
-)
-
-AM_CONDITIONAL([HASHDF],[test -z $HAVE_LIBHDF5])
+                              [AC_CHECK_HEADER([hdf5.h],,exit)])
+AM_CONDITIONAL([HAS_HDF],[test ! -z $HAVE_LIBHDF5])
 
 # FFTW3
 AC_ARG_WITH([fftw3],AS_HELP_STRING([--without-fftw3],[do not use the FFTW3 library even if installed]),,with_fftw3=yes)

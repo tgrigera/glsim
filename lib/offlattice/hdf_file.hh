@@ -41,8 +41,8 @@
 #include <list>
 #include <vector>
 
-#include "glsim/exception.hh"
-#include "glsim/cerrors.h"
+#include "exception.hh"
+#include "cerrors.h"
 
 #include "hdf5.h"
 #include "hdf5_hl.h"

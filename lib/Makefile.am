@@ -96,22 +96,26 @@ TESTS = fft_test
 # Offlattice lib
 #
 
-# if HAS_HDF
+if HAS_HDF
 
-# # offlattice headers
+AM_CPPFLAGS += -I$(top_srcdir)/lib/offlattice
 
-# pkginclude_HEADERS = offlattice/hdf_file.hh
+LDADD += libglsim_ol.la
 
-# # offlattice lib 
+# offlattice headers
 
-# lib_LTLIBRARIES = libglsim_ol.la
-# libglsim_ol_la_LDFLAGS = -version-info @LIBGLSIM_VERSION@
-# libglsim_ol_SOURCES =  offlattice/hdf_file.cc 
+pkginclude_HEADERS += offlattice/hdf_file.hh
 
-# # offlattice tests
+# offlattice lib 
 
-# check_PROGRAMS = hdf_recfile_test
+lib_LTLIBRARIES += libglsim_ol.la
+libglsim_ol_la_LDFLAGS = -version-info @LIBGLSIM_VERSION@
+libglsim_ol_la_SOURCES =  offlattice/hdf_file.cc 
 
-# hdf_recfile_test_SOURCES = hdf_recfile_test.cc
+# offlattice tests
 
-# endif
+check_PROGRAMS += hdf_recfile_test
+
+hdf_recfile_test_SOURCES = hdf_recfile_test.cc
+
+endif
