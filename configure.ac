@@ -14,8 +14,8 @@
 # Initialization
 #
 AC_PREREQ([2.67])
-AC_INIT([glsim],[1.0.0],[tgrigera@users.sourceforge.net])
-AC_CONFIG_SRCDIR([blib/blib.hh])  # Check just one file as safety check
+AC_INIT([glsim],[1.1.0],[tgrigera@iflysib.unlp.edu.ar])
+AC_CONFIG_SRCDIR([lib/blib/blib.hh])  # Check just one file as safety check
 AC_CONFIG_MACRO_DIR([m4])
 AC_LANG(C++)
 AM_INIT_AUTOMAKE
@@ -59,7 +59,6 @@ AC_CHECK_HEADERS([stdlib.h unistd.h])
 AC_CHECK_HEADER([gsl/gsl_rng.h],,exit)
 AC_CHECK_HEADER([boost/program_options.hpp],,exit)
 AC_CHECK_HEADER([boost/timer/timer.hpp],,exit)
-AC_CHECK_HEADER([hdf5.h],,exit)
 
 ###############################################################################
 #
@@ -136,8 +135,14 @@ AC_LINK_IFELSE(
   AC_MSG_RESULT(no) ; [LIBS=$SAVED_LIBS] ; [AC_MSG_FAILURE([cannot build without boost::timer])])
 
 # HDF5
-AC_CHECK_LIB([hdf5], H5Fcreate,,exit)
-AC_CHECK_LIB([hdf5_hl], H5LTset_attribute_short,,exit)
+AC_CHECK_LIB([hdf5], H5Fcreate,,)
+AC_CHECK_LIB([hdf5_hl], H5LTset_attribute_short,,)
+
+AS_IF([test -z $HAVE_LIBHDF5],[AC_MSG_WARN([HDF5 not found --- NOT BUILDING offlilattice library])],
+                              [AC_CHECK_HEADER([hdf5.h],,exit)]
+)
+
+AM_CONDITIONAL([HASHDF],[test -z $HAVE_LIBHDF5])
 
 # FFTW3
 AC_ARG_WITH([fftw3],AS_HELP_STRING([--without-fftw3],[do not use the FFTW3 library even if installed]),,with_fftw3=yes)
@@ -148,7 +153,6 @@ AS_IF([test x"$with_fftw3" = xyes],
       echo "**** FFT calls will will use the GSL FFT routines, but"
       echo "**** will fail unless the number of data points is a power of 2"]) ]
 )
-#AS_IF([test x"$ac_cv_lib_fftw3_fftw_execute" = xyes],AC_DEFINE([TSIM_HAVE_LIBFFTW3],[1],[libfftw3]))
 
 
 ###############################################################################
@@ -172,11 +176,16 @@ AC_FUNC_STRFTIME
 # Generates files
 #
 AC_CONFIG_HEADERS([config.h])
+dnl AC_CONFIG_FILES([Makefile
+dnl 		 analysis/Makefile
+dnl 	         blib/Makefile
+dnl                  lattice/Makefile
+dnl 		 offlattice/Makefile
+dnl 		 doc/Makefile
+dnl 		 doc/version.tex])
 AC_CONFIG_FILES([Makefile
-		 analysis/Makefile
-	         blib/Makefile
+	         lib/Makefile
                  lattice/Makefile
-		 offlattice/Makefile
 		 doc/Makefile
 		 doc/version.tex])
 AC_OUTPUT

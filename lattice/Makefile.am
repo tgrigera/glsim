@@ -39,8 +39,8 @@
 # General compiler and linker options
 #
 include $(top_srcdir)/Makefile-common
-AM_CPPFLAGS = -I$(top_srcdir)/blib
-LDADD=$(top_builddir)/blib/libglsim.la
+AM_CPPFLAGS = -I$(top_srcdir)/lib/blib
+LDADD=$(top_builddir)/lib/libglsim.la
 
 #
 # Headers
