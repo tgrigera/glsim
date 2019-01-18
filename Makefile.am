@@ -52,17 +52,7 @@ doc:
 	echo "Cannot build documentation"
 endif
 
-
-# idir = $(top_builddir)/include/glsim
-
-# $(idir):
-# 	mkdir -p $@
-
-# BUILT_SOURCES = $(idir)
-
-#SUBDIRS = . blib lattice offlattice analysis $(CONDITIONAL_SUBDIRS)
-
-SUBDIRS = . lib lattice $(CONDITIONAL_SUBDIRS)
+SUBDIRS = . lib lattice prog $(CONDITIONAL_SUBDIRS)
 
 MAINTAINERCLEANFILES = config.guess config.sub configure depcomp	\
 		       install-sh ltmain.sh Makefile.in missing aclocal.m4 m4/*

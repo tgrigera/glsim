@@ -1,5 +1,5 @@
 /*
- * md.hh -- MD simulations w/different integrators
+ * mcobservable.hh --  Recording basic quantities along a MC run
  *
  * This file is part of olglsim, a numerical simulation class library
  * and helper programs.
@@ -35,54 +35,43 @@
  *
  */
 
-#ifndef MD_HH
-#define MD_HH
+#ifndef MCOBSERVABLE_HH
+#define MCOBSERVABLE_HH
 
-#include "mdenvironment.hh"
-#include "glsim/simulation.hh"
-#include "interactions.hh"
+#include <cstdio>
+
+#include "olconfiguration.hh"
+#include "observable.hh"
+#include "mc.hh"
 
 namespace glsim {
 
-/*****************************************************************************/
-
-/** \class MDSimulation
-    \ingroup OfflatticeSIM
-
-Common methods for MD (does not include the integrator)
-
-This assumes that number of particles and mass are conserved.
-
-*/
-class MDSimulation : public Simulation {
+class MCObservable_parameters : public Parameters {
 public:
-  MDSimulation(MDEnvironment& e,OLconfiguration &c,Interactions *i);
-  void        log();
-  void        log_start_sim();
-
-protected:
-  void update_observables();
-
-  MDEnvironment&   env;
-  OLconfiguration& conf;
-  Interactions     *inter;
+  MCObservable_parameters(const char* scope);
 } ;
 
-/** \class VVerletMD
-    \ingroup OfflatticeSIM
-
-*/
-class VVerletMD : public MDSimulation {
+class MCObservable : public SBObservable {
 public:
-  VVerletMD(MDEnvironment& e,OLconfiguration &c,Interactions *i);
+  MCObservable(MCEnvironment&,OLconfiguration&);
 
-  const char* name() const {return "MD with velocity Verlet integrator";}
-  void step();
+  void interval_and_file();
+  void write_header();
+  void observe();
 
 private:
-  double           Dt,Dt2,Dtsq2;
+  MCEnvironment           &env;
+  OLconfiguration         &conf;
+  MCObservable_parameters par;
 } ;
+
+inline MCObservable::MCObservable(MCEnvironment& e,OLconfiguration &c) :
+  SBObservable(e),
+  env(e),
+  conf(c),
+  par(e.scope())
+{}
 
 } /* namespace */
 
-#endif /* MD_HH */
+#endif /* MCOBSERVABLE_HH */

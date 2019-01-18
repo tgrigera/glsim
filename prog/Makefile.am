@@ -40,25 +40,7 @@
 #
 
 include $(top_srcdir)/Makefile-common
-AM_CPPFLAGS = -I$(top_srcdir)/blib -I$(top_srcdir)/offlattice
-
-#
-# Headers
-#
-
-pkginclude_HEADERS = avevar.hh binvec.hh geoave.hh Grk.hh gr.hh	\
-                     histogram.hh iscatt.hh Sk.hh timecorr.hh
-
-EXTRA_DIST = readbt.sh gs_columnave.awk gs_fileave.awk
-
-#
-# library
-#
-
-lib_LTLIBRARIES = libglsim_an.la
-libglsim_an_la_LDFLAGS = -version-info @LIBGLSIM_VERSION@
-libglsim_an_la_SOURCES = avevar.cc geoave.cc gr.cc Grk.cc Sk.cc	\
-                         timecorr.cc iscatt.cc
+AM_CPPFLAGS = -I$(top_srcdir)/lib/blib -I$(top_srcdir)/lib/offlattice -I$(top_srcdir)/lib/analysis
 
 #
 # binaries
@@ -66,34 +48,47 @@ libglsim_an_la_SOURCES = avevar.cc geoave.cc gr.cc Grk.cc Sk.cc	\
 
 bin_SCRIPTS = gs_columnave.awk gs_fileave.awk readbt.sh
 
-bin_PROGRAMS = gs_1stneighbours gs_avesd gs_gav gs_gr gs_histogram	\
-               gs_tcorr gs_tau gs_Fk gs_Sk
+EXTRA_DIST = readbt.sh gs_columnave.awk gs_fileave.awk
 
-LDADD=libglsim_an.la $(top_builddir)/blib/libglsim.la
+LDADD=$(top_builddir)/lib/libglsim.la
 
-gs_1stneighbours_SOURCES = gs_1stneighbours.cc
-gs_1stneighbours_LDADD = $(LDADD) $(top_builddir)/offlattice/libglsim_ol.la
-gs_1stneighbours_CXXFLAGS=$(OPENMP_CXXFLAGS) $(AM_CXXFLAGS)
+bin_PROGRAMS = gs_avesd gs_gav gs_histogram gs_tcorr gs_tau
 
 gs_avesd_SOURCES = avesd.cc
-
-gs_Fk_SOURCES = Fk.cc
-gs_Fk_LDADD=$(top_builddir)/offlattice/libglsim_ol.la libglsim_an.la	\
-            $(top_builddir)/blib/libglsim.la
-
 gs_gav_SOURCES = gav.cc
-
-gs_gr_SOURCES = gs_gr.cc
-gs_gr_LDADD=libglsim_an.la $(top_builddir)/offlattice/libglsim_ol.la \
-            $(top_builddir)/blib/libglsim.la
-
 gs_histogram_SOURCES = histocl.cc
-
-gs_Sk_SOURCES = gs_Sk.cc
-gs_Sk_LDADD=libglsim_an.la $(top_builddir)/offlattice/libglsim_ol.la \
-            $(top_builddir)/blib/libglsim.la
-
 gs_tcorr_SOURCES = tcorr.cc
-
 gs_tau_SOURCES = tau.cc
 
+#
+# Offlattice progs
+#
+
+if HAS_HDF
+
+LDADD+=$(top_builddir)/lib/libglsim_ol.la
+
+bin_PROGRAMS += gs_1stneighbours gs_gr gs_Fk gs_Sk gs_olconf_cat	\
+		gs_olconf_create gs_olconf_dump gs_ljenergy gs_ljld	\
+		gs_ljmc gs_ljmd gs_neighbour_time gs_rljmc gs_rljmd	\
+		gs_traj2h5md
+
+gs_1stneighbours_SOURCES = gs_1stneighbours.cc
+gs_1stneighbours_CXXFLAGS=$(OPENMP_CXXFLAGS) $(AM_CXXFLAGS)
+gs_Fk_SOURCES = Fk.cc
+gs_gr_SOURCES = gs_gr.cc
+gs_Sk_SOURCES = gs_Sk.cc
+gs_olconf_cat_SOURCES = olconf_cat.cc
+gs_olconf_create_SOURCES = olconf_create.cc
+gs_olconf_dump_SOURCES = olconf_dump.cc
+gs_ljenergy_SOURCES = ljenergy.cc energy.cc
+gs_ljld_SOURCES = ljld.cc
+gs_ljmc_SOURCES = ljmc.cc
+gs_ljmd_SOURCES = ljmd.cc
+gs_neighbour_time_SOURCES = neighbour_time.cc
+gs_neighbour_time_CXXFLAGS=$(OPENMP_CXXFLAGS) $(AM_CXXFLAGS)
+gs_rljmc_SOURCES = rljmc.cc
+gs_rljmd_SOURCES = rljmd.cc
+gs_traj2h5md_SOURCES = traj2h5md.cc
+
+endif

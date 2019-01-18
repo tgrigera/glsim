@@ -38,9 +38,9 @@
 #ifndef MC_HH
 #define MC_HH
 
-#include "glsim/environment.hh"
-#include "glsim/stochastic.hh"
-#include "glsim/simulation.hh"
+#include "environment.hh"
+#include "stochastic.hh"
+#include "simulation.hh"
 #include "interactions.hh"
 
 namespace glsim {

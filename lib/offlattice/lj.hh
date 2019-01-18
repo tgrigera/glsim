@@ -40,7 +40,7 @@
 
 #include <math.h>
 
-#include "glsim/environment.hh"
+#include "environment.hh"
 
 namespace glsim {
 

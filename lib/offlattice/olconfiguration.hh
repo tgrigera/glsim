@@ -40,8 +40,8 @@
 
 #include <cmath>
 
-#include "glsim/configuration.hh"
-#include "glsim/exception.hh"
+#include "configuration.hh"
+#include "exception.hh"
 #include "hdf_file.hh"
 
 namespace glsim {

@@ -57,6 +57,11 @@ pkginclude_HEADERS = blib/blib.hh blib/cerrors.h blib/exception.hh	\
                      blib/stochastic.hh blib/mfile.hh			\
                      blib/test_exception.hh
 
+pkginclude_HEADERS += analysis/avevar.hh analysis/binvec.hh	\
+                     analysis/geoave.hh 		\
+                     analysis/histogram.hh analysis/iscatt.hh	\
+                     analysis/timecorr.hh
+
 
 # Doc-only headers
 
@@ -71,6 +76,10 @@ libglsim_la_SOURCES = blib/scontext.cc blib/cerrors.c blib/log.cc	\
                       blib/environment.cc blib/simulation.cc		\
                       blib/stochastic.cc blib/observable.cc		\
                       blib/mfile.cc blib/fft.cc
+
+# analysis modules
+libglsim_la_SOURCES += analysis/avevar.cc analysis/geoave.cc	\
+                       analysis/timecorr.cc analysis/iscatt.cc
 
 # Test programs
 
@@ -104,18 +113,44 @@ LDADD += libglsim_ol.la
 
 # offlattice headers
 
-pkginclude_HEADERS += offlattice/hdf_file.hh
+pkginclude_HEADERS += offlattice/hdf_file.hh offlattice/offlattice.hh	\
+		     offlattice/h5md.hh offlattice/olconfiguration.hh	\
+		     offlattice/interactions.hh offlattice/ld.hh	\
+		     offlattice/lj.hh offlattice/mc.hh			\
+		     offlattice/mcobservable.hh				\
+		     offlattice/mdenvironment.hh			\
+		     offlattice/mdobservable.hh offlattice/md.hh	\
+		     offlattice/nneighbours.hh				\
+		     offlattice/trajectory.hh
+
+pkginclude_HEADERS += analysis/Grk.hh analysis/Sk.hh analysis/gr.hh
 
 # offlattice lib 
 
 lib_LTLIBRARIES += libglsim_ol.la
 libglsim_ol_la_LDFLAGS = -version-info @LIBGLSIM_VERSION@
-libglsim_ol_la_SOURCES =  offlattice/hdf_file.cc 
+libglsim_ol_la_SOURCES = offlattice/hdf_file.cc offlattice/h5md.cc	\
+			 offlattice/olconfiguration.cc			\
+			 offlattice/interactions.cc offlattice/ld.cc	\
+			 offlattice/mc.cc offlattice/mcobservable.cc	\
+			 offlattice/md.cc offlattice/mdenvironment.cc	\
+			 offlattice/mdobservable.cc			\
+			 offlattice/nneighbours.cc			\
+			 offlattice/trajectory.cc
+
+# offlattice analysis
+
+libglsim_ol_la_SOURCES += analysis/Grk.cc analysis/Sk.cc analysis/gr.cc
 
 # offlattice tests
 
-check_PROGRAMS += hdf_recfile_test
+check_PROGRAMS += hdf_recfile_test neighbour_test pseudo-md
 
 hdf_recfile_test_SOURCES = hdf_recfile_test.cc
+neighbour_test_SOURCES = neighbour_test.cc
+pseudo_md_SOURCES = pseudo-md.cc
+
+TESTS += neighbour_test
+
 
 endif

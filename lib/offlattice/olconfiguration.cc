@@ -40,7 +40,7 @@
 #include <utility>
 #include <unordered_map>
 
-#include "glsim/cerrors.h"
+#include "cerrors.h"
 #include "olconfiguration.hh"
 
 namespace glsim {

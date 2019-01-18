@@ -1,5 +1,5 @@
 /*
- * mdobservable.hh --  Recording basic MD quantities
+ * md.hh -- MD simulations w/different integrators
  *
  * This file is part of olglsim, a numerical simulation class library
  * and helper programs.
@@ -35,43 +35,54 @@
  *
  */
 
-#include <cstdio>
+#ifndef MD_HH
+#define MD_HH
 
-#include "olconfiguration.hh"
-#include "glsim/observable.hh"
-#include "md.hh"
-
-#ifndef MDOBSERVABLE_HH
-#define MDOBSERVABLE_HH
+#include "mdenvironment.hh"
+#include "simulation.hh"
+#include "interactions.hh"
 
 namespace glsim {
 
-class MDObservable_parameters : public Parameters {
+/*****************************************************************************/
+
+/** \class MDSimulation
+    \ingroup OfflatticeSIM
+
+Common methods for MD (does not include the integrator)
+
+This assumes that number of particles and mass are conserved.
+
+*/
+class MDSimulation : public Simulation {
 public:
-  MDObservable_parameters(const char* scope);
+  MDSimulation(MDEnvironment& e,OLconfiguration &c,Interactions *i);
+  void        log();
+  void        log_start_sim();
+
+protected:
+  void update_observables();
+
+  MDEnvironment&   env;
+  OLconfiguration& conf;
+  Interactions     *inter;
 } ;
 
-class MDObservable : public SBObservable {
-public:
-  MDObservable(MDEnvironment&,OLconfiguration&);
+/** \class VVerletMD
+    \ingroup OfflatticeSIM
 
-  void interval_and_file();
-  void write_header();
-  void observe();
+*/
+class VVerletMD : public MDSimulation {
+public:
+  VVerletMD(MDEnvironment& e,OLconfiguration &c,Interactions *i);
+
+  const char* name() const {return "MD with velocity Verlet integrator";}
+  void step();
 
 private:
-  MDEnvironment           &env;
-  OLconfiguration         &conf;
-  MDObservable_parameters par;
+  double           Dt,Dt2,Dtsq2;
 } ;
-
-inline MDObservable::MDObservable(MDEnvironment& e,OLconfiguration &c) :
-  SBObservable(e),
-  env(e),
-  conf(c),
-  par(e.scope())
-{}
 
 } /* namespace */
 
-#endif /* MDOBSERVABLE_HH */
+#endif /* MD_HH */

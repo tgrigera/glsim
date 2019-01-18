@@ -176,16 +176,10 @@ AC_FUNC_STRFTIME
 # Generates files
 #
 AC_CONFIG_HEADERS([config.h])
-dnl AC_CONFIG_FILES([Makefile
-dnl 		 analysis/Makefile
-dnl 	         blib/Makefile
-dnl                  lattice/Makefile
-dnl 		 offlattice/Makefile
-dnl 		 doc/Makefile
-dnl 		 doc/version.tex])
 AC_CONFIG_FILES([Makefile
 	         lib/Makefile
                  lattice/Makefile
+                 prog/Makefile
 		 doc/Makefile
 		 doc/version.tex])
 AC_OUTPUT

@@ -36,7 +36,7 @@
  */
 
 #include <queue>
-#include "glsim/log.hh"
+#include "log.hh"
 #include "nneighbours.hh"
 
 namespace glsim {

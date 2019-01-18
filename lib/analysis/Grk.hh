@@ -44,7 +44,7 @@
 #include <math.h>
 
 #include "olconfiguration.hh"
-#include "glsim/binvec.hh"
+#include "binvec.hh"
 
 namespace glsim {
 

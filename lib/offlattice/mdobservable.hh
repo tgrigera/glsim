@@ -1,5 +1,5 @@
 /*
- * mcobservable.hh --  Recording basic quantities along a MC run
+ * mdobservable.hh --  Recording basic MD quantities
  *
  * This file is part of olglsim, a numerical simulation class library
  * and helper programs.
@@ -35,37 +35,37 @@
  *
  */
 
-#ifndef MCOBSERVABLE_HH
-#define MCOBSERVABLE_HH
-
 #include <cstdio>
 
 #include "olconfiguration.hh"
-#include "glsim/observable.hh"
-#include "mc.hh"
+#include "observable.hh"
+#include "md.hh"
+
+#ifndef MDOBSERVABLE_HH
+#define MDOBSERVABLE_HH
 
 namespace glsim {
 
-class MCObservable_parameters : public Parameters {
+class MDObservable_parameters : public Parameters {
 public:
-  MCObservable_parameters(const char* scope);
+  MDObservable_parameters(const char* scope);
 } ;
 
-class MCObservable : public SBObservable {
+class MDObservable : public SBObservable {
 public:
-  MCObservable(MCEnvironment&,OLconfiguration&);
+  MDObservable(MDEnvironment&,OLconfiguration&);
 
   void interval_and_file();
   void write_header();
   void observe();
 
 private:
-  MCEnvironment           &env;
+  MDEnvironment           &env;
   OLconfiguration         &conf;
-  MCObservable_parameters par;
+  MDObservable_parameters par;
 } ;
 
-inline MCObservable::MCObservable(MCEnvironment& e,OLconfiguration &c) :
+inline MDObservable::MDObservable(MDEnvironment& e,OLconfiguration &c) :
   SBObservable(e),
   env(e),
   conf(c),
@@ -74,4 +74,4 @@ inline MCObservable::MCObservable(MCEnvironment& e,OLconfiguration &c) :
 
 } /* namespace */
 
-#endif /* MCOBSERVABLE_HH */
+#endif /* MDOBSERVABLE_HH */

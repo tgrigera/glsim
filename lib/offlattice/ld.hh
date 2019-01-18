@@ -1,5 +1,5 @@
 /*
- * mdenvironment.hh -- Environment for Molecular Dynamics
+ * ld.hh -- Langevin dynamics simulations
  *
  * This file is part of olglsim, a numerical simulation class library
  * and helper programs.
@@ -35,46 +35,42 @@
  *
  */
 
-#ifndef MDENVIRONMENT_HH
-#define MDENVIRONMENT_HH
+#ifndef LD_HH
+#define LD_HH
 
-#include "glsim/environment.hh"
+#include <unordered_map>
+
+#include "mdenvironment.hh"
+#include "stochastic.hh"
+#include "simulation.hh"
 #include "interactions.hh"
 
 namespace glsim {
 
-class MDParameters : public Parameters {
+/*****************************************************************************/
+
+class LDParameters : public Parameters {
 public:
-  MDParameters(const char *scope);
+  LDParameters(const char* scope);
 } ;
 
-/** \class MDEnvironment
-    \ingroup OfflatticeSIM
-*/
-class MDEnvironment : public SimEnvironment {
+class LDEnvironment : public MDEnvironment {
 public:
-  MDEnvironment(const char* scope=Parameters::default_scope);
+  LDEnvironment(const char* scope=Parameters::default_scope);
 
   ///@{ \name Set from parameters
-  long   MDsteps;
-  double time_step;
-
+  double  eta;
+  double  temperature;
+  
   ///@}@{ Computed by the simulation (guaranteed accurate only upon request)
-  double      Etot;    ///< Total energy
-  double      Ekin;    ///< Kinetic energy
-  double      Epot;    ///< Potential energy
-  double      Ptot[3]; ///< Total momentum
-  double      total_mass;
-  double      total_number;
 
-  Interactions *inter;  ///< The simulation can/should place here the pointer to interactions to allow observers to report interactions information
-  ///@}
+  StochasticEnvironment SE;
 
 protected:
   void init_local(),warm_init_local();
   
 private:
-  MDParameters par;
+  LDParameters par;
 
   void vserial(oarchive_t &ar) {ar << *this;}
   void vserial(iarchive_t &ar) {ar >> *this;}
@@ -86,9 +82,39 @@ public:
   static const int class_version=1;
 } ;
 
+/** \class LDSimulation
+    \ingroup OfflatticeSIM
+    \brief Langevin dynamics simulation 
+
+Sometimes called simply stochastic dynamics, this is a stochastic
+dynamics simulation according to the Langevin equation with an inertia
+term.
+
+*/
+class LDSimulation : public Simulation {
+public:
+  LDSimulation(LDEnvironment& e,OLconfiguration &c,Interactions *i);
+  ~LDSimulation();
+  const char  *name() const {return "Langevin Dynamics simulation";}
+  void        step();
+  void        log();
+  void        log_start_sim();
+
+protected:
+  void update_observables();
+
+  LDEnvironment&   env;
+  OLconfiguration& conf;
+  Interactions     *inter;
+
+private:
+  double Dt;
+  std::unordered_map<short,double> c0,c1dt,c1mc2dt,c2dtsq,c2dt;
+  std::unordered_map<short,BivariateGaussian_distribution*> noise;
+} ;
+
 } /* namespace */
 
+BOOST_CLASS_VERSION(glsim::LDEnvironment,glsim::LDEnvironment::class_version);
 
-BOOST_CLASS_VERSION(glsim::MDEnvironment,glsim::MDEnvironment::class_version);
-
-#endif /* MDENVIRONMENT_HH */
+#endif /* LD_HH */

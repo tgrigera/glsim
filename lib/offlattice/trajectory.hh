@@ -38,7 +38,7 @@
 #ifndef TRAJECTORY_HH
 #define TRAJECTORY_HH
 
-#include "glsim/environment.hh"
+#include "environment.hh"
 
 #include "olconfiguration.hh"
 

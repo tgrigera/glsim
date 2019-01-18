@@ -43,7 +43,6 @@
 #include "environment.hh"
 #include "exception.hh"
 #include "fft.hh"
-#include "hdf_file.hh"
 #include "log.hh"
 #include "mfile.hh"
 #include "observable.hh"
