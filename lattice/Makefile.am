@@ -4,10 +4,35 @@
 # This file is part of glsim, a numerical simulation class library and
 # helper programs.
 #
-# glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014, 2015
-# by Tomas S. Grigera.
+#  glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016,
+#                         2017, 2018, 2019
+#  by Tomas S. Grigera.
+# 
+# glsim is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License (GPL) as published
+# by the Free Software Foundation. You can use either version 3, or
+# (at your option) any later version.
 #
-# See file LICENSE in base directory
+# If you use glsim to produced published work, or if you redistribute
+# a modified version of glsim, or code based on glsim, please cite us
+#
+# - T. S. Grigera, /glsim: A general library for numerical
+#   simulation/.  Computer Physics Communications *182*, 2122-2131
+#   (2011).
+#
+# glsim is developed as part of academic work.  As such author
+# attributions are not only a way to give recognition to the original
+# authors, but also help to ensure continued development, since
+# citations show that the work has been useful to others and thus
+# help convince funding agencies that it is worth funding.  * glsim
+# distribution.
+#
+# glsim is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.
+# 
+# For details see the file LICENSE in the home directory. If the file is
+# missing, contact the maintainers.
 #
 
 #
@@ -22,13 +47,17 @@ LDADD=$(top_builddir)/blib/libglsim.la
 #
 
 pkginclude_HEADERS = graph.hh bethe.hh lattice1D.hh lattice2D.hh	\
-                     lattice3D.hh graph_test.hh poisson.hh
+                     lattice3D.hh graph_test.hh
+
+#  poisson.hh
 
 #
 # binaries
 #
 check_PROGRAMS = graph_ck bethe_test lattice1D_test lattice2D_test	\
-                 lattice3D_test poisson_test
+                 lattice3D_test
+
+# poisson_test
 
 # Binary dependencies
 
@@ -37,17 +66,15 @@ bethe_test_SOURCES = graph_test.cc bethe_test.cc
 lattice1D_test_SOURCES = graph_test.cc lattice1D_test.cc
 lattice2D_test_SOURCES = graph_test.cc lattice2D_test.cc
 lattice3D_test_SOURCES = graph_test.cc lattice3D_test.cc
-poisson_test_SOURCES = graph_test.cc poisson_test.cc
-poisson_test_CPPFLAGS = -I$(top_srcdir)/blib -I$(top_srcdir)/offlattice
-poisson_test_LDADD =  -L../offlattice -lglsim_ol -L../blib -lglsim
+# poisson_test_SOURCES = graph_test.cc poisson_test.cc
+# poisson_test_CPPFLAGS = -I$(top_srcdir)/blib -I$(top_srcdir)/offlattice
+# poisson_test_LDADD =  -L../offlattice -lglsim_ol -L../blib -lglsim
 
 #
 # Tests
 #
 
-TESTS = bethe_test lattice1D_test lattice2D_test lattice3D_test poisson_test
+TESTS = bethe_test lattice1D_test lattice2D_test lattice3D_test
 
-#doc_DATA = lattice.pdf
-
-#CLEANFILES = graph.tex *.aux *.log *.pdf
+# poisson_test
 

@@ -1,31 +1,32 @@
 /*
  * h5md.cc -- class interface for H5MD trajectory files (definitions)
  *
- * This file is part of glsim, a numerical simulation class library and
- * helper programs.
+ * This file is part of olglsim, a numerical simulation class library
+ * and helper programs.
  *
- * glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014, 2015
+ * olglsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016,
+ *                        2017, 2018, 2019
  * by Tomas S. Grigera.
  * 
- * glsim is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License (GPL) as published by the
- * Free Software Foundation, with the additional requirements of
- * attribution and nonmisrepresentation. You can use either version 3, or
- * (at your option) any later version.
+ * olglsim is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License (GPL) as
+ * published by the Free Software Foundation. You can use either
+ * version 3, or (at your option) any later version.
  * 
- * Additional terms under GNU GPL version 3 section 7:
- * 
- * When you redistribute this software, you are required to preserve its
- * author attributions. If you distribute verbatim copies, you must not
- * alter the AUTHORS file or attributions inserted in the source files,
- * and you must not change the software's name. If you distribute a
- * modified copy, then you must give clear notice that your work is
- * different from but based on glsim. You must distribute it under a
- * different name, but include a prominent notice specifying that "(your
- * package) is based on glsim version x.x", and provide a pointer to the
- * glsim distribution.
+ * If you use olglsim to produced published work, or if you redistribute a
+ * modified version of olglsim, or code based on olglsim, please cite us
  *
- * glsim is distributed in the hope that it will be useful, but WITHOUT
+ *  - T. S. Grigera, /glsim: A general library for numerical
+ *    simulation/.  Computer Physics Communications *182*, 2122-2131
+ *    (2011).
+ *
+ * olglsim is developed as part of academic work.  As such author
+ * attributions are not only a way to give recognition to the original
+ * authors, but also help to ensure continued development, since
+ * citations show that the work has been useful to others and thus
+ * help convince funding agencies that it is worth funding.
+ *
+ * olglsim is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.
  * 
