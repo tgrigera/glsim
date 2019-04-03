@@ -117,7 +117,7 @@ private:
   std::istream             *in;
   std::ifstream            fin;
 
-  bool          open_next();
+  void           open_next();
 } ;
 
 read_files::read_files(std::vector<std::string> &files,bool binary_,
@@ -157,14 +157,14 @@ bool read_files::read(double &x)
   }
 }
 
-bool read_files::open_next()
+void read_files::open_next()
 {
   if (fnames.size()==0) {
     in=&std::cin;
-    return true;
+    return;
   }
   filen++;
-  if (filen==fnames.size()) return false;
+  if (filen==fnames.size()) return;
   fin.close();
   fin.open(fnames[filen]);
   in=&fin;

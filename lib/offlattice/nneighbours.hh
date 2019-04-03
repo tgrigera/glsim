@@ -126,7 +126,7 @@ public:
   int const * operator->() const {return &n;}
 
   NeighbourIterator& operator++()
-  { while (++n==particle); }
+  { while (++n==particle); return *this;}
 
   NeighbourIterator operator++(int)
   {NeighbourIterator c=*this; ++(*this); return c;}
@@ -164,7 +164,7 @@ public:
   Pair const * operator->() const {return &pair;}
 
   PairIterator& operator++()
-  {++pair.second; if (pair.second==NN.conf->N) {++pair.first; pair.second=pair.first+1;}}
+  {++pair.second; if (pair.second==NN.conf->N) {++pair.first; pair.second=pair.first+1;}; return *this;}
 
   PairIterator operator++(int)
   {PairIterator c=*this; ++(*this); return c;}

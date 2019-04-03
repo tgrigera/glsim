@@ -151,7 +151,7 @@ public:
   double gsx() const {return gsx_;}
   double gsy() const {return gsy_;}
   /// Return the center of the grid corresponding to given grid number
-  double gridc(std::size_t gridn,double &xc,double &yc);
+  void gridc(std::size_t gridn,double &xc,double &yc);
   /// Return the grid number corresponding to (x,y)
   std::size_t gridn(double x,double y) const
   {return (std::size_t) igrid(floor(x/gsx_),floor(y/gsy_));}
@@ -193,7 +193,7 @@ std::size_t Grid2D<T>::gridn_protected(double x,double y) const
 }
 
 template <typename T>
-double Grid2D<T>::gridc(std::size_t gridn,double &xc,double &yc)
+void Grid2D<T>::gridc(std::size_t gridn,double &xc,double &yc)
 {
   int nx,ny;
   gridnxny(gridn,nx,ny);

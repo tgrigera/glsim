@@ -77,6 +77,7 @@ inline AveVar<maxmin>& AveVar<maxmin>::clear()
   N_=0;
   max_=std::numeric_limits<double>::min();
   min_=std::numeric_limits<double>::max();
+  return *this;
 }
   
 
@@ -120,7 +121,7 @@ public:
   AveVar_vector() : av() {clear();}
   AveVar_vector& push(dvector&);
   AveVar_vector& push(double*,int);
-  AveVar_vector& clear() {av.clear();}
+  AveVar_vector& clear() {av.clear(); return *this;}
 
   double ave(int n) const {return av[n].ave();}
   double var(int n) const {return av[n].var();}

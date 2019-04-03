@@ -42,6 +42,7 @@
 #include <string>
 #include <iostream>
 #include <map>
+#include <libgen.h>
 #include <boost/program_options.hpp>
 
 #include "exception.hh"

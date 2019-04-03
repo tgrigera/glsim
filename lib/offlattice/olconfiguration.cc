@@ -171,6 +171,7 @@ OLconfiguration& OLconfiguration::swap(OLconfiguration& c)
   std::swap(r,c.r);
   std::swap(v,c.v);
   std::swap(a,c.a);
+  return *this;
 }
 
 /*
