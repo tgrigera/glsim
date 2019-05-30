@@ -190,6 +190,7 @@ bool read_files::open_next()
   fin.close();
   fin.open(fnames[filen]);
   in=&fin;
+  return true;
 }
 
 /*****************************************************************************
