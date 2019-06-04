@@ -86,6 +86,16 @@ public:
   static const int class_version=1;
 } ;
 
+template <typename Archive>
+inline void MDEnvironment::serialize(Archive &ar,const unsigned int version)
+{
+  if (version!=class_version)
+    throw glsim::Environment_wrong_version("MDEnvironment",version,class_version);
+  ar & boost::serialization::base_object<SimEnvironment>(*this);
+  ar & MDsteps;
+  ar & time_step;
+}
+
 } /* namespace */
 
 

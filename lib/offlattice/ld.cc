@@ -76,15 +76,6 @@ void LDEnvironment::warm_init_local()
   eta=par.value("LD.eta").as<double>();
 }
 
-template <typename Archive>
-inline void LDEnvironment::serialize(Archive &ar,const unsigned int version)
-{
-  if (version!=class_version)
-    throw glsim::Environment_wrong_version("MDEnvironment",version,class_version);
-  ar & boost::serialization::base_object<MDEnvironment>(*this);
-  ar & temperature & eta;
-}
-
 /*****************************************************************************
  *
  * Simulation
