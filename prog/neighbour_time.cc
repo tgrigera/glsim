@@ -115,7 +115,7 @@ void CLoptions::show_usage() const
 template <typename Function,typename NeighboursT>
 Function for_each_pair_generic(glsim::OLconfiguration& conf,NeighboursT& NN,Function f)
 {
-  for (auto p = NN.pairs_begin(), end=NN.pairs_end(); p!=end; ++p) {
+  for (auto p = NN.pairs_begin() ; p!=NN.pairs_end(); ++p) {
     double dsq=conf.distancesq(p->first,p->second);
     if (dsq<=NN.cutoffsq()) f(p->first,p->second,dsq);
   }
