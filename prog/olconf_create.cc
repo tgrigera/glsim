@@ -71,7 +71,7 @@ void create_random(glsim::OLconfiguration &conf,scomp &SC)
 
   int i;
   conf.id=new short[conf.N];
-  for (i=0; i<conf.N; conf.id[i]=i++) ;
+  for (i=0; i<conf.N; ++i) conf.id[i]=i;
   if (SC.Nt>1) {
     conf.type = new short[conf.N];
     i=0;

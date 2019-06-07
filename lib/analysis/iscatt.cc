@@ -48,9 +48,9 @@ Fk::Fk(double k_,double deltat_,int Nav_) :
   k(k_),
   deltat(deltat_),
   Nav(Nav_),
+  Npart(0),
   kr(Nav_),
-  rhok_(Nav_),
-  Npart(0)
+  rhok_(Nav_)
 {
   // fill random directions
   Spherical3d_distribution sr;

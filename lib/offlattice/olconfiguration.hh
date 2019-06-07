@@ -250,10 +250,10 @@ public:
   } ;
 
 private:
-  options         opt;
   const int       version;
-  std::string     fname;
   OLconfiguration *cbuffer;
+  options         opt;
+  std::string     fname;
   bool            own_buffer;
 
   void declare_header_fields(mode);

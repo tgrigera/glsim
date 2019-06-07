@@ -191,11 +191,12 @@ ComplexFFTW::~ComplexFFTW()
 void ComplexFFTW::plan(bool time_rules)
 {
   if (storage==out_of_place)
-      if (tdomain->size()!=fdomain->size())
+    if (tdomain->size()!=fdomain->size()) {
 	if (time_rules) 
 	  fdomain->resize(tdomain->size());
 	else
 	  tdomain->resize(fdomain->size());
+    }
 
   typedef double (*pp)[2];
   pp t=reinterpret_cast<pp>(&((*tdomain)[0]));
@@ -251,12 +252,14 @@ RealFFTW::~RealFFTW()
 
 void RealFFTW::plan(bool time_rules)
 {
-  if (storage==out_of_place)
-      if (tdomain->size()!=fdomain->size())
-	if (time_rules) 
-	  fdomain->resize(tdomain->size());
-	else
-	  tdomain->resize(fdomain->size());
+  if (storage==out_of_place) {
+    if (tdomain->size()!=fdomain->size()) {
+      if (time_rules) 
+	fdomain->resize(tdomain->size());
+      else
+	tdomain->resize(fdomain->size());
+    }
+  }
 
   r2hc=fftw_plan_r2r_1d(tdomain->size(),&(*tdomain)[0],&(*fdomain)[0],
 			FFTW_R2HC,FFTW_ESTIMATE);
