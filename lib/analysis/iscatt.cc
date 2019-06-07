@@ -103,6 +103,7 @@ std::ostream& operator<<(std::ostream& o,const Fk& Fk_)
   for (int i=0; i<Fk_.Fk_.size(); i++)
     o << i*Fk_.deltat << "  " << Fk_.Fk_[i].real()
       << "  " << Fk_.Fk_[i].imag() << '\n';
+  return o;
 }
 
 /*****************************************************************************
@@ -147,7 +148,7 @@ Fsk& Fsk::compute_Fsk()
     correlation_1d_tti_fft(expkr[i],FF,Fklen);
     for (int j=0; j<FF.tdata_rw().size(); j++) Fsk_[j]+=fac*FF.tdatum(j);
   }
-  
+  return *this;
 }
 
 std::ostream& operator<<(std::ostream& o,const Fsk& Fsk_)
@@ -156,6 +157,7 @@ std::ostream& operator<<(std::ostream& o,const Fsk& Fsk_)
   for (int i=0; i<Fsk_.Fsk_.size(); i++)
     o << i*Fsk_.deltat << "  " << Fsk_.Fsk_[i].real()
       << "  " << Fsk_.Fsk_[i].imag() << '\n';
+  return o;
 }
 
 } /* namespace */
