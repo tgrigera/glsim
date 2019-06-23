@@ -212,6 +212,10 @@ void Subcells::update(double maxdisp)
       std::cout << "                position " << conf->r[i][0] << ' ' << conf->r[i][1] << ' ' << conf->r[i][2] << '\n';
       throw glsim::Runtime_error("Invalid subcell number",HERE);
     }
+    if (ic<0 || ic>=nscell) {
+      std::cout << "ERROR in scell: ic nscell " << ic << ' ' << nscell << '\n';
+      throw glsim::Runtime_error("Invalid subcell number",HERE);
+    }
 #endif
 
     llist[i]=subcell[ic];
