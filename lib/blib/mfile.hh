@@ -91,10 +91,10 @@ public:
 
 private:
   std::vector<std::string> filelist;
-  int  fileno;
-  FILE *filep;
-  int  mark_files;
-  long mark_fpos;
+  unsigned int fileno;
+  FILE     *filep;
+  int      mark_files;
+  long     mark_fpos;
 
   void open_first();
   void open_next();

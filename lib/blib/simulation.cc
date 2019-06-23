@@ -258,7 +258,7 @@ static existing_file_status check_existing_files(SimEnvironment &env,
 						 bool ignore_partial)
 {
   struct stat s;
-  bool env_exist,conf_exist,partial_run;
+  bool env_exist,conf_exist;
 
   logs(info) << "Checking for existing files...";
   // if (stat(envfile,&s)!=0) {

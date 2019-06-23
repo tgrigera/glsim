@@ -90,13 +90,12 @@ void Geoave::get_aves(std::vector<double>& time,std::vector<double>& ave,
   ave.clear();
   var.clear();
 
-  double v,da;
+  double v;
 
   if (count[0]>0) {
     time.push_back(t0);
     ave.push_back(rave[0]);
     v=rvarn[0]/(count[0]-1);
-    da=sqrt(v/count[0]);
     var.push_back(v);
   }
   
@@ -107,7 +106,6 @@ void Geoave::get_aves(std::vector<double>& time,std::vector<double>& ave,
     time.push_back(t);
     ave.push_back(rave[i]);
     v=rvarn[i]/(count[i]-1);
-    da=sqrt(v/count[i]);
     var.push_back(v);
   }
 }
@@ -115,7 +113,7 @@ void Geoave::get_aves(std::vector<double>& time,std::vector<double>& ave,
 std::ostream& operator<<(std::ostream& os,const Geoave& g)
 {
   os << "# time   ave  deltaave(=s.d/sqrt(n))\n";
-  double ave,var;
+  double var;
   if (g.count[0]>0) {
     var=g.rvarn[0]/(g.count[0]-1);
     os << g.t0 << "   " << g.rave[0] << "   " << sqrt(var/g.count[0]) << '\n';

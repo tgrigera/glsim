@@ -87,8 +87,8 @@ public:
   const vcomplex& Fk_data() const {return Fk_;} 
 
 private:
-  int                               Nav,Npart;
   double                            k,deltat;
+  int                               Nav,Npart;
   std::vector<std::vector<double> > kr;
   std::vector<vcomplex>             rhok_;
   vcomplex                          Fk_;
@@ -133,8 +133,8 @@ public:
   const vcomplex& Fsk_data() const {return Fsk_;}
 
 private:
-  int                   Npart;
   double                k,deltat;
+  int                   Npart;
   std::vector<double>   kr;
   std::vector<vcomplex> expkr;
   vcomplex              Fsk_;
