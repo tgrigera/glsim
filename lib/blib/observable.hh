@@ -112,9 +112,10 @@ void Observable<ITYP>::init_local()
   interval_and_file();
   obs_fname="[AUTO]";
   final_filename(obs_fname,obs_file_prefix);
+  first_observed=false;
+  if (obs_interval<=0) return;
   of=fopen(obs_fname.c_str(),"w");
   if (!of) throw Open_file_error(obs_fname);
-  first_observed=false;
   write_header();
 }
 
@@ -125,6 +126,7 @@ void Observable<ITYP>::warm_init_local()
   interval_and_file();
   obs_fname="[AUTO]";
   final_filename(obs_fname,obs_file_prefix);
+  if (obs_interval<=0) return;
   of=fopen(obs_fname.c_str(),"w");
   if (!of) throw Open_file_error(obs_fname);
   first_observed=true;
@@ -136,6 +138,7 @@ void Observable<ITYP>::warm_init_local()
 template <typename ITYP>
 void Observable<ITYP>::observe_first()
 {
+  if (obs_interval<=0) return;
   if (first_observed) return;
   observe();
   first_observed=true;

@@ -132,7 +132,7 @@ void MC::log_start_sim()
   logs(info) << "   Step     Energy  Acc. rate\n";
 
   update_observables();
-  sprintf(buff,"Initial %10.3e %10.3e\n",
+  sprintf(buff,"Initial %7ld %10.3e %10.3e\n",
 	  env.steps_completed,env.energy/conf.N,
 	  env.accepted_moves/(((double) env.steps_in_run)*conf.N));
   logs(info) << buff;
