@@ -105,11 +105,11 @@ void load_test_data(int which,glsim::vcomplex& test,glsim::vcomplex& result)
   case 1:
     test.resize(8);
     test[0]=glsim::dcomplex(1,0);
-    test[1]=glsim::dcomplex(0,0);
-    std::copy(test.begin()+1,test.end()-1,test.begin()+2);
+    for (int i=1; i<8; ++i)
+      test[i]=glsim::dcomplex(0,0);
     result.resize(8);
-    result[0]=glsim::dcomplex(8*0.125,0);
-    std::copy(result.begin(),result.end()-1,result.begin()+1);
+    for (int i=0; i<8; ++i)
+      result[i]=glsim::dcomplex(8*0.125,0);
     break;
   case 2:
     test.resize(8);
