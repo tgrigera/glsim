@@ -46,8 +46,8 @@ LDADD=$(top_builddir)/lib/libglsim.la
 # Headers
 #
 
-pkginclude_HEADERS = graph.hh bethe.hh lattice1D.hh lattice2D.hh	\
-                     lattice3D.hh graph_test.hh
+pkginclude_HEADERS = graph.hh fcgraph.hh bethe.hh lattice1D.hh	\
+                     lattice2D.hh lattice3D.hh graph_test.hh
 if HAS_HDF
 pkginclude_HEADERS += poisson.hh
 endif
