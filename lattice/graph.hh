@@ -5,7 +5,7 @@
  * helper programs.
  *
  * glsim is copyright (C) 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016,
- *                        2017, 2018, 2019
+ *                        2017, 2018, 2019, 2020, 2021
  * by Tomas S. Grigera.
  * 
  * glsim is free software; you can redistribute it and/or modify it
@@ -189,7 +189,7 @@ public:
   const nodeT& at(id_t i) const;         ///< Constant eference to node, with bound check
   id_t         id(node_t *n) const;           ///< Get node id from pointer to node
   nodeT*       data() noexcept {return nodes;}///< Access raw data through pointer
-  const nodeT* data() const noexcept          /// Access raw data through `const` pointer
+  const nodeT* data() const noexcept          ///< Access raw data through `const` pointer
   {return nodes;}
 
   ///@}

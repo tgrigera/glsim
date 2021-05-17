@@ -133,7 +133,7 @@ public:
   ///\name Extra methods (including neighbour access)
   ///@{
   node_iterator& to(id_t i);
-  node_iterator& to(nodeT *n_) {to(lat.id(n_));}
+  node_iterator& to(nodeT *n_) {return to(lat.id(n_));}
 
   int            neighbour_size() const {return 2;}
   node_iterator& to_neighbour(int n);

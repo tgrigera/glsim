@@ -55,7 +55,7 @@ endif
 #
 # binaries
 #
-check_PROGRAMS = graph_ck bethe_test lattice1D_test lattice2D_test	\
+check_PROGRAMS = graph_ck fcgraph_test bethe_test lattice1D_test lattice2D_test	\
                  lattice3D_test
 if HAS_HDF
 check_PROGRAMS += poisson_test
@@ -64,6 +64,7 @@ endif
 # Binary dependencies
 
 graph_ck_SOURCES = graph_ck.cc
+fcgraph_test_SOURCES = graph_test.cc fcgraph_test.cc
 bethe_test_SOURCES = graph_test.cc bethe_test.cc
 lattice1D_test_SOURCES = graph_test.cc lattice1D_test.cc
 lattice2D_test_SOURCES = graph_test.cc lattice2D_test.cc
@@ -80,7 +81,7 @@ endif
 # Tests
 #
 
-TESTS = bethe_test lattice1D_test lattice2D_test lattice3D_test
+TESTS = fcgraph_test bethe_test lattice1D_test lattice2D_test lattice3D_test
 
 if HAS_HDF
 TESTS += poisson_test

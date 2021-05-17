@@ -45,6 +45,7 @@
 
 #include <typeinfo>
 #include "bethe.hh"
+#include "fcgraph.hh"
 #include "lattice1D.hh"
 #include "lattice2D.hh"
 #include "lattice3D.hh"
@@ -105,8 +106,8 @@ void check_bethe()
     old=*nd;
   }
 
-  for (nd=lat.begin(); nd!=lat.end(); ++nd)
-     (*nd)+=sin(*nd);
+  // for (nd=lat.begin(); nd!=lat.end(); ++nd)
+  //    (*nd)+=sin(*nd);
 
   timer.stop();
   std::cout << "  " << boost::timer::format(timer.elapsed());
@@ -156,6 +157,100 @@ void check_bethe()
 
 /******************************************************************************/
 
+void check_fc()
+{
+  using glsim::FullyConnectedGraph;
+  
+  boost::timer::cpu_timer timer;
+
+  std::cout << "\n\n***** Testing FullyConnected\n\n";
+
+  std::cout << "-- Filling and processing simple array of size "
+	    << BIGSIZE << "\n";
+  double *l=new double[BIGSIZE];
+  timer.start();
+  *l=10;
+  for (double* d=l+1; d!=l+BIGSIZE; )
+    *d=*(d++-1)+1.1;
+
+  timer.stop();
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+
+  std::cout << "-- Creating FullyConnectedGraph\n";
+  timer.start();
+  FullyConnectedGraph<double> lat(BIGSIZE);
+  std::cout << "   FC size " << lat.size() << '\n';
+  timer.stop();
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+  std::cout << "-- Filling and processing FullyConnectedGraph through data() pointer\n";
+  timer.start();
+  double *d=lat.data();
+  *d=10;
+  for (; d!=lat.data()+lat.size(); d++)
+    *d=*(d-1)+1.1;
+  timer.stop();
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+
+  std::cout << "-- Filling and processing FullyConnectedGraph through node iterator\n";
+  timer.start();
+  FullyConnectedGraph<double>::node_iterator nd=lat.begin();
+  *nd=10;
+  double old=*nd;
+  for (; nd!=lat.end(); ++nd) {
+    *nd=old+1.1;
+    old=*nd;
+  }
+
+  // for (nd=lat.begin(); nd!=lat.end(); ++nd)
+  //    (*nd)+=sin(*nd);
+
+  timer.stop();
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+
+  std::cout << "-- Writing and reading lattice\n";
+  timer.start();
+  std::ofstream f("graphfc.dat");
+  lat.write(f);
+  f.close();
+  FullyConnectedGraph<double> lat2(2);
+  std::ifstream ifs("graphf.dat");
+  lat2.read(ifs);
+  timer.stop();
+  std::cout << "   Original: size " << lat.size() << " last: " <<
+    lat[lat.size()-1] << '\n';
+  std::cout << "   Read    : size " << lat2.size() << " last: " <<
+    lat2[lat2.size()-1] << " connectivity " << lat.coordination_number() << '\n';
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+
+  std::cout << "-- Walking and adding neighbours through iterator\n";
+  timer.start();
+  FullyConnectedGraph<double> lat3(RTBIGSIZE);
+  double sum=0;
+  for (nd=lat3.begin(); nd!=lat3.end(); ++nd) {
+    for (int i=0; i<nd.neighbour_size(); ++i)
+      sum+=nd.neighbour(i);
+  }
+  std::cout << "   sum = " << sum << '\n';
+  timer.stop();
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+
+  std::cout << "-- Walking and adding neighbours with for_each\n";
+  timer.start();
+  struct s {
+    double sum;
+    s() : sum(0){}
+    void operator()(double d) {sum+=d;}
+  } ;
+  double ss=0;
+  for (nd=lat3.begin(); nd!=lat3.end(); ++nd) {
+    ss+=for_each_neighbour(nd,s()).sum;
+  }
+  std::cout << "   sum = " << ss << '\n';
+  timer.stop();
+  std::cout << "  " << boost::timer::format(timer.elapsed());
+}
+
+/******************************************************************************/
 
 void check_1d()
 {
@@ -513,6 +608,7 @@ void check_sc()
 int main(int argc, char *argv[])
 {
   check_bethe();
+  check_fc();
   check_1d();
   check_sq();
   check_sc();
