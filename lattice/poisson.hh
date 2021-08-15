@@ -164,6 +164,7 @@ operator=(const MetricPoisson3D<nodeT>& g)
   intrange=g.intrange;
   conf=g.conf;
   nlist.rebuild(conf,intrange);
+  return *this;
 }
 
 template <typename nodeT>
@@ -367,6 +368,7 @@ typename MetricPoisson3D<nodeT>::node_iterator&
 MetricPoisson3D<nodeT>::node_iterator::to_neighbour(int i)
 {
   n=grph.data()+grph.nlist.neighbour_list(grph.id(n)).at(i);
+  return *this;
 }
 
 template <typename nodeT,typename Function>

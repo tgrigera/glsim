@@ -466,6 +466,7 @@ PeriodicSCLattice<nodeT>::node_iterator::to_neighbour(int i)
   case 4: return to(&U());
   case 5: return to(&D());
   }
+  throw glsim::Internal_error(HERE);
 }
 
 

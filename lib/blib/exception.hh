@@ -69,6 +69,19 @@ public:
   ~Logic_error() throw () {}
 } ;
 
+class Internal_error : public Logic_error {
+private:
+  const Source_context scontext;
+
+public:
+  Internal_error(const Source_context &c=Source_context() ) :
+    Logic_error("Internal logic error",c),
+    scontext(c)
+  {}
+  const Backtrace &backtrace() const {return scontext.backtrace();}
+  ~Internal_error() throw () {}
+} ;
+  
 /** \class Runtime_error
     \ingroup Exceptions
 

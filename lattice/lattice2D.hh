@@ -427,6 +427,7 @@ PeriodicSQLattice<nodeT>::node_iterator::to_neighbour(int i)
   case 2: return to(&S());
   case 3: return to(&W());
   }
+  throw glsim::Internal_error(HERE);
 }
 
 
