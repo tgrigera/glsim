@@ -164,6 +164,8 @@ header plus a table-like structure).
 
 \defgroup FILE File manipulation
 
+\defgroup Vector Vector arithmetic
+
 \defgroup FFT Interface to 3rd party Fast Fourier Transforms
 
 @}

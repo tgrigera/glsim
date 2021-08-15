@@ -86,7 +86,7 @@ libglsim_la_SOURCES += analysis/avevar.cc analysis/geoave.cc	\
 LDADD=libglsim.la
 
 check_PROGRAMS = exception_test parameters_test environment_test	\
-                 fft_test
+                 fft_test mvector_test
 
 exception_test_SOURCES = exception_test.cc
 
@@ -95,6 +95,8 @@ environment_test_SOURCES = environment_test.cc
 fft_test_SOURCES = fft_test.cc
 
 parameters_test_SOURCES = parameters_test.cc
+
+mvector_test_SOURCES = mvector_test.cc
 
 # Tests
 
