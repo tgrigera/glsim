@@ -55,7 +55,7 @@ pkginclude_HEADERS = blib/blib.hh blib/cerrors.h blib/exception.hh	\
                      blib/configuration.hh blib/environment.hh		\
                      blib/simulation.hh blib/observable.hh		\
                      blib/stochastic.hh blib/mfile.hh			\
-                     blib/test_exception.hh
+                     blib/test_exception.hh blib/mvector.hh
 
 pkginclude_HEADERS += analysis/avevar.hh analysis/binvec.hh	\
                      analysis/geoave.hh 		\

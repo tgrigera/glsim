@@ -138,7 +138,7 @@ mvector<dimension> &mvector<dimension>::operator+=(const mvector<dimension>& v)
 }
 
 /// Template specializaiton for 2D addition
-template<>
+template<> inline
 mvector<2>& mvector<2>::operator+=(const mvector<2>& v)
 {
   data[0]+=v.data[0];
@@ -146,7 +146,7 @@ mvector<2>& mvector<2>::operator+=(const mvector<2>& v)
   return *this;
 }
 
-template<>
+template<> inline
 mvector<3>& mvector<3>::operator+=(const mvector<3>& v)
 {
   data[0]+=v.data[0];
@@ -162,8 +162,8 @@ mvector<dimension> &mvector<dimension>::operator-=(const mvector<dimension>& v)
   return *this;
 }
 
-template<>
-inline mvector<2>& mvector<2>::operator-=(const mvector<2>& v)
+template<> inline
+mvector<2>& mvector<2>::operator-=(const mvector<2>& v)
 {
   data[0]-=v.data[0];
   data[1]-=v.data[1];
@@ -188,7 +188,7 @@ mvector<dimension> &mvector<dimension>::operator*=(const double &a)
   return *this;
 }
 
-template <> inline
+template<> inline
 mvector<2> &mvector<2>::operator*=(const double &a)
 {
   data[0]*=a;
@@ -196,7 +196,7 @@ mvector<2> &mvector<2>::operator*=(const double &a)
   return *this;
 }
 
-template <> inline
+template<> inline
 mvector<3> &mvector<3>::operator*=(const double &a)
 {
   data[0]*=a;
@@ -205,7 +205,7 @@ mvector<3> &mvector<3>::operator*=(const double &a)
   return *this;
 }
 
-template <unsigned int dimension>
+template <unsigned int dimension> inline
 const mvector<dimension> operator*(const double &a,const mvector<dimension>& v)
 {
   return mvector<dimension>(v)*=a;
@@ -231,7 +231,7 @@ double mvector<3>::dot(const mvector<3>& v) const
   return data[0]*v.data[0] + data[1]*v.data[1] + data[2]*v.data[2];
 }
 
-// Vecctor product
+// Vector product
 
 const mvector_3D cross(const mvector_3D& a,const mvector_3D& b)
 {
