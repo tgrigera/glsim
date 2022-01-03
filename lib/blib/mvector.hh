@@ -233,6 +233,7 @@ double mvector<3>::dot(const mvector<3>& v) const
 
 // Vector product
 
+inline
 const mvector_3D cross(const mvector_3D& a,const mvector_3D& b)
 {
   return mvector_3D({a[1]*b[2] - a[2]*b[1],
@@ -254,12 +255,14 @@ std::ostream& operator<<(std::ostream& o,const mvector<dim> &v)
   return o;
 }
 
+inline
 std::ostream& operator<<(std::ostream& o,const mvector_2D &v)
 {
   o << '(' << v[0] << ", " << v[1] << ')';
   return o;
 }
 
+inline
 std::ostream& operator<<(std::ostream& o,const mvector_3D &v)
 {
   o << '(' << v[0] << ", " << v[1] << ", " << v[2] << ')';

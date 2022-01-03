@@ -215,10 +215,11 @@ void wmain(int argc,char *argv[])
     options.smin.erase(0,1);
     options.smin.erase(options.smin.size()-1,1);
   }
+
   options.min=std::stod(options.smin);
   if (options.smax[0]=='\"') {
     options.smax.erase(0,1);
-    options.smax.erase(options.smin.size()-1,1);
+    options.smax.erase(options.smax.size()-1,1);
   }
   options.max=std::stod(options.smax);
 
