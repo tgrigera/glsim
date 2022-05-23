@@ -24,8 +24,7 @@
  * attributions are not only a way to give recognition to the original
  * authors, but also help to ensure continued development, since
  * citations show that the work has been useful to others and thus
- * help convince funding agencies that it is worth funding.  * glsim
- * distribution.
+ * help convince funding agencies that it is worth funding.
  *
  * glsim is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -336,7 +335,8 @@ void wmain(int argc,char *argv[])
       printf("%g %g\n",i*options.deltat,(*acorr)[i]);
   }
 
-  delete realft,complexft;
+  delete realft;
+  delete complexft;
 }
 
 
